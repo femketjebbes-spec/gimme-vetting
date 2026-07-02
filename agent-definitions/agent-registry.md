@@ -16,3 +16,4 @@ This file logs all active agents in the ZooCode framework.
 |-------|-----------------|
 | Alignment Agent | [`agent-definitions/alignment-agent/agent-definition.md`](agent-definitions/alignment-agent/agent-definition.md) |
 | Architect | [`agent-definitions/architect-agent/agent-definition.md`](agent-definitions/architect-agent/agent-definition.md) |
+| Requirements Engineer | [`agent-definitions/requirements-engineer/agent-definition.md`](agent-definitions/requirements-engineer/agent-definition.md) |
