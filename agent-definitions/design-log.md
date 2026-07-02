@@ -22,3 +22,10 @@ _No design decisions recorded yet._
 - **Rationale**: User requires centralised architectural knowledge. Combining delegation and advisory functions ensures all task assignments are grounded in documented architecture decisions.
 - **Boundary safeguard**: Architect does not implement code, define new agent roles, or modify artefacts produced by coding agents. It delegates only.
 - **Design override**: User explicitly requested combining two potentially separate functions (delegation and architectural advisory) into one agent despite the risk of broad scope. This is recorded per Ada's monitoring requirements.
+
+### Entry 3: Mandatory Requirements Gate
+
+- **Date**: 2026-07-02
+- **Decision**: All feature requests and task triggers must pass through Robbie (Requirements Engineer) before reaching any producing agent.
+- **Rationale**: Feature validation and requirements structuring is a prerequisite for architectural decisions and implementation. Bypassing Robbie risks unvalidated features reaching the architecture and implementation stages.
+- **Artefact impact**: Updated [`workflow/agent-architecture-flow.mmd`](workflow/agent-architecture-flow.mmd) to replace the direct trigger from UserTask to Archibald with a mandatory flow through Robbie.

@@ -23,8 +23,9 @@ flowchart LR
         DelegationPlan["Delegation Plan<br/>(user output)"]
     end
 
-    UserTask -->|"direct trigger"| Archibald
-    Robbie -->|"submits artefact"| ReviewChannel
+    UserTask -->|"feature request"| Robbie
+        Robbie -->|"validated requirements"| Archibald
+        Robbie -->|"submits artefact"| ReviewChannel
     ReviewChannel --> ReviewCheck
     ReviewCheck -->|"role OK"| ReqConform
     ReviewCheck -->|"boundary violation"| Robbie
