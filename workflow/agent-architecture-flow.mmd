@@ -7,7 +7,7 @@ flowchart LR
 
     subgraph ProductionAgents["Producing Agents"]
         Robbie["Robbie<br/>Requirements Engineering"]
-        Architect["Architect<br/>Architecture & Delegation"]
+        Archibald["Archibald<br/>Architecture & Delegation"]
     end
 
     subgraph AlignmentAgent["Alignment Agent<br/>Compliance Enforcement"]
@@ -23,7 +23,7 @@ flowchart LR
         DelegationPlan["Delegation Plan<br/>(user output)"]
     end
 
-    UserTask -->|"direct trigger"| Architect
+    UserTask -->|"direct trigger"| Archibald
     Robbie -->|"submits artefact"| ReviewChannel
     ReviewChannel --> ReviewCheck
     ReviewCheck -->|"role OK"| ReqConform
@@ -34,14 +34,14 @@ flowchart LR
     ReviewChannel -->|"approved artefact"| FinalArtefacts
     ReviewChannel -->|"rejected artefact"| Robbie
 
-    Architect -->|"reads"| ArchDecisions
-    Architect -->|"reads"| AgentDefs["Agent Definitions"]
-    Architect -->|"writes"| ArchDecisions
-    Architect -->|"produces"| DelegationPlan
+    Archibald -->|"reads"| ArchDecisions
+    Archibald -->|"reads"| AgentDefs["Agent Definitions"]
+    Archibald -->|"writes"| ArchDecisions
+    Archibald -->|"produces"| DelegationPlan
     DelegationPlan -->|"subtasks assigned to"| CodingAgents["Coding Agents<br/>(future agents)"]
 
     style AlignmentAgent fill:#f9f,stroke:#333,stroke-width:2px
     style ReviewChannel fill:#ff9,stroke:#333,stroke-width:2px
     style FinalArtefacts fill:#9f9,stroke:#333,stroke-width:2px
-    style Architect fill:#9cf,stroke:#333,stroke-width:2px
+    style Archibald fill:#9cf,stroke:#333,stroke-width:2px
     style ArchDecisions fill:#ff9,stroke:#333,stroke-width:2px
