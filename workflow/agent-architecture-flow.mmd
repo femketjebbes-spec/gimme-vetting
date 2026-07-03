@@ -8,6 +8,7 @@ flowchart LR
     subgraph ProductionAgents["Producing Agents"]
         Robbie["Robbie<br/>Requirements Engineering"]
         Archibald["Archibald<br/>Architecture & Delegation"]
+        Naut["Naut<br/>Java TDD Implementation"]
     end
 
     subgraph AlignmentAgent["Alignment Agent<br/>Compliance Enforcement"]
@@ -39,10 +40,19 @@ flowchart LR
     Archibald -->|"reads"| AgentDefs["Agent Definitions"]
     Archibald -->|"writes"| ArchDecisions
     Archibald -->|"produces"| DelegationPlan
-    DelegationPlan -->|"subtasks assigned to"| CodingAgents["Coding Agents<br/>(future agents)"]
+    DelegationPlan -->|"assigned subtasks"| Naut
+    Archibald -->|"architecture constraints"| Naut
+    Robbie -->|"requirements baseline"| Naut
+
+    Naut -->|"JUnit 5 tests (Testing Mode)"| BackendTests["Backend Test Dir<br/>(.java test files)"]
+    Naut -->|"production code (Implementation Mode)"| BackendSrc["Backend Source Dir<br/>(.java source files)"]
+    Naut -->|"API contract"| ApiContract["API Contract<br/>(docs/api-contract.md)"]
+    BackendTests -->|"reads for guidance"| BackendSrc
+    Naut -->|"test mod auth if plan changes"| Naut
 
     style AlignmentAgent fill:#f9f,stroke:#333,stroke-width:2px
     style ReviewChannel fill:#ff9,stroke:#333,stroke-width:2px
     style FinalArtefacts fill:#9f9,stroke:#333,stroke-width:2px
     style Archibald fill:#9cf,stroke:#333,stroke-width:2px
     style ArchDecisions fill:#ff9,stroke:#333,stroke-width:2px
+    style BackendAgent fill:#9f9,stroke:#333,stroke-width:2px
