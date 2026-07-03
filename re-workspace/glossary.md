@@ -18,13 +18,13 @@ Description: The end-to-end process by which Gimmo evaluates and accepts or reje
 Description: The debtor verification process, including checks against an Uncooperative Register and verification of existing payment arrangements.
 
 [2026-07-03] [Session 1] Backwards Chaining
-Description: Reasoning approach described in the document where the system reasons from the desired acceptance outcome backward to the required data points. Used as both a logical framework and a justification for the four automation streams. Note: this term may conflate formal backwards chaining (goal-driven inference) with a more general conditional acceptance model. Needs verification.
+Description: A modulation technique where a business goal is formulated first, and proposed changes are derived to achieve that goal with minimal disruption to existing business operations. This is the reverse of solution-first approaches where a technical solution is proposed and the business adapts. Clarified by user in Session 1.
 
 [2026-07-03] [Session 1] Case Analyst (Dossierbehandelaar)
 Description: The human role performing dossier processing. Under the proposed automation, their role shifts from manual verification to exception handling only.
 
-[2026-07-03] [Session 1] Gimmo / Gimme
-Description: The organisation or system being automated. The source document uses both spellings interchangeably. This is ambiguous and requires resolution. Recommendation: adopt a single canonical name and reference it consistently.
+[2026-07-03] [Session 1] Gimme
+Description: The organisation or system being automated. User confirmed in Session 1 that "Gimme" is the correct spelling. All instances of "Gimmo" in source materials should be corrected to "Gimme".
 
 [2026-07-03] [Session 1] System Identifier
 Description: A unique identifier on invoices required for database integrity. Mandatory field with no empty values permitted.

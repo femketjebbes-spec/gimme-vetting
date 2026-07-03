@@ -10,12 +10,12 @@ Rationale (if overridden): <user-provided>
 ```
 
 [2026-07-03] [Session 1] ASSUMPTION: "Backwards chaining" as described in the document represents genuine goal-driven inference, not merely a collection of independent validation rules.
-Status: Unverified
-Notes: The document describes four parallel validation streams. This is not backwards chaining in the formal AI sense. It is a set of gate rules. The user should confirm whether the backwards chaining concept carries formal weight or is used rhetorically.
+Status: Overridden
+Rationale: User clarified in Session 1 that "backwards chaining" refers to a modulation technique where a business goal is formulated first and changes are derived to achieve it with minimal disruption. It is not a formal AI inference mechanism. The term describes an approach philosophy, not a technical architecture pattern.
 
 [2026-07-03] [Session 1] ASSUMPTION: OCR is a viable and reliable mechanism for extracting dates from PoC documents.
-Status: Unverified
-Notes: OCR reliability depends on document quality, language, format, and layout. The document does not specify which OCR technology is used or what accuracy threshold is acceptable. This is a critical dependency.
+Status: Overridden
+Rationale: User clarified in Session 1 that all PoC validation is out of scope. OCR dependency for PoC is therefore not required.
 
 [2026-07-03] [Session 1] ASSUMPTION: An Uncooperative Register already exists as a data source.
 Status: Unverified
