@@ -24,3 +24,7 @@ Rationale: If the user intends a formal backwards chaining implementation, the s
 [2026-07-03] [Session 1] DECISION: No decision was made on organisation name spelling.
 Assumptions: None.
 Rationale: This is a critical consistency issue that the user must resolve. I log it as an open question but make no editorial decision.
+
+[2026-07-03] [Session 1] DECISION: PoC (Proof of Correspondence) content validity checking is out of scope. PoC existence verification is in scope.
+Assumptions: None.
+Rationale: User clarified in Session 1 that PoC content validation (OCR date extraction, temporal rule checking, correspondence content verification) is out of scope. However, the system must still verify that a PoC file exists and is associated with the invoice. This means file-level linkage (e.g., filename matching) is required, but content-level analysis is not.
