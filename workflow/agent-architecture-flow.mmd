@@ -68,6 +68,22 @@ flowchart LR
     Gerard -->|"delegates fixes to"| CodingAgents
     Gerard -->|"submits artefact"| ReviewChannel
 
+    Archibald -->|"architectural guidelines"| DBEngineer
+    Robbie -->|"functional requirements"| DBEngineer
+    DBEngineer -->|"schema definitions"| FinalArtefacts
+    DBEngineer -->|"migration scripts"| FinalArtefacts
+    DBEngineer -->|"optimized queries"| FinalArtefacts
+    DBEngineer -->|"submits artefact"| ReviewChannel
+
+    Gerard -->|"reads"| ApiContract["API Contract<br/>(docs/api-contract.md)"]
+    Gerard -->|"reads"| FrontendSrc["Frontend Source<br/>(fetch calls, API services)"]
+    Gerard -->|"reads"| BackendSrc["Backend Source<br/>(route definitions)"]
+    Gerard -->|"produces"| AdapterCode["Adapter/Gateway Code<br/>(src/integration/)"]
+    Gerard -->|"produces"| ContractTests["Contract Tests<br/>(tests/contract-tests/)"]
+    Gerard -->|"produces"| ValidationReports["Validation Reports"]
+    Gerard -->|"delegates fixes to"| CodingAgents
+    Gerard -->|"submits artefact"| ReviewChannel
+
     style AlignmentAgent fill:#f9f,stroke:#333,stroke-width:2px
     style ReviewChannel fill:#ff9,stroke:#333,stroke-width:2px
     style FinalArtefacts fill:#9f9,stroke:#333,stroke-width:2px
