@@ -1,4 +1,4 @@
-# Gerard: Open Questions
+# API-Agent (Gerard): Open Questions
 
 Records contract mismatches that could not be resolved because no downstream agent was available for delegation.
 

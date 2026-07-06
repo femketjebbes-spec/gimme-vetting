@@ -11,3 +11,13 @@ Summary of each session conducted by Naut.
 **Remains Open:** Specific Java version, backend directory structure, Spring Boot version, and database technology. These will be defined by Robbie and Archibald before the agent activates on real tasks.
 
 **Assumptions:** The project has a clear separation between backend and frontend code. Archibald will document the architectural pattern before the agent begins implementation work.
+
+## Session 2 - 2026-07-06
+
+**Explored:** The Gerard-to-Naut handover protocol. The user requested that the Alignment Agent gate be enforced before Naut activates, mirroring the Femke-to-Gerard pattern.
+
+**Decided:** Naut's trigger section was updated to require confirmed Alignment Agent approval of Gerard's work in Archibald's delegation plan. The anti-patterns section was updated to include activation before Alignment Agent approval of Gerard's work as a user-request error to watch for.
+
+**Remains Open:** None from this specific change.
+
+**Assumptions:** Archibald reads the Alignment Agent decision and includes confirmation of `greenlightForNextAgent: true` for Gerard in the delegation plan passed to Naut.
