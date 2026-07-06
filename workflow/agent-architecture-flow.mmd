@@ -8,6 +8,7 @@ flowchart LR
     subgraph ProductionAgents["Producing Agents"]
         Robbie["Robbie<br/>Requirements Engineering"]
         Archibald["Archibald<br/>Architecture & Delegation"]
+        Femke["Femke<br/>Frontend Implementation"]
         DBEngineer["Database Engineer<br/>Schema & Query Design"]
         Gerard["Gerard<br/>API Integration Supervisor"]
         Naut["Naut<br/>Java TDD Implementation"]
@@ -23,7 +24,8 @@ flowchart LR
         ReviewChannel["Review Channel<br/>(dedicated queue)"]
         FinalArtefacts["Approved Artefacts<br/>(workspace)"]
         ArchDecisions["Architecture Decisions<br/>(architecture-decisions.md)"]
-        DelegationPlan["Delegation Plan<br/>(user output)"]
+        ApiRequirements["API Requirements<br/>(docs/api-requirements.md)"]
+        ApiContract["API Contract<br/>(docs/api-contract.md)"]
     end
 
     UserTask -->|"feature request"| Robbie
@@ -41,14 +43,25 @@ flowchart LR
     Archibald -->|"reads"| ArchDecisions
     Archibald -->|"reads"| AgentDefs["Agent Definitions"]
     Archibald -->|"writes"| ArchDecisions
-    Archibald -->|"produces"| DelegationPlan
-    DelegationPlan -->|"assigned subtasks"| Naut
-    Archibald -->|"architecture constraints"| Naut
+
+    %% NEW SEQUENTIAL WORKFLOW
+    Archibald -->|"delegation plan<br/>(frontend subtasks)"| Femke
+    Femke -->|"HTML/JS/CSS frontend code"| FinalArtefacts
+    Femke -->|"API requirements"| ApiRequirements
+    ApiRequirements -->|"consumed by Gerard"| Gerard
+    Gerard -->|"reads frontend source"| Femke
+    Gerard -->|"produces API contract"| ApiContract
+    ApiContract -->|"consumed by Naut"| Naut
+    Gerard -->|"adapter/gateway code"| FinalArtefacts
+    Gerard -->|"contract tests"| FinalArtefacts
+    Gerard -->|"completion signal"| Archibald
+
+    Archibald -->|"delegation plan<br/>(backend subtasks)"| Naut
     Robbie -->|"requirements baseline"| Naut
+    Robbie -->|"requirements baseline"| Femke
 
     Naut -->|"JUnit 5 tests (Testing Mode)"| BackendTests["Backend Test Dir<br/>(.java test files)"]
     Naut -->|"production code (Implementation Mode)"| BackendSrc["Backend Source Dir<br/>(.java source files)"]
-    Naut -->|"API contract"| ApiContract["API Contract<br/>(docs/api-contract.md)"]
     BackendTests -->|"reads for guidance"| BackendSrc
     Naut -->|"test mod auth if plan changes"| Naut
 
@@ -59,28 +72,9 @@ flowchart LR
     DBEngineer -->|"optimized queries"| FinalArtefacts
     DBEngineer -->|"submits artefact"| ReviewChannel
 
-    Gerard -->|"reads"| ApiContract["API Contract<br/>(docs/api-contract.md)"]
-    Gerard -->|"reads"| FrontendSrc["Frontend Source<br/>(fetch calls, API services)"]
-    Gerard -->|"reads"| BackendSrc["Backend Source<br/>(route definitions)"]
-    Gerard -->|"produces"| AdapterCode["Adapter/Gateway Code<br/>(src/integration/)"]
-    Gerard -->|"produces"| ContractTests["Contract Tests<br/>(tests/contract-tests/)"]
-    Gerard -->|"produces"| ValidationReports["Validation Reports"]
-    Gerard -->|"delegates fixes to"| CodingAgents
-    Gerard -->|"submits artefact"| ReviewChannel
-
-    Archibald -->|"architectural guidelines"| DBEngineer
-    Robbie -->|"functional requirements"| DBEngineer
-    DBEngineer -->|"schema definitions"| FinalArtefacts
-    DBEngineer -->|"migration scripts"| FinalArtefacts
-    DBEngineer -->|"optimized queries"| FinalArtefacts
-    DBEngineer -->|"submits artefact"| ReviewChannel
-
-    Gerard -->|"reads"| ApiContract["API Contract<br/>(docs/api-contract.md)"]
-    Gerard -->|"reads"| FrontendSrc["Frontend Source<br/>(fetch calls, API services)"]
-    Gerard -->|"reads"| BackendSrc["Backend Source<br/>(route definitions)"]
-    Gerard -->|"produces"| AdapterCode["Adapter/Gateway Code<br/>(src/integration/)"]
-    Gerard -->|"produces"| ContractTests["Contract Tests<br/>(tests/contract-tests/)"]
-    Gerard -->|"produces"| ValidationReports["Validation Reports"]
+    Gerard -->|"reads frontend fetch patterns"| FrontendSrc["Frontend Source<br/>(fetch calls, API services)"]
+    Gerard -->|"reads backend routes"| BackendSrc
+    Gerard -->|"produces validation reports"| ValidationReports["Validation Reports"]
     Gerard -->|"delegates fixes to"| CodingAgents
     Gerard -->|"submits artefact"| ReviewChannel
 
@@ -89,6 +83,8 @@ flowchart LR
     style FinalArtefacts fill:#9f9,stroke:#333,stroke-width:2px
     style Archibald fill:#9cf,stroke:#333,stroke-width:2px
     style ArchDecisions fill:#ff9,stroke:#333,stroke-width:2px
+    style Femke fill:#9cf,stroke:#333,stroke-width:2px
     style Gerard fill:#9cf,stroke:#333,stroke-width:2px
+    style ApiRequirements fill:#ff9,stroke:#333,stroke-width:2px
     style ApiContract fill:#ff9,stroke:#333,stroke-width:2px
     style BackendAgent fill:#9f9,stroke:#333,stroke-width:2px
