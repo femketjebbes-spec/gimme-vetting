@@ -38,5 +38,9 @@ Status: Unverified
 Notes: The document contains no non-functional requirements. Their absence may be intentional (out of scope) or unintentional (overlooked). This is a significant gap if the system handles financial and legal data.
 
 [2026-07-03] [Session 1] ASSUMPTION: The 1-month waiting period before manual enrichment of incomplete dossiers (section 4, line 113) is a business rule, not a system timing mechanism.
-Status: Unverified
-Notes: The document states a "wachttijd van 1 maand" applies. It is unclear whether the system enforces this as a timer, or whether it is an organisational guideline for case analysts.
+Status: Overridden
+Rationale: User clarified in Session 2 that Type A (incomplete data) rejections can be re-submitted whenever without any waiting period. The 1-month waiting period is removed from the specification.
+
+[2026-07-06] [Session 2] ASSUMPTION: RQ-006 (Rejection Overview) generates an overview for all Type A rejections.
+Status: Moot
+Rationale: Requirements were restructured in Session 2. RQ-006 (Rejection Overview) was removed. Data enrichment (RQ-005) was removed from scope. The current specification (RQ-001 through RQ-005) does not include a rejection overview requirement. If a rejection overview is needed, it must be specified as a new requirement.

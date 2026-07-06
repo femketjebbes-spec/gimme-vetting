@@ -1,0 +1,74 @@
+stateDiagram-v2
+    [*] --> Received
+
+    state Received: Invoice received by Gimme<br/>RQ-001, RQ-002, RQ-003 applied
+    Received --> GatePass: All gate checks pass
+    Received --> TypeA_Rejected: Gate check fails<br/>(RQ-001: PoC missing)
+    Received --> TypeB_Rejected: Gate check fails<br/>(RQ-002: Uncooperative Register<br/>RQ-003: Payment plan)
+
+    state GatePass: All gate checks passed<br/>Proceed to queue
+    GatePass --> CaseAnalyst_Queue: Gate pass
+
+    state CaseAnalyst_Queue: Non-rejected invoices<br/>awaiting case analyst acceptance<br/>RQ-004 active
+    CaseAnalyst_Queue --> Batch_Included: Accepted into current batch
+    CaseAnalyst_Queue --> Batch_Later: Accepted into later batch
+
+    state Batch_Included: Invoice in current<br/>processing batch
+    Batch_Included --> DossierProduced: Processing complete
+
+    state Batch_Later: Invoice queued<br/>for future batch
+    Batch_Later --> DossierProduced: Processing complete
+
+    state TypeA_Rejected: Rejection Type A<br/>Missing PoC<br/>RQ-001: No PoC linked<br/>Client may re-submit anytime
+    TypeA_Rejected --> Received: Client re-submits
+
+    state TypeB_Rejected: Rejection Type B<br/>Business Rule<br/>RQ-002: Uncooperative Register match<br/>RQ-003: Payment plan match<br/>Not re-applicable
+    TypeB_Rejected --> [*]
+
+    state DossierProduced: Debtor dossier produced<br/>System output complete
+    DossierProduced --> [*]
+
+    note right of Received
+        Gate checks applied in order:
+        1. RQ-001: PoC existence (filename match)
+           If no PoC found: Type A rejection.
+        2. RQ-002: Uncooperative Register
+           (if available; log warning if not)
+           Debtor in register: Type B rejection.
+        3. RQ-003: Payment Plan check
+           (if available; log warning if not)
+           Active plan exists: Type B rejection.
+
+        Mandatory field enforcement
+        (name, address, rekeningnummer,
+        phone, invoice number) is handled
+        externally at the form level.
+        Incomplete submissions never enter
+        the system.
+    end note
+
+    note right of TypeA_Rejected
+        Type A rejection sources:
+        - RQ-001: No PoC linked to invoice
+        Client receives overview and
+        may re-submit without limit.
+        Re-submitted invoices enter
+        CaseAnalyst_Queue after re-validation.
+    end note
+
+    note right of TypeB_Rejected
+        Type B rejection sources:
+        - RQ-002: Debtor in Uncooperative Register
+        - RQ-003: Debtor has active payment plan
+        Not re-applicable. Invoice is rejected
+        permanently.
+        Warning logged if data source unavailable (RQ-005).
+    end note
+
+    note right of CaseAnalyst_Queue
+        Case analysts manually accept
+        non-rejected invoices (RQ-004).
+        Each invoice is individually
+        accepted into current batch or
+        deferred to a later batch.
+    end note
