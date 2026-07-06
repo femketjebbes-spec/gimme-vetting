@@ -12,7 +12,7 @@ Description: <statement>
 Description: Primary evidence document for Gimmo vetting dossiers. Must contain at least two contact moments spaced at least one month apart, with the first contact moment occurring at least two months before the submission date. Used as a gatekeeping document for dossier quality.
 
 [2026-07-03] [Session 1] Vetting Proces
-Description: The end-to-end process by which Gimmo evaluates and accepts or rejects invoices/dossiers. Currently manual, proposed for automation across four streams: PoC validation, debtor cooperativeness check, data enrichment, and payment plan verification.
+Description: The end-to-end process by which Gimme evaluates and accepts or rejects invoices/dossiers. Currently manual, proposed for automation across three streams: PoC validation, debtor cooperativeness check, and payment plan verification. Data enrichment was removed from scope in Session 2 (2026-07-06). Mandatory field enforcement is externalized to the submission form; incomplete submissions are blocked at the form level and never enter the system.
 
 [2026-07-03] [Session 1] Debiteurencontrole
 Description: The debtor verification process, including checks against an Uncooperative Register and verification of existing payment arrangements.

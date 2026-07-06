@@ -32,13 +32,13 @@ Answer: Content OCR (date extraction from PoC documents) is out of scope. Howeve
 
 [2026-07-03] [Session 1] QUESTION: What is the current state of the data sources referenced in the requirements (Uncooperative Register, payment plan database, incassolijst)?
 Raised by: Robbie
-Status: Open
-Notes: Each is described as an existing system to query. Their existence, accessibility, and data quality directly determine feasibility.
+Status: Resolved
+Answer: Both data sources are external systems provided by different company entities during implementation. Gimme must accept both registries via a defined interface or mock implementation. The registries are not built by Gimme.
 
 [2026-07-03] [Session 1] QUESTION: Which OCR technology is intended or required for PoC date extraction?
 Raised by: Robbie
-Status: Open
-Notes: The document proposes OCR but specifies no technology, accuracy threshold, or fallback mechanism for failed extractions. This is a critical technical dependency.
+Status: Resolved (duplicate entry)
+Answer: Content OCR is out of scope (Session 1 clarification). This entry is superseded by the resolution at line 28-31. Housekeeping: status corrected to Resolved.
 
 [2026-07-03] [Session 1] QUESTION: Are there non-functional requirements that should be documented in parallel with these functional requirements?
 Raised by: Robbie
@@ -59,3 +59,23 @@ Notes: The requirements cover only the intake/acceptance gate. Post-acceptance p
 Raised by: Robbie
 Status: Resolved
 Answer: "Uitzonderingen" refers to exceptional PoC formats requiring case analyst intervention. This is out of scope since PoC validation is out of scope (Session 1 clarification).
+
+[2026-07-03] [Session 2] QUESTION: What fields are mandatory for dossier submission?
+Raised by: Robbie
+Status: Resolved
+Answer: An invoice is considered complete if there is a valid PoC (validated by a case analyst, post-acceptance) and the debtor is uniquely identifiable. Unique debtor identification requires: full name (initials + surname sufficient, full first name preferred), address, and bank account number (rekeningnummer).
+
+[2026-07-03] [Session 2] QUESTION: What is the post-acceptance workflow after batch acceptance?
+Raised by: Robbie
+Status: Resolved
+Answer: Post-acceptance workflow is out of scope. The system output is "debtor dossiers" containing all accepted invoices pertaining to the client. What happens after the system outputs a debtor dossier is not part of this project.
+
+[2026-07-03] [Session 2] QUESTION: What happens when external data sources (Uncooperative Register, Payment Plan) are unavailable during intake?
+Raised by: Robbie
+Status: Resolved
+Answer: External data sources are optional ("if exists") dependencies. When unavailable or not existing, Gimme logs a warning and proceeds with invoice processing without the unavailable check.
+
+[2026-07-03] [Session 2] QUESTION: What non-functional requirements apply (security, audit, availability, data retention)?
+Raised by: Robbie
+Status: Deferred
+Answer: NFRs deferred by user decision. Functional requirements are the current priority. NFRs will be addressed in a future session.

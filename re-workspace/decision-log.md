@@ -1,4 +1,4 @@
-# Decision Log
+even # Decision Log
 
 Records requirements decisions with their rationale, the stakeholder authority behind them, and the assumptions they depend on. Traceable to entries in the Assumption Log.
 
@@ -28,3 +28,19 @@ Rationale: This is a critical consistency issue that the user must resolve. I lo
 [2026-07-03] [Session 1] DECISION: PoC (Proof of Correspondence) content validity checking is out of scope. PoC existence verification is in scope.
 Assumptions: None.
 Rationale: User clarified in Session 1 that PoC content validation (OCR date extraction, temporal rule checking, correspondence content verification) is out of scope. However, the system must still verify that a PoC file exists and is associated with the invoice. This means file-level linkage (e.g., filename matching) is required, but content-level analysis is not.
+
+[2026-07-06] [Session 2] DECISION: Automatic debtor data enrichment is removed from scope.
+Assumptions: None.
+Rationale: User clarified in Session 2 that data enrichment is no longer a requirement. Invoices that lack mandatory fields (name, address, rekeningnummer, phone number, invoice number) are blocked at the form interface level before entering the system. These invoices are implicitly Type A rejections but never reach the system.
+
+[2026-07-06] [Session 2] DECISION: Mandatory field enforcement is externalized to the submission form.
+Assumptions: None.
+Rationale: User clarified in Session 2 that mandatory fields (debtor name, address, bank account number, phone number, invoice number / System Identifier) are enforced at the form level. Incomplete submissions are blocked before entering Gimme. This removes the need for RQ-004 (Mandatory Field Validation) from the system specification.
+
+[2026-07-06] [Session 2] DECISION: Requirements restructured from 9 to 5 requirements.
+Assumptions: None.
+Rationale: Data enrichment removed, mandatory field validation externalized, rejection overview requirement scope conflict resolved by removal. Remaining requirements: RQ-001 (PoC Existence Verification), RQ-002 (Uncooperative Register Check), RQ-003 (Payment Plan Check), RQ-004 (Batch Acceptance by Case Analyst), RQ-005 (Warning Logging for Unavailable Data Sources).
+
+[2026-07-06] [Session 2] DECISION: RQ-005 (Warning Logging for Unavailable Data Sources) demoted from "Must have" to lower priority.
+Assumptions: None.
+Rationale: RQ-005 provides no direct stakeholder value. It is an internal system behaviour (audit trail logging) that does not produce observable output for end users. Priority adjusted to lower based on user decision. Diagram may omit this requirement until priority is raised again.
