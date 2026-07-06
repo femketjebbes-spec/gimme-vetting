@@ -12,6 +12,7 @@ This file logs all active agents in the ZooCode framework.
 | Database Engineer| Schema Design, Query Optimization, Migration Management | Architectural guidelines, functional requirements, existing schema artefacts | Schema definitions, optimized queries, migration scripts, index documentation |
 | Ada         | Agent Definition and Specification          | Agent role descriptions, agent registry, agent definitions | Agent definitions, agent registry updates, architecture flow diagrams, custom mode entries |
 | Gerard      | API Integration Supervisor and Adapter Layer Development | docs/api-contract.md, frontend fetch patterns, backend endpoint definitions | Adapter/gateway code, contract validation reports, error mappings, automated contract tests |
+| Naut                 | Java Backend Implementation | Delegation plans, architecture decisions, requirements baseline, existing backend code | Java backend source code, JUnit 5 test code, implementation summaries |
 
 ### Agent Definition Files
 
@@ -23,3 +24,4 @@ This file logs all active agents in the ZooCode framework.
 | Database Engineer | [`agent-definitions/database-engineer/agent-definition.md`](agent-definitions/database-engineer/agent-definition.md) |
 | Requirements Engineer | [`agent-definitions/requirements-engineer/agent-definition.md`](agent-definitions/requirements-engineer/agent-definition.md) |
 | Gerard | [`agent-definitions/gerard/agent-definition.md`](agent-definitions/gerard/agent-definition.md) |
+| Naut                 | [`agent-definitions/backend-coding-agent/agent-definition.md`](agent-definitions/backend-coding-agent/agent-definition.md) |

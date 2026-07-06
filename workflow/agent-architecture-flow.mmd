@@ -10,6 +10,7 @@ flowchart LR
         Archibald["Archibald<br/>Architecture & Delegation"]
         DBEngineer["Database Engineer<br/>Schema & Query Design"]
         Gerard["Gerard<br/>API Integration Supervisor"]
+        Naut["Naut<br/>Java TDD Implementation"]
     end
 
     subgraph AlignmentAgent["Alignment Agent<br/>Compliance Enforcement"]
@@ -41,7 +42,31 @@ flowchart LR
     Archibald -->|"reads"| AgentDefs["Agent Definitions"]
     Archibald -->|"writes"| ArchDecisions
     Archibald -->|"produces"| DelegationPlan
-    DelegationPlan -->|"subtasks assigned to"| CodingAgents["Coding Agents<br/>(future agents)"]
+    DelegationPlan -->|"assigned subtasks"| Naut
+    Archibald -->|"architecture constraints"| Naut
+    Robbie -->|"requirements baseline"| Naut
+
+    Naut -->|"JUnit 5 tests (Testing Mode)"| BackendTests["Backend Test Dir<br/>(.java test files)"]
+    Naut -->|"production code (Implementation Mode)"| BackendSrc["Backend Source Dir<br/>(.java source files)"]
+    Naut -->|"API contract"| ApiContract["API Contract<br/>(docs/api-contract.md)"]
+    BackendTests -->|"reads for guidance"| BackendSrc
+    Naut -->|"test mod auth if plan changes"| Naut
+
+    Archibald -->|"architectural guidelines"| DBEngineer
+    Robbie -->|"functional requirements"| DBEngineer
+    DBEngineer -->|"schema definitions"| FinalArtefacts
+    DBEngineer -->|"migration scripts"| FinalArtefacts
+    DBEngineer -->|"optimized queries"| FinalArtefacts
+    DBEngineer -->|"submits artefact"| ReviewChannel
+
+    Gerard -->|"reads"| ApiContract["API Contract<br/>(docs/api-contract.md)"]
+    Gerard -->|"reads"| FrontendSrc["Frontend Source<br/>(fetch calls, API services)"]
+    Gerard -->|"reads"| BackendSrc["Backend Source<br/>(route definitions)"]
+    Gerard -->|"produces"| AdapterCode["Adapter/Gateway Code<br/>(src/integration/)"]
+    Gerard -->|"produces"| ContractTests["Contract Tests<br/>(tests/contract-tests/)"]
+    Gerard -->|"produces"| ValidationReports["Validation Reports"]
+    Gerard -->|"delegates fixes to"| CodingAgents
+    Gerard -->|"submits artefact"| ReviewChannel
 
     Archibald -->|"architectural guidelines"| DBEngineer
     Robbie -->|"functional requirements"| DBEngineer
@@ -66,3 +91,4 @@ flowchart LR
     style ArchDecisions fill:#ff9,stroke:#333,stroke-width:2px
     style Gerard fill:#9cf,stroke:#333,stroke-width:2px
     style ApiContract fill:#ff9,stroke:#333,stroke-width:2px
+    style BackendAgent fill:#9f9,stroke:#333,stroke-width:2px
