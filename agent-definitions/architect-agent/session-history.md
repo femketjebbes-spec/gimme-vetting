@@ -21,3 +21,13 @@ Summary of each session conducted by the Architect agent.
 **Remains Open:** The exact moment Archibald reads the signal files (polling vs event-driven). Whether signals should be version-controlled or transient artefacts.
 
 **Assumptions:** Archibald actively monitors for signal file existence. Signal files are well-known and written to the workspace root. Gerard produces all required subtasks before writing its completion signal. Naut waits for Gerard's signal before activating.
+
+## Session 3 - 2026-07-06
+
+**Explored:** The handover protocol between Gerard (API-Agent) and Naut (Backend Agent). The user requested that the Gerard-to-Naut transition replicate the Femke-to-Gerard pattern: Gerard signals completion, the Alignment Agent verifies Gerard's work, and only after Alignment Agent approval does the Architect delegate to Naut.
+
+**Decided:** The Architect's Sequential Workflow Enforcement was updated to require reading the Alignment Agent decision before activating Naut. A new monitoring error type (Alignment Agent gate violation) was added to the Persistent Monitoring Layer, blocking delegation if `docs/alignment-review-request.md` lacks Alignment Agent approval for Gerard. Naut's trigger was updated to require confirmed Alignment Agent approval of Gerard's work. The Alignment Agent's Pipeline Gate Enforcement now explicitly documents the Architect-reading-behaviour for the API-to-Backend sequence. The architecture flow diagram was updated to show the ReviewDecision -> Archibald -> Naut chain. An architecture decision (Session 4) was recorded documenting this symmetric gate enforcement pattern.
+
+**Remains Open:** Whether Naut's own completion should similarly require a post-implementation Alignment Agent review before the pipeline is considered fully closed (Naut already submits Alignment Agent review requests, but downstream handover does not exist).
+
+**Assumptions:** The Alignment Agent decision is appended to `docs/alignment-review-request.md` and remains readable. Archibald actively reads and parses the Alignment Agent compliance decision before producing any backend delegation plan.

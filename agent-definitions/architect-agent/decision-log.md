@@ -21,3 +21,7 @@ Rationale: User specified direct user trigger.
 [2026-07-02] [Session 1] DECISION: Architecture decisions are stored in a separate file at agent-definitions/architecture-decisions.md.
 Assumptions: Centralising decisions outside the agent folder keeps them accessible to all agents.
 Rationale: Coding agents need to reference architecture decisions during implementation.
+
+[2026-07-06] [Session 3] DECISION: The Architect must read the Alignment Agent compliance decision from docs/alignment-review-request.md before activating Naut. A new monitoring error type (Alignment Agent gate violation) was added to block delegation if the compliance decision is missing or shows REJECTED status for Gerard.
+Assumptions: The Alignment Agent appends its decision to docs/alignment-review-request.md and the fields greenlightForNextAgent and nextAgentInPipeline are correctly set.
+Rationale: The existing Femke-to-Gerard handover already requires this check. The Gerard-to-Nut handover lacked this explicit gate. Symmetric enforcement ensures consistent quality control across all pipeline transitions.

@@ -27,3 +27,7 @@ Rationale: <user-provided or derived from delegation plan>
 Purpose: <what behaviour the test validates>
 Derived from: <delegation plan subtask ID or Robbie requirement ID>
 ```
+
+[2026-07-06] [Session 3] DECISION: Femke invokes `npx jest --config jest.config.js --json --outputFile .jest-results.json` in Testing Mode, Implementation Mode, and Refactoring Mode. Test state is determined by parsing the JSON output fields: `numFailedTests` and `failureMessage` for red state, `numPassedTests` and `numFailedTests` for green state.
+Assumptions: Jest is installed as a project dependency accessible via `npx`. The `jest.config.js` file exists at the project root before Femke activates. The JSON reporter is available as a built-in Jest reporter.
+Rationale: Resolves the under-specification of Femke's test execution. Matches Naut's level of command precision (`mvn test`, `mvn compile`). JSON parsing provides deterministic, machine-readable test state evaluation.

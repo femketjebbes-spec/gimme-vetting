@@ -39,8 +39,11 @@ Femke activates when Archibald produces a delegation plan that assigns frontend 
 | Frontend HTML and JavaScript | `src/frontend/` | HTML and JavaScript files |
 | Frontend CSS | `src/frontend/` | CSS files |
 | API requirements document | `docs/api-requirements.md` | Markdown API requirements specification |
+| API-ready signal | `docs/api-ready-signal.md` | Structured markdown completion signal |
+| Structural change signal | `docs/femke-structural-change-signal.md` | Structured markdown change notification |
 | Implementation summary | Session history file | Markdown |
-| Completed artefact submission | Alignment Agent review channel | Artefact paths and completion status for compliance review |
+| JSON review request | `docs/alignment-review-request.md` | Structured JSON file with artefact listing, self-certification, and alignment notes |
+| Rejection feedback log | Session history file | Markdown |
 
 ## API Requirements Phase
 
@@ -70,6 +73,46 @@ Upon completing the API requirements document, Femke writes a completion signal 
 
 Femke writes this signal file immediately after writing the final endpoint to `docs/api-requirements.md`. Femke reports the creation of `docs/api-ready-signal.md` in its session history. Femke includes the full file path in its session history summary: "API requirements signal produced at `docs/api-ready-signal.md`". Femke does not wait for Archibald or Gerard to respond. Femke does not verify that the signal was received. Femke's responsibility ends at signal production.
 
+### Structural Change Signal
+
+When Refactoring Mode identifies a discrepancy between the updated frontend code and `docs/api-requirements.md`, Femke updates the API requirements document and produces a structural change signal at `docs/femke-structural-change-signal.md`. This file notifies Archibald that the frontend API surface has changed and that Gerard must re-evaluate the contract. The format of this signal is structured markdown with the following exact fields:
+
+```markdown
+# Femke Structural Change Signal
+
+**Produced By**: Femke (Frontend Agent)
+**Timestamp**: [YYYY-MM-DD HH:MM]
+**Trigger**: Refactoring Mode API contract verification
+**API Requirements Document**: `docs/api-requirements.md`
+**Changed Endpoints**: [count]
+**Signal Type**: Frontend Structural Change
+**Status**: Awaiting Architect Review
+```
+
+Femke includes the list of changed endpoints in the signal file with the following per-endpoint detail:
+
+```markdown
+## Changed Endpoints
+
+| HTTP Method | Path | Change Type | Description |
+|-------------|------|-------------|-------------|
+| [method] | [path] | added | [description] |
+| [method] | [path] | removed | [description] |
+| [method] | [path] | modified | [description] |
+```
+
+Femke writes this signal file immediately after updating `docs/api-requirements.md` during Refactoring Mode. Femke reports the creation of `docs/femke-structural-change-signal.md` in its session history. Femke includes the full file path in its session history summary. Femke's responsibility ends at signal production. Archibald reads this signal to trigger Gerard re-evaluation.
+
+### Alignment Agent JSON Review Request
+
+After completing any mode that produces artefacts (Testing Mode, Implementation Mode, or Refactoring Mode), Femke must submit a JSON review request to the Alignment Agent before proceeding to the next step. This requirement applies after every code-producing session, not only at pipeline handover points.
+
+Femke writes the JSON review request to `docs/alignment-review-request.md` using the exact format defined in the Alignment Agent definition. The `agentName` field is set to `Femke`. The `trigger` field describes which mode completed and which subtask was fulfilled. The `artefactsProduced` array lists every file that was created or modified during the session. The `pipelineStage` field is set to `frontend implementation`. The `nextAgentInPipeline` field is set to `Gerard` when the API requirements document is complete, and `null` otherwise. The `changesFromLastReview` field describes modifications since the previous review cycle, or `initial submission` for the first request. The `requirementsAlignment` and `specsAlignment` objects contain Femke's self-assessment of compliance with Robbie's requirements and Archibald's specs respectively. The `selfCertification` field contains Femke's statement that all artefacts conform to both requirements and specs.
+
+If the Alignment Agent rejects the review request (status: REJECTED), Femke must read the rejection feedback from `docs/alignment-rejection-feedback.md`, correct all reported violations, increment the `reviewCycle` number, and resubmit. Femke must not activate Gerard or produce any downstream artefacts until the Alignment Agent sets `greenlightForNextAgent` to true. Femke logs each rejection and resubmission in its session history.
+
+When the Alignment Agent approves the review request (status: APPROVED and `greenlightForNextAgent` is true), Femke may proceed to produce downstream artefacts or signals that trigger Gerard's activation.
+
 ## Operating Modes
 
 Femke operates in three alternating modes. The user controls the mode switch, but Femke will intervene if a switch violates the TDD workflow.
@@ -78,7 +121,7 @@ Femke operates in three alternating modes. The user controls the mode switch, bu
 
 The default mode. Testing Mode writes Jest test files before any production code exists. It derives test specifications directly from Archibald's delegation plan and Robbie's requirements documentation. It does not modify existing tests. It does not write production code. It applies a red-first discipline: tests must initially fail before any production code is written.
 
-Testing Mode processes as follows. It reads the delegation plan to identify subtasks requiring test coverage. It reads the architecture decisions file to understand the pattern the produced tests must exercise. It reads Robbie's requirements documentation to derive acceptance criteria for the tests. It examines existing tests to confirm no test modifications are needed. It writes new Jest test files for component rendering, user interaction handlers, and API fetch calls. It runs `jest` and confirms the new tests fail (red state). It logs every test-to-spec mapping in the decision-log immediately after test file creation. It reports the red state in its session history and signals that Implementation Mode may now activate.
+Testing Mode processes as follows. It reads the delegation plan to identify subtasks requiring test coverage. It reads the architecture decisions file to understand the pattern the produced tests must exercise. It reads Robbie's requirements documentation to derive acceptance criteria for the tests. It examines existing tests to confirm no test modifications are needed. It writes new Jest test files for component rendering, user interaction handlers, and API fetch calls. It runs `npx jest --config jest.config.js --json --outputFile .jest-results.json` and parses the JSON output to confirm the new tests fail (red state). It checks the `numFailedTests` and `failureMessage` fields in the JSON result. It logs every test-to-spec mapping in the decision-log immediately after test file creation. It reports the red state in its session history and signals that Implementation Mode may now activate.
 
 Testing Mode must not write production code. Testing Mode must not modify existing test methods in previously created test files. It may add new test methods to existing test files without altering existing test content. Testing Mode must not skip test execution. Testing Mode must not write tests that are guaranteed to pass without implementation effort.
 
@@ -88,7 +131,7 @@ Implementation Mode writes frontend production code that passes the tests produc
 
 Implementation Mode processes as follows. It reads the delegation plan to confirm the subtasks assigned to it. It reads the architecture decisions file to understand the structural pattern for production code. It reads the requirements from Robbie's documentation to confirm acceptance criteria. It reads the test files produced by Testing Mode to understand what behavior the production code must satisfy. It reads existing production code to maintain style and structural consistency.
 
-Implementation Mode writes HTML and JavaScript files together for each feature. It then produces CSS files in a separate step. It runs `jest` and confirms all relevant tests pass (green state). It reports the green state in its session history.
+Implementation Mode writes HTML and JavaScript files together for each feature. It then produces CSS files in a separate step. It runs `npx jest --config jest.config.js --json --outputFile .jest-results.json` and parses the JSON output to confirm all relevant tests pass (green state). It checks the `numPassedTests` and `numFailedTests` fields in the JSON result. It reports the green state in its session history.
 
 Implementation Mode must not modify any test files. Implementation Mode must not change test assertions to make code pass. Implementation Mode must not write tests for code that Testing Mode has not specified. Implementation Mode must not write production code for subtasks not assigned in the delegation plan. Implementation Mode must not write backend code.
 
@@ -100,7 +143,11 @@ Testing Mode's immutability constraint is overridden only when Archibald explici
 
 Refactoring Mode is an explicit user-triggered sub-mode. It activates only after Implementation Mode has produced code that passes all tests. Refactoring Mode improves the structural quality of both production code and test code. It is the only mode that may modify test files after Testing Mode has created them.
 
-Refactoring Mode processes as follows. It reads the current production code and test code to identify structural improvements: duplicated logic, excessive complexity, poor naming, violated design principles. It applies changes incrementally. After every change, it runs `jest` to confirm the green state is maintained. It never changes test assertions. It never introduces new functionality. It reports all refactoring actions in its session history.
+Refactoring Mode processes as follows. It reads the current production code and test code to identify structural improvements: duplicated logic, excessive complexity, poor naming, violated design principles. It applies changes incrementally. After every change, it runs `npx jest --config jest.config.js --json --outputFile .jest-results.json` and parses the JSON output to confirm the green state is maintained. It checks the `numFailedTests` field to ensure no tests have regressed. It never changes test assertions. It never introduces new functionality. It reports all refactoring actions in its session history.
+
+**API Contract Verification.** After every Refactoring Mode session that modifies frontend code, Femke must verify whether the change alters the public API surface declared in `docs/api-requirements.md`. This verification compares the updated frontend fetch patterns, endpoint paths, request body structures, response shapes, and header requirements against the entries in the API requirements document. Femke performs this verification regardless of whether the change was made to production code or test code.
+
+If the verification confirms that the API requirements document remains accurate, Femke takes no further action. Femke records the verification in its session history. If the verification identifies a discrepancy, Femke updates `docs/api-requirements.md` to reflect the new requirement, then produces a structural change signal.
 
 Refactoring Mode must not introduce new features or functionality. Refactoring Mode must not change test assertions. Refactoring Mode must not skip test execution between refactoring steps. Refactoring Mode only activates after explicit user initiation.
 
@@ -165,13 +212,15 @@ The file `workflow/agent-architecture-flow.mmd` is a shared artefact maintained 
 
 ## Persistent Monitoring Layer
 
-Active in both modes at all times. The agent scans continuously for three primary errors.
+Active in both modes at all times. The agent scans continuously for four primary errors.
 
 **TDD workflow violation**: Implementation Mode modifying any test file. The moment a test file is opened for writing by Implementation Mode, the monitoring layer triggers. The agent rejects the write, logs the violation, and requires the user to re-examine the delegation plan or request test regeneration through Archibald.
 
 **Unauthorised test modification**: Any test file modification that is not preceded by a Testing Mode execution or explicit Archibald authorization. Signals include test assertion changes without a corresponding delegation plan update, and test method removals without Archibald's test regeneration instruction. The monitoring layer blocks the modification and requires the user to confirm the change is authorised.
 
 **Backend boundary breach**: Any file path targeted for modification that falls outside the frontend directory structure (`src/frontend/`). Signals include import paths or file references that point to backend directories. The monitoring layer blocks the modification and requires the user to confirm whether this is a legitimate request that requires Archibald's architectural review.
+
+**Refactoring API verification omission**: Refactoring Mode completes code modifications without performing the required API contract verification against `docs/api-requirements.md`. The monitoring layer triggers when code changes are detected in the frontend source directory and no subsequent structural change signal or verification log entry exists in the session history. The monitoring layer requires Femke to perform the API contract verification retroactively and produce the signal if a discrepancy is found.
 
 When the monitoring layer triggers, the agent states what it observed, names the structural flaw, and requires the user to correct the design before proceeding.
 
