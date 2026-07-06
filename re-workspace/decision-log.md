@@ -1,4 +1,4 @@
-# Decision Log
+even # Decision Log
 
 Records requirements decisions with their rationale, the stakeholder authority behind them, and the assumptions they depend on. Traceable to entries in the Assumption Log.
 
@@ -40,3 +40,7 @@ Rationale: User clarified in Session 2 that mandatory fields (debtor name, addre
 [2026-07-06] [Session 2] DECISION: Requirements restructured from 9 to 5 requirements.
 Assumptions: None.
 Rationale: Data enrichment removed, mandatory field validation externalized, rejection overview requirement scope conflict resolved by removal. Remaining requirements: RQ-001 (PoC Existence Verification), RQ-002 (Uncooperative Register Check), RQ-003 (Payment Plan Check), RQ-004 (Batch Acceptance by Case Analyst), RQ-005 (Warning Logging for Unavailable Data Sources).
+
+[2026-07-06] [Session 2] DECISION: RQ-005 (Warning Logging for Unavailable Data Sources) demoted from "Must have" to lower priority.
+Assumptions: None.
+Rationale: RQ-005 provides no direct stakeholder value. It is an internal system behaviour (audit trail logging) that does not produce observable output for end users. Priority adjusted to lower based on user decision. Diagram may omit this requirement until priority is raised again.
