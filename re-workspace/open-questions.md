@@ -74,3 +74,8 @@ Answer: Post-acceptance workflow is out of scope. The system output is "debtor d
 Raised by: Robbie
 Status: Resolved
 Answer: External data sources are optional ("if exists") dependencies. When unavailable or not existing, Gimme logs a warning and proceeds with invoice processing without the unavailable check.
+
+[2026-07-03] [Session 2] QUESTION: What non-functional requirements apply (security, audit, availability, data retention)?
+Raised by: Robbie
+Status: Deferred
+Answer: NFRs deferred by user decision. Functional requirements are the current priority. NFRs will be addressed in a future session.
