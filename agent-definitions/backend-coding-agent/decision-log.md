@@ -1,6 +1,18 @@
 # Naut Decision Log
 
-Records implementation decisions made by Naut during coding sessions.
+Records implementation decisions made by Naut during coding sessions. Records test-to-spec mappings produced during Testing Mode. Format per entry:
+
+```
+[YYYY-MM-DD] [Session N] DECISION: <statement>
+Assumptions: <statement>
+Rationale: <user-provided or derived from delegation plan>
+
+[YYYY-MM-DD] [Session N] TEST-SPEC: <test file path> maps to <specification or delegation subtask reference>
+Purpose: <what behaviour the test validates>
+Derived from: <delegation plan subtask ID or Robbie requirement ID>
+```
+
+Existing entries:
 
 [2026-07-03] [Session 1] DECISION: Naut is a Java-specific implementation agent.
 Assumptions: The project uses Java for backend development.

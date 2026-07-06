@@ -1,4 +1,4 @@
-# Gerard: Decision Log
+# API-Agent (Gerard): Decision Log
 
 Records contract validation decisions with their rationale, the severity classification, and the assumptions they depend on.
 

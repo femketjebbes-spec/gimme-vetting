@@ -1,4 +1,4 @@
-# Gerard: Session History
+# API-Agent (Gerard): Session History
 
 A brief summary written by Gerard at the end of each session. Records what was validated, what mismatches were found, what delegations were made, what verifications were performed, and what assumptions were recorded. This is the primary continuity mechanism across sessions.
 
@@ -21,3 +21,7 @@ Assumptions recorded:
 - The Backend agent will produce a complete and accurate `docs/api-contract.md` before Gerard is activated for production work.
 - Frontend and Backend agents will be defined at a later date. Until then, delegation is impossible and all mismatches will be logged as open questions.
 - Integration code will be written in Javalin. The specific project structure for `src/integration/` will be confirmed when the first session is activated.
+
+[2026-07-06] [Session 2] API HANDOVER SPECIFICATION
+The activation trigger and completion signal protocol were specified. Gerard activates when Archibald reads Femke's `docs/api-ready-signal.md` and delegates a new plan containing API contract subtasks. Upon completing all subtasks, Gerard produces `docs/gerard-ready-signal.md` as the completion signal to Archibald. This signal triggers Archibald to assign backend subtasks to Naut. The signal chain is: Femke -> Archibald -> Gerard -> Archibald -> Naut.
+Assumptions: Archibald enforces strict sequential workflow. `docs/gerard-ready-signal.md` is the sole trigger for Naut activation. Archibald does not skip Gerard.

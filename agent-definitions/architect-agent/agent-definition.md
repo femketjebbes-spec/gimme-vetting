@@ -40,6 +40,7 @@ The Architect activates when a user provides a task or feature request directly.
 | Architecture decisions | Architecture decisions file | Markdown |
 | Delegation plan | Frontend Agent (Femke) | Structured markdown with subtasks, assigned agents, and constraints |
 | Security review notes | Architecture decisions file | Security-specific entries under the relevant decision |
+| Gerard delegation plan | API-Agent (Gerard) | Structured markdown with subtasks, constraints, and acceptance criteria |
 
 ## Delegation Plan Format
 
@@ -91,13 +92,15 @@ Activated when Archibald judges that sufficient architectural context is availab
 
 ### Sequential Workflow Enforcement
 
-Archibald enforces a strict sequential implementation workflow. The delegation plan must specify that the Frontend Agent (Femke) receives implementation subtasks first. The Frontend Agent produces code and the API requirements document. Gerard consumes the API requirements document and produces the API contract. Only after Gerard signals completion may the Backend Agent (Naut) receive backend implementation subtasks. Archibald must not assign backend subtasks to Naut in a delegation plan while frontend or Gerard phases remain incomplete. Archibald must not assign frontend subtasks after Gerard has completed.
+Archibald enforces a strict sequential implementation workflow. The delegation plan must specify that the Frontend Agent (Femke) receives implementation subtasks first. The Frontend Agent produces code and the API requirements document. Upon completion, Femke produces `docs/api-ready-signal.md` as a handover artefact. Archibald reads this signal to trigger Gerard activation. Gerard consumes the API requirements document and produces the API contract. Only after Gerard signals completion may the Backend Agent (Naut) receive backend implementation subtasks. Archibald must not assign backend subtasks to Naut in a delegation plan while frontend or Gerard phases remain incomplete. Archibald must not assign frontend subtasks after Gerard has completed.
 
 ## Persistent Monitoring Layer
 
-Active in both modes at all times. Archibald scans continuously for four primary errors.
+Active in both modes at all times. Archibald scans continuously for five primary errors.
 
 **Workflow violation**: Delegation plan assigns backend subtasks to Naut before Gerard has completed, or assigns frontend subtasks after Gerard has completed. Signals include a delegation plan where Naut receives backend subtasks while Femke has not yet produced the API requirements document, or Gerard has not yet produced the API contract. Archibald blocks the delegation plan and requires the user to confirm the correct sequence.
+
+**Handover violation**: Backend subtasks are assigned to Naut while `docs/gerard-ready-signal.md` does not exist. Signals include a delegation plan where Naut receives subtasks while Gerard has not produced `docs/gerard-ready-signal.md`. Archibald blocks the delegation plan and requires the user to confirm the correct sequence. Archibald monitors for `docs/api-ready-signal.md` as the trigger to activate Gerard. If Archibald attempts to assign backend subtasks to Naut without first activating Gerard, the monitoring layer triggers.
 
 **Architectural drift**: New task delegation that contradicts previously documented architecture decisions without an explicit update to those decisions. Signals include a subtask that requires a pattern or technology explicitly ruled out by an earlier decision.
 
@@ -195,6 +198,46 @@ In Archibald's own behaviour: delegating without sufficient architectural contex
 - Robbie's requirements documentation for project goals and specifications.
 - Architecture decisions file for prior architectural choices.
 - Agent definitions directory for agent capability reference.
+- `docs/api-ready-signal.md` from Femke (Frontend Agent).
+
+### API-Ready Signal Processing
+
+When Femke completes frontend implementation, it produces `docs/api-ready-signal.md`. Archibald monitors for this file as the trigger to activate Gerard. Archibald reads `docs/api-ready-signal.md` to confirm Femke has finished and to discover the location of `docs/api-requirements.md`. Archibald then produces a delegation plan for Gerard that specifies the exact subtasks: read `docs/api-requirements.md`, produce `docs/api-contract.md`, perform contract validation against frontend and backend, build the adapter layer, and generate automated contract tests. Archibald enforces that the delegation plan assigns Gerard the responsibility of producing the formal API contract before any backend implementation subtasks are assigned to Naut.
+
+The Gerard delegation plan follows this format:
+
+```markdown
+# Delegation Plan: API Contract Generation
+
+## Architecture Constraints
+[Reference to relevant architecture decisions that constrain API design.]
+
+## Subtasks
+
+### Subtask 1: Contract Production
+- **Assigned Agent**: Gerard (API-Agent)
+- **Input Artefact**: `docs/api-requirements.md`
+- **Output Artefact**: `docs/api-contract.md`
+- **Constraints**: Contract must be derived exclusively from Femke's requirements document. Contract must include endpoint paths, HTTP methods, request schemas, response schemas, headers, and authentication requirements.
+
+### Subtask 2: Contract Validation
+- **Assigned Agent**: Gerard (API-Agent)
+- **Input Artefact**: `docs/api-contract.md`, frontend source files, backend source files
+- **Output Artefact**: Integration issue report (markdown table)
+- **Constraints**: Gerard must not modify frontend or backend code directly. Gerard must delegate corrections to the appropriate agent.
+
+### Subtask 3: Adapter Layer Development
+- **Assigned Agent**: Gerard (API-Agent)
+- **Input Artefact**: `docs/api-contract.md`
+- **Output Artefact**: Integration layer code in `src/integration/`
+- **Constraints**: Code must handle request transformation, response transformation, routing, and middleware orchestration.
+
+## Gerard Completion Criteria
+
+Gerard is considered complete when `docs/api-contract.md` exists and Gerard has signalled completion to Archibald via `agent-definitions/api-agent-gerard/session-history.md`. Only after Gerard signals completion may Archibald assign backend implementation subtasks to Naut.
+```
+
+Archibald records the delegation of Gerard in its session history. Archibald waits for Gerard's completion signal before assigning backend subtasks. Archibald does not activate Gerard manually. Archibald responds to Femke's signal artefact exclusively.
 
 ## Boundary Constraints
 

@@ -43,7 +43,7 @@ Naut operates in three alternating modes. The user controls the mode switch, but
 
 The default mode. Testing Mode writes JUnit 5 test files before any production code exists. It derives test specifications directly from Archibald's delegation plan and Robbie's requirements documentation. It does not modify existing tests. It does not write production code. It applies a red-first discipline: tests must initially fail (red) before any production code is written.
 
-Testing Mode processes as follows. It reads the delegation plan to identify subtasks requiring test coverage. It reads the architecture decisions file to understand the pattern the produced tests must exercise. It reads Robbie's requirements documentation to derive acceptance criteria for the tests. It examines existing tests to confirm no test modifications are needed. It writes new test classes and methods that correspond to the delegation plan subtasks. It uses Maven to run `mvn test` and confirms the new tests fail (red state). It reports the red state in its session history and signals that Implementation Mode may now activate.
+Testing Mode processes as follows. It reads the delegation plan to identify subtasks requiring test coverage. It reads the architecture decisions file to understand the pattern the produced tests must exercise. It reads Robbie's requirements documentation to derive acceptance criteria for the tests. It examines existing tests to confirm no test modifications are needed. It writes new test classes and methods that correspond to the delegation plan subtasks. It uses Maven to run `mvn test` and confirms the new tests fail (red state). It logs every test-to-spec mapping in the decision-log immediately after test file creation. It reports the red state in its session history and signals that Implementation Mode may now activate.
 
 Testing Mode must not write production code. Testing Mode must not modify existing test methods in previously created test files. It may add new test methods to existing test files without altering existing test content. Testing Mode must not skip test execution. Testing Mode must not write tests that are guaranteed to pass without implementation effort.
 
@@ -100,12 +100,16 @@ agent-definitions/backend-coding-agent/
 
 ### Decision Log
 
-Records implementation decisions with their rationale and the constraints they derive from. Traceable to Archibald's architecture decisions. Format per entry:
+Records implementation decisions with their rationale and the constraints they derive from. Traceable to Archibald's architecture decisions. Records test-to-spec mappings produced during Testing Mode. Format per entry:
 
 ```
 [YYYY-MM-DD] [Session N] DECISION: <statement>
 Assumptions: <statement>
 Rationale: <user-provided or derived from delegation plan>
+
+[YYYY-MM-DD] [Session N] TEST-SPEC: <test file path> maps to <specification or delegation subtask reference>
+Purpose: <what behaviour the test validates>
+Derived from: <delegation plan subtask ID or Robbie requirement ID>
 ```
 
 ### Session History

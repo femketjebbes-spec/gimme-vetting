@@ -10,7 +10,7 @@ flowchart LR
         Archibald["Archibald<br/>Architecture & Delegation"]
         Femke["Femke<br/>Frontend Implementation"]
         DBEngineer["Database Engineer<br/>Schema & Query Design"]
-        Gerard["Gerard<br/>API Integration Supervisor"]
+        Gerard["API-Agent (Gerard)<br/>API Integration Supervisor"]
         Naut["Naut<br/>Java TDD Implementation"]
     end
 
@@ -26,6 +26,8 @@ flowchart LR
         ArchDecisions["Architecture Decisions<br/>(architecture-decisions.md)"]
         ApiRequirements["API Requirements<br/>(docs/api-requirements.md)"]
         ApiContract["API Contract<br/>(docs/api-contract.md)"]
+        ApiReadySignal["API-Ready Signal<br/>(docs/api-ready-signal.md)"]
+        GerardReadySignal["Gerard-Ready Signal<br/>(docs/gerard-ready-signal.md)"]
     end
 
     UserTask -->|"feature request"| Robbie
@@ -44,17 +46,19 @@ flowchart LR
     Archibald -->|"reads"| AgentDefs["Agent Definitions"]
     Archibald -->|"writes"| ArchDecisions
 
-    %% NEW SEQUENTIAL WORKFLOW
+    %% NEW SEQUENTIAL WORKFLOW (signal-based handover)
     Archibald -->|"delegation plan<br/>(frontend subtasks)"| Femke
     Femke -->|"HTML/JS/CSS frontend code"| FinalArtefacts
     Femke -->|"API requirements"| ApiRequirements
-    ApiRequirements -->|"consumed by Gerard"| Gerard
+    Femke -->|"API-ready signal"| ApiReadySignal
+    ApiReadySignal -->|"triggers Gerard activation"| Archibald
+    Archibald -->|"delegation plan<br/>(API contract subtasks)"| Gerard
     Gerard -->|"reads frontend source"| Femke
     Gerard -->|"produces API contract"| ApiContract
-    ApiContract -->|"consumed by Naut"| Naut
     Gerard -->|"adapter/gateway code"| FinalArtefacts
     Gerard -->|"contract tests"| FinalArtefacts
-    Gerard -->|"completion signal"| Archibald
+    Gerard -->|"Gerard-ready signal"| GerardReadySignal
+    GerardReadySignal -->|"triggers Naut activation"| Archibald
 
     Archibald -->|"delegation plan<br/>(backend subtasks)"| Naut
     Robbie -->|"requirements baseline"| Naut
