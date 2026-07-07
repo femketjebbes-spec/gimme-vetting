@@ -106,3 +106,23 @@ Rationale: These requirements are necessary for the MVP client portal. RQ-006 is
 [2026-07-07] [Session 5] DECISION: RQ-002 and RQ-003 deferred from MVP.
 Assumptions: AUNV-001, AUNV-002 remain unverified.
 Rationale: User confirmed MVP only includes RQ-001 and RQ-007 (mandatory field validation). RQ-002 (Uncooperative Register) and RQ-003 (Payment Plan) are deferred to a later increment.
+
+[2026-07-07] [Session 5] DECISION: Excel file supports .xlsx and .csv formats.
+Assumptions: None.
+Rationale: User confirmed both formats for MVP. The architect should implement parsing for both or select one and document the justification.
+
+[2026-07-07] [Session 5] DECISION: Excel header row is optional (column order matters, header presence does not).
+Assumptions: None.
+Rationale: User said header row "ought not matter." The parser must handle both with and without headers. If the header row is present, it uses the standard names: invoice number, debtor name, address, phone number, bank account number.
+
+[2026-07-07] [Session 5] DECISION: Excel column order is invoice number / debtor name / address / phone number / bank account number.
+Assumptions: None.
+Rationale: User confirmed this order. The architect must map these column names to the internal field names.
+
+[2026-07-07] [Session 5] DECISION: No authentication for client portal MVP.
+Assumptions: None.
+Rationale: User confirmed no auth for MVP. This is a security risk that must be documented in the architect design and flagged for future sessions.
+
+[2026-07-07] [Session 5] DECISION: No maximum file size for Excel upload MVP.
+Assumptions: None.
+Rationale: User confirmed no limit for MVP. The architect should document the performance risk of unlimited file sizes and flag it for NFRs.

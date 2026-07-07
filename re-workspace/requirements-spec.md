@@ -227,11 +227,11 @@ Gimme shall provide a client portal endpoint for uploading PoC files separately 
 | OQ-004 | What is the downstream workflow for invoices after case analyst batch acceptance (PoC validation and beyond)? | Resolved - out of scope; system output is debtor dossiers |
 | OQ-005 | What non-functional requirements apply (security, audit, availability, data retention)? | Deferred - NFRs deferred to future session |
 | OQ-006 | What is the error handling mechanism when data sources are unavailable during intake? | Resolved - log warning and proceed |
-| OQ-007 | What is the Excel file column structure for batch upload? | Pending - to be confirmed before implementation |
-| OQ-008 | Does the Excel file have a header row? What is the column order? | Pending - to be confirmed before implementation |
-| OQ-009 | What Excel file format is required (.xlsx, .xls, .csv)? | Pending - to be confirmed before implementation |
-| OQ-010 | What is the maximum file size for the Excel upload? | Pending - to be confirmed before implementation |
-| OQ-011 | Does the client portal need authentication? | Pending - to be confirmed, currently unspecified |
+| OQ-007 | What is the Excel file column structure for batch upload? | Resolved — Session 5: invoice number, debtor name, address, phone number, bank account number |
+| OQ-008 | Does the Excel file have a header row? What is the column order? | Resolved — Session 5: header row optional, column order as listed above |
+| OQ-009 | What Excel file format is required (.xlsx, .xls, .csv)? | Resolved — Session 5: supports .xlsx and .csv |
+| OQ-010 | What is the maximum file size for the Excel upload? | Resolved — Session 5: no file size limit for MVP |
+| OQ-011 | Does the client portal need authentication? | Resolved — Session 5: no authentication for MVP |
 
 ---
 
