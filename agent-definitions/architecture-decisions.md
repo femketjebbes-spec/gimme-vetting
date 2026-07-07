@@ -72,3 +72,8 @@ Affected Agents: Gerard, Naut, Femke
 Rationale: Apache POI is the industry standard for Java Excel processing, supports both .xlsx and .csv formats, and is consistent across the parsing and generation work items. EasyExcel can be evaluated later if large-file performance becomes critical.
 Security Implications: Apache POI has had historical vulnerabilities related to XML external entity injection in .xlsx files (ZIP slip vulnerabilities). The version used must be the latest patched version. XML entity expansion must be disabled in the parser configuration.
 Affected Agents: Naut
+
+[2026-07-07] [Session 6] ARCHITECTURAL DECISION: Wi-006 shall use a GNU Make Makefile at the project root for build orchestration. Targets: `build`, `test`, `clean`, `backend`, `frontend`, `backend-test`, `frontend-test`, `check-tools`. Backend builds before frontend in the `build` target. `check-tools` validates that `mvn`, `node`, `npm` are installed.
+Rationale: Option B (Makefile) was selected over Option A (shell script) and Option C (root package.json) by the WI-006 specification. Make provides incremental build support, clear dependency declarations, and is the standard convention for multi-language projects.
+Security Implications: None. Build orchestration does not affect the product security surface.
+Affected Agents: Naut

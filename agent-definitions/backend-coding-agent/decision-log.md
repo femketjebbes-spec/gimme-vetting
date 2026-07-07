@@ -57,3 +57,19 @@ Derived from: docs/wi-002-delegation-parallel.md subtask 2, docs/api-contract-wi
 [2026-07-07] [Session 1] TEST-SPEC: ExcelIntakeControllerTest.java maps to delegation subtask 2 (controller endpoint)
 Purpose: Validates full upload flow, MIME type rejection, column name mismatch rejection, path traversal rejection, return Excel download
 Derived from: docs/wi-002-delegation-parallel.md subtask 2, docs/api-contract-wi-002.md sections 2, 3, 5
+
+[2026-07-07] [Session 2] DECISION: Makefile placed at project root with all eight targets as specified in WI-006 delegation plan.
+Assumptions: GNU Make is installed on the build machine. Maven 3.x and Node.js 18+ are installed.
+Rationale: Delegation plan (docs/wi-006-delegation.md) mandates GNU Make with POSIX compliance and GNU Make extensions.
+
+[2026-07-07] [Session 2] DECISION: Backend build uses `mvn clean package -DskipTests` in 5-backend/ directory.
+Assumptions: Multi-module Maven reactor at 5-backend/pom.xml correctly orders modules.
+Rationale: Delegation plan specifies `mvn clean package -DskipTests` for backend build target.
+
+[2026-07-07] [Session 2] DECISION: Frontend build uses `npm run build` in 4-frontend/ directory.
+Assumptions: Vite build configuration exists in 4-frontend/vite.config.js. Node dependencies are installed.
+Rationale: Delegation plan specifies `npm run build` for frontend build target.
+
+[2026-07-07] [Session 2] DECISION: check-tools target verifies mvn, node, npm availability before build targets execute.
+Assumptions: Standard POSIX `command -v` is available for tool detection.
+Rationale: NFR-002 from WI-006 requires clear error messages for missing tools.
