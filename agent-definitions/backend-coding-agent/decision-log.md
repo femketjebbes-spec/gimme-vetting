@@ -37,3 +37,23 @@ Rationale: User requirement for Archibald to decide the pattern.
 [2026-07-03] [Session 1] DECISION: Naut activates only after Robbie and Archibald have completed their work.
 Assumptions: Robbie produces requirements documentation and Archibald produces a delegation plan with architecture decisions.
 Rationale: User specified sequential pipeline: Robbie first, then Archibald, then Naut.
+
+[2026-07-07] [Session 1] DECISION: WI-002 Excel upload endpoint uses Apache POI 5.2.5 for .xlsx and .csv parsing.
+Assumptions: Apache POI 5.2.5 is the latest patched version with XXE protections.
+Rationale: Architectural decision D-029 mandates Apache POI with latest patched version.
+
+[2026-07-07] [Session 1] DECISION: Column position mapping applies when no header row is present.
+Assumptions: Files without headers always use the same column order: invoiceNumber, debtorName, address, phoneNumber, bankAccountNumber.
+Rationale: Architectural decision D-025 confirms position mapping behavior.
+
+[2026-07-07] [Session 1] DECISION: Return Excel generation uses XSSFWorkbook for small failing-row sets.
+Assumptions: Failing rows will be small enough to fit in memory without SXSSF streaming.
+Rationale: MVP scope does not require streaming for return Excel generation.
+
+[2026-07-07] [Session 1] TEST-SPEC: ExcelParsingServiceTest.java maps to delegation subtask 2 (backend parsing logic)
+Purpose: Validates XLSX with header, XLSX without header, CSV parsing, column name validation, empty rows, partial rows, MIME type validation, filename validation, return Excel generation
+Derived from: docs/wi-002-delegation-parallel.md subtask 2, docs/api-contract-wi-002.md section 4
+
+[2026-07-07] [Session 1] TEST-SPEC: ExcelIntakeControllerTest.java maps to delegation subtask 2 (controller endpoint)
+Purpose: Validates full upload flow, MIME type rejection, column name mismatch rejection, path traversal rejection, return Excel download
+Derived from: docs/wi-002-delegation-parallel.md subtask 2, docs/api-contract-wi-002.md sections 2, 3, 5
