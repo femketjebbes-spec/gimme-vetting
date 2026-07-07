@@ -9,7 +9,6 @@ stages:
   - deploy-production
 
 variables:
-  JAVA_HOME: java-17
   NODE_VERSION: "20"
   DOCKER_DRIVER: overlay2
 
