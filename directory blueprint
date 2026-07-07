@@ -1,0 +1,61 @@
+/project-root
+│
+├── /1-product-vision            # Domein van Robbie
+│   ├── requirements.md           # Klantwensen op hoog niveau
+│   └── technical-specs.md        # Diepgaande functionele & technische specs
+│
+├── /2-planning                  # Domein van de Architect
+│   └── delegation-plan.md        # De "To-Do list" voor Femke en Naut (met tekstuele koppen)
+│
+├── /3-shared-contracts           # Het kruispunt tussen Frontend en Backend
+│   ├── /drafts                  # Domein van Femke (schrijven) & Gerard (lezen)
+│   │   ├── api-needs-client.json   # Femke's "wishlist" voor de Client API
+│   │   └── api-needs-business.json # Femke's "wishlist" voor de Business API
+│   └── /final                   # Domein van Gerard (schrijven) & Naut (lezen)
+│       ├── openapi-client.yaml  # OpenAPI contract voor de Client-zijde
+│       └── openapi-business.yaml# OpenAPI contract voor de Business (Analyst)-zijde
+│
+├── /4-frontend                  # Domein van Femke (Gegenereerd via NPM/Vite)
+│   ├── package.json             # NPM dependency management (root)
+│   ├── vite.config.ts           # Vite build configuration (root)
+│   ├── tsconfig.json            # TypeScript configuration (root)
+│   ├── public/                  # Static assets (favicons, static images)
+│   ├── client-side/             # Portaal voor de reguliere eindgebruikers
+│   │   ├── index.html           # Vite entry point for client app
+│   │   ├── /src                 # HTML, CSS, JavaScript/TypeScript productiecode client
+│   │   │   ├── main.ts          # Vite application entry point
+│   │   │   └── components/      # Reusable UI components
+│   │   └── /tests               # Jest unit- en UI-tests client (TDD)
+│   └── /business-side           # Portaal voor de Case Analyst
+│       ├── index.html           # Vite entry point for business app
+│       ├── /src                 # HTML, CSS, JavaScript/TypeScript productiecode business
+│       │   ├── main.ts          # Vite application entry point
+│       │   └── components/      # Reusable UI components
+│       └── /tests               # Jest unit- en UI-tests business (TDD)
+│
+├── /5-backend                   # Domein van Naut (Gegenereerd via Maven)
+│   ├── pom.xml                  # Maven parent POM (root, with dependencyManagement)
+│   ├── /client-service          # Backend logica specifiek voor de client applicatie
+│   │   ├── pom.xml              # Maven module POM for client-service
+│   │   └── /src
+│   │       ├── /main/java       # Java Spring Boot productiecode
+│   │       │   └── /main/resources
+│   │       │       ├── application.yml       # Spring Boot application configuration
+│   │       │       └── db/migration/         # Flyway/Liquibase database migrations
+│   │       └── /test/java       # JUnit backend tests (TDD)
+│   └── /business-service        # Backend logica specifiek voor de Case Analyst
+│       ├── pom.xml              # Maven module POM for business-service
+│       └── /src
+│           ├── /main/java       # Java Spring Boot productiecode
+│           │   └── /main/resources
+│           │       ├── application.yml       # Spring Boot application configuration
+│           │       └── db/migration/         # Flyway/Liquibase database migrations
+│           └── /test/java       # JUnit backend tests (TDD)
+│
+└── /6-orchestration              # Domein van de Alignment Agent
+    ├── handover-payload-schema.json  # JSON Schema defining required fields for agent handovers
+    ├── /pending-reviews           # Hier droppen agents hun JSON Handover Payloads
+    │   └── [agent-name]/          # Subdirectories per agent for payload organization
+    │       └── [payload-id].json  # Individual handover payloads awaiting review
+    └── /error-reports             # Hier plaatst de Alignment Agent zijn REJECTED JSONs
+        └── [rejection-id].json    # Rejected payloads with Alignment Agent feedback
