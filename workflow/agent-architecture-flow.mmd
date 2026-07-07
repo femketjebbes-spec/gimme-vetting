@@ -33,6 +33,8 @@ flowchart LR
         ApiRequirements["API Requirements<br/>(docs/api-requirements.md)"]
         FemkeStructuralSignal["Femke Structural Change Signal<br/>(docs/femke-structural-change-signal.md)"]
         GerardReevalSignal["Gerard Re-evaluation Complete Signal<br/>(docs/gerard-reevaluation-complete-signal.md)"]
+        GerardDelegation["Gerard Delegation Plan<br/>(docs/wi-<NNNN>-delegation-gerard.md)"]
+        ParallelDelegation["Parallel Delegation Plan<br/>(docs/wi-<NNNN>-delegation-parallel.md)"]
     end
 
     UserTask -->|"feature request"| Robbie
@@ -73,7 +75,8 @@ flowchart LR
 
     %% NEW SEQUENTIAL-PARALLEL WORKFLOW
     %% PHASE 1: Gerard (Sequential)
-    Archibald -->|"delegation plan<br/>(API contract subtasks)"| Gerard
+    Archibald -->|"produces<br/>docs/wi-<NNNN>-delegation-gerard.md"| GerardDelegation
+    GerardDelegation -->|"reads delegation plan"| Gerard
     Gerard -->|"produces versioned API contract"| ApiContractVersioned
     Gerard -->|"adapter/gateway code"| FinalArtefacts
     Gerard -->|"contract tests"| FinalArtefacts
@@ -83,8 +86,9 @@ flowchart LR
     Archibald -->|"reads Alignment Agent decision<br/>before parallel activation"| ReviewDecision
 
     %% PHASE 2: Femke + Naut (Parallel)
-    Archibald -->|"parallel delegation plan<br/>(frontend + backend subtasks)"| Femke
-    Archibald -->|"parallel delegation plan<br/>(frontend + backend subtasks)"| Naut
+    Archibald -->|"produces<br/>docs/wi-<NNNN>-delegation-parallel.md"| ParallelDelegation
+    ParallelDelegation -->|"reads parallel delegation"| Femke
+    ParallelDelegation -->|"reads parallel delegation"| Naut
     Femke -->|"HTML/JS/CSS frontend code"| FinalArtefacts
     Femke -->|"API requirements"| ApiRequirements
     Naut -->|"JUnit 5 tests (Testing Mode)"| BackendTests["Backend Test Dir<br/>(.java test files)"]
