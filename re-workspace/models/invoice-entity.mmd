@@ -1,0 +1,34 @@
+---
+name: Invoice Entity Model
+description: Domain entity model for the Invoice entity, minimal definition for WI-001 (PoC Existence Verification). Based on RQ-001, RQ-002, RQ-003, RQ-004. Glossary terms aligned.
+created: 2026-07-07
+---
+
+erDiagram
+    INVOICE ||--o{ POCCHECK : "has"
+    INVOICE }o--|| DEBTOR : "belongs to"
+
+    INVOICE {
+        String invoiceNumber PK "System Identifier. Mandatory. Unique."
+        String status "QUEUED / REJECTED / ACCEPTED / IN_BATCH"
+        String rejectionType "A / B / NONE"
+        String rejectionReason "Human-readable rejection description"
+        DateTime createdAt "Timestamp of invoice submission"
+        DateTime updatedAt "Timestamp of last state change"
+        String poCStatus "VERIFIED / MISSING"
+        String batchId "NULL if not yet assigned to a batch"
+    }
+
+    DEBTOR {
+        String debtorName "Full name or initials+surname"
+        String address
+        String bankAccountNumber "Rekeningnummer"
+        String phoneNumber
+    }
+
+    POCCHECK {
+        String poCFileName "Filename in PoC store"
+        String linkedInvoiceNumber FK "Matches invoice.invoiceNumber"
+        Boolean matchFound "True if filename matched invoice number"
+        DateTime checkedAt "Timestamp of PoC check"
+    }

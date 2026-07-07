@@ -1,0 +1,60 @@
+%% Mermaid flowchart: WI-001 Delegation Plan
+%% Date: 2026-07-07
+%% Session: 1
+%% Subject: wi-001-delegation-flow
+
+flowchart TD
+    subgraph Archibald["Archibald (Architect)"]
+        A1["Phase 1: Delegate to Gerard<br/>Intake Pipeline API Contract"]
+        A2["Read Alignment Agent decision<br/>Confirm greenlightForNextAgent = true"]
+        A3["Phase 2: Delegate to Naut<br/>Backend Implementation"]
+        A4["Read Naut Alignment Agent approval"]
+    end
+
+    subgraph Gerard["Gerard (API-Agent)"]
+        G1["Read WI-001 spec + architecture decisions"]
+        G2["Produce docs/api-contract.md"]
+        G3["Submit docs/alignment-review-request.md"]
+        G4["Wait for Alignment Agent decision"]
+    end
+
+    subgraph Alignment["Alignment Agent"]
+        L1["Validate API contract<br/>against requirements + specs"]
+        L2["Set greenlightForNextAgent<br/>to true if compliant"]
+        L3["Set greenlightForNextAgent<br/>to true if compliant"]
+    end
+
+    subgraph Naut["Naut (Backend Agent)"]
+        N1["Read api-contract.md + delegation plan"]
+        N2["Testing Mode: Write JUnit 5 tests"]
+        N3["Implementation Mode: Write production code"]
+        N4["Submit docs/alignment-review-request.md"]
+    end
+
+    %% Phase 1 flow
+    A1 --> G1
+    G1 --> G2
+    G2 --> G3
+    G3 --> L1
+    L1 --> L2
+    L2 --> A2
+
+    %% Phase 2 flow
+    A2 --> A3
+    A3 --> N1
+    N1 --> N2
+    N2 --> N3
+    N3 --> N4
+    N4 --> L3
+    L3 --> A4
+
+    %% Styling
+    classDef architect fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    classDef apiAgent fill:#e67e22,stroke:#a0522d,color:#fff
+    classDef alignment fill:#27ae60,stroke:#1e8449,color:#fff
+    classDef backend fill:#8e44ad,stroke:#6c3483,color:#fff
+
+    class A1,A2,A3,A4 architect
+    class G1,G2,G3,G4 apiAgent
+    class L1,L2,L3 alignment
+    class N1,N2,N3,N4 backend
