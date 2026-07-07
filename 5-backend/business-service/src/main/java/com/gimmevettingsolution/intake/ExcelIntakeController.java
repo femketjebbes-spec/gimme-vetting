@@ -2,6 +2,8 @@ package com.gimmevettingsolution.intake;
 
 import com.gimmevettingsolution.intake.dto.*;
 import com.gimmevettingsolution.intake.service.ExcelParsingService;
+import com.gimmevettingsolution.intake.service.MandatoryFieldValidationService;
+import com.gimmevettingsolution.intake.service.ValidationResult;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,10 +25,13 @@ import java.util.UUID;
 public class ExcelIntakeController {
 
     private final ExcelParsingService excelParsingService;
+    private final MandatoryFieldValidationService mandatoryFieldValidationService;
     private final Path uploadDir;
 
-    public ExcelIntakeController(ExcelParsingService excelParsingService) throws IOException {
+    public ExcelIntakeController(ExcelParsingService excelParsingService,
+                                 MandatoryFieldValidationService mandatoryFieldValidationService) throws IOException {
         this.excelParsingService = excelParsingService;
+        this.mandatoryFieldValidationService = mandatoryFieldValidationService;
         this.uploadDir = Files.createTempDirectory("excel-upload-" + UUID.randomUUID());
     }
 
@@ -78,67 +83,35 @@ public class ExcelIntakeController {
             // Parse the file
             ExcelInvoiceRow[] parsedRows = excelParsingService.parse(new ByteArrayInputStream(fileBytes), isCsv);
 
-            // Determine passing and failing rows
-            // For WI-002, all rows pass (business rule checks are out of scope)
-            // rowsFailed = rows with missing required fields
-            int totalRows = parsedRows.length;
-            int rowsFailed = 0;
-            int rowsPassed = 0;
-
-            for (ExcelInvoiceRow row : parsedRows) {
-                boolean hasAllFields = true;
-                if (row.getInvoiceNumber() == null || row.getInvoiceNumber().isEmpty()) {
-                    hasAllFields = false;
-                }
-                if (row.getDebtorName() == null || row.getDebtorName().isEmpty()) {
-                    hasAllFields = false;
-                }
-                if (row.getAddress() == null || row.getAddress().isEmpty()) {
-                    hasAllFields = false;
-                }
-                if (row.getPhoneNumber() == null || row.getPhoneNumber().isEmpty()) {
-                    hasAllFields = false;
-                }
-                if (row.getBankAccountNumber() == null || row.getBankAccountNumber().isEmpty()) {
-                    hasAllFields = false;
-                }
-                if (hasAllFields) {
-                    rowsPassed++;
-                } else {
-                    rowsFailed++;
-                }
-            }
+            // Validate mandatory fields using dedicated service
+            List<ExcelInvoiceRow> rowList = java.util.Arrays.asList(parsedRows);
+            ValidationResult validationResult = mandatoryFieldValidationService.validate(rowList);
 
             // Generate return Excel for failing rows
-            ExcelInvoiceRow[] failingRows = new ExcelInvoiceRow[rowsFailed];
-            int failIdx = 0;
-            for (ExcelInvoiceRow row : parsedRows) {
-                boolean hasAllFields = true;
-                if (row.getInvoiceNumber() == null || row.getInvoiceNumber().isEmpty()) hasAllFields = false;
-                if (row.getDebtorName() == null || row.getDebtorName().isEmpty()) hasAllFields = false;
-                if (row.getAddress() == null || row.getAddress().isEmpty()) hasAllFields = false;
-                if (row.getPhoneNumber() == null || row.getPhoneNumber().isEmpty()) hasAllFields = false;
-                if (row.getBankAccountNumber() == null || row.getBankAccountNumber().isEmpty()) hasAllFields = false;
-                if (!hasAllFields) {
-                    failingRows[failIdx++] = row;
-                }
-            }
-
             String downloadLink = null;
-            if (rowsFailed > 0) {
+            if (validationResult.getRowsFailed() > 0) {
+                // Build failing rows array for return Excel generation
+                ExcelInvoiceRow[] failingRowsForExcel = new ExcelInvoiceRow[validationResult.getRowsFailed()];
+                int failIdx = 0;
+                for (ExcelInvoiceRow originalRow : rowList) {
+                    boolean isFailing = validationResult.getFailingRows().stream()
+                            .noneMatch(rf -> rf.getRowIndex() == (originalRow != null ? originalRow.getRowIndex() : -1));
+                    if (isFailing) {
+                        failingRowsForExcel[failIdx++] = originalRow;
+                    }
+                }
                 String returnFilename = "return-" + UUID.randomUUID() + ".xlsx";
-                Path returnPath = uploadDir.resolve(returnFilename);
-                excelParsingService.generateReturnExcel(failingRows, uploadDir);
-                // Return a relative path for download
+                excelParsingService.generateReturnExcel(failingRowsForExcel, uploadDir);
                 downloadLink = "/api/v1/intake/excel/download/" + returnFilename;
             }
 
             ExcelUploadResponse response = new ExcelUploadResponse();
             response.setProcessingStatus("COMPLETED");
-            response.setTotalRowsProcessed(totalRows);
-            response.setRowsPassed(rowsPassed);
-            response.setRowsFailed(rowsFailed);
+            response.setTotalRowsProcessed(validationResult.getTotalRowsProcessed());
+            response.setRowsPassed(validationResult.getRowsPassed());
+            response.setRowsFailed(validationResult.getRowsFailed());
             response.setReturnExcelDownloadLink(downloadLink != null ? downloadLink : "");
+            response.setFailingRows(mandatoryFieldValidationService.toFailingRows(validationResult.getFailingRows()));
 
             return ResponseEntity.ok(response);
 

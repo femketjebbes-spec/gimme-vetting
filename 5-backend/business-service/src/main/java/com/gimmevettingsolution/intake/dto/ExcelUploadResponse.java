@@ -1,5 +1,7 @@
 package com.gimmevettingsolution.intake.dto;
 
+import java.util.List;
+
 /**
  * Response DTO for successful Excel upload processing.
  */
@@ -10,6 +12,7 @@ public class ExcelUploadResponse {
     private Integer rowsPassed;
     private Integer rowsFailed;
     private String returnExcelDownloadLink;
+    private List<FailingRow> failingRows;
 
     public ExcelUploadResponse() {
     }
@@ -52,5 +55,13 @@ public class ExcelUploadResponse {
 
     public void setReturnExcelDownloadLink(String returnExcelDownloadLink) {
         this.returnExcelDownloadLink = returnExcelDownloadLink;
+    }
+
+    public List<FailingRow> getFailingRows() {
+        return failingRows;
+    }
+
+    public void setFailingRows(List<FailingRow> failingRows) {
+        this.failingRows = failingRows;
     }
 }
