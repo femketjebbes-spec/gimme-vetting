@@ -1,4 +1,4 @@
-%% # Agent Architecture Flow
+# Agent Architecture Flow
 
 flowchart LR
     subgraph User["User"]
@@ -8,119 +8,41 @@ flowchart LR
     subgraph ProductionAgents["Producing Agents"]
         Robbie["Robbie<br/>Requirements Engineering"]
         Archibald["Archibald<br/>Architecture & Delegation"]
-        Femke["Femke<br/>Frontend Implementation"]
-        DBEngineer["Database Engineer<br/>Schema & Query Design"]
-        Gerard["API-Agent (Gerard)<br/>API Integration Supervisor"]
-        Naut["Naut<br/>Java TDD Implementation"]
     end
 
     subgraph AlignmentAgent["Alignment Agent<br/>Compliance Enforcement"]
-        JSONParse["JSON Format Validation"]
-        RoleCheck["Role Boundary Check"]
-        ReqCheck["Requirements Conformance<br/>(Robbie's baseline)"]
-        SpecsCheck["Specs Conformance<br/>(Archibald's baseline)"]
-        DecisionGen["Compliance Decision<br/>Generation"]
+        ReviewCheck["Role Boundary Check"]
+        ReqConform["Requirements Conformance Check"]
+        ReportGen["Compliance Report Generation"]
     end
 
     subgraph ArtefactFlow["Artefact Pipeline"]
-        ReviewRequest["Review Request<br/>(docs/alignment-review-request.md)"]
-        ReviewDecision["Review Decision<br/>(overwritten in<br/>docs/alignment-review-request.md)"]
-        RejectionFeedback["Rejection Feedback<br/>(docs/alignment-rejection-feedback.md)"]
+        ReviewChannel["Review Channel<br/>(dedicated queue)"]
         FinalArtefacts["Approved Artefacts<br/>(workspace)"]
         ArchDecisions["Architecture Decisions<br/>(architecture-decisions.md)"]
-        ApiRequirements["API Requirements<br/>(docs/api-requirements.md)"]
-        ApiContract["API Contract<br/>(docs/api-contract.md)"]
-        ApiReadySignal["API-Ready Signal<br/>(docs/api-ready-signal.md)"]
-        GerardReadySignal["Gerard-Ready Signal<br/>(docs/gerard-ready-signal.md)"]
-        FemkeStructuralSignal["Femke Structural Change Signal<br/>(docs/femke-structural-change-signal.md)"]
-        GerardReevalSignal["Gerard Re-evaluation Complete Signal<br/>(docs/gerard-reevaluation-complete-signal.md)"]
-        ImplSummaries["Implementation Summaries"]
+        DelegationPlan["Delegation Plan<br/>(user output)"]
     end
 
     UserTask -->|"feature request"| Robbie
         Robbie -->|"validated requirements"| Archibald
-        Robbie -->|"requirements baseline"| Femke
-        Robbie -->|"requirements baseline"| Naut
-        Robbie -->|"requirements baseline"| Gerard
-        Robbie -->|"requirements baseline"| DBEngineer
-
-    %% JSON REVIEW REQUEST FLOW - All coding agents
-    Femke -->|"JSON review request<br/>(after each mode)"| ReviewRequest
-    Gerard -->|"JSON review request<br/>(after contract/re-eval)"| ReviewRequest
-    Naut -->|"JSON review request<br/>(after each mode)"| ReviewRequest
-    DBEngineer -->|"JSON review request<br/>(after each output)"| ReviewRequest
-
-    %% Alignment Agent processing
-    ReviewRequest --> JSONParse
-    JSONParse -->|"valid JSON"| RoleCheck
-    JSONParse -->|"invalid format"| RejectionFeedback
-    RoleCheck -->|"role OK"| ReqCheck
-    RoleCheck -->|"boundary violation"| DecisionGen
-    ReqCheck -->|"requirements OK"| SpecsCheck
-    ReqCheck -->|"requirements violation"| DecisionGen
-    SpecsCheck -->|"specs OK"| DecisionGen
-    SpecsCheck -->|"specs violation"| DecisionGen
-    DecisionGen -->|"APPROVED"| ReviewDecision
-    DecisionGen -->|"REJECTED"| ReviewDecision
-    DecisionGen -->|"REJECTED"| RejectionFeedback
-
-    ReviewDecision -->|"greenlightForNextAgent: true"| FinalArtefacts
-    ReviewDecision -->|"greenlightForNextAgent: false"| ReviewRequest
-    RejectionFeedback -->|"correct and resubmit"| ReviewRequest
+        Robbie -->|"submits artefact"| ReviewChannel
+    ReviewChannel --> ReviewCheck
+    ReviewCheck -->|"role OK"| ReqConform
+    ReviewCheck -->|"boundary violation"| Robbie
+    ReqConform -->|"requirements OK"| ReportGen
+    ReqConform -->|"requirements violation"| Robbie
+    ReportGen -->|"compliance report"| ReviewChannel
+    ReviewChannel -->|"approved artefact"| FinalArtefacts
+    ReviewChannel -->|"rejected artefact"| Robbie
 
     Archibald -->|"reads"| ArchDecisions
     Archibald -->|"reads"| AgentDefs["Agent Definitions"]
-    Archibald -->|"reads"| ReviewDecision
     Archibald -->|"writes"| ArchDecisions
-
-    %% SEQUENTIAL WORKFLOW (signal-based handover, gated by Alignment Agent)
-    Archibald -->|"delegation plan<br/>(frontend subtasks)"| Femke
-    Femke -->|"HTML/JS/CSS frontend code"| FinalArtefacts
-    Femke -->|"API requirements"| ApiRequirements
-    ApiRequirements -->|"API requirements"| Gerard
-    Femke -->|"API-ready signal"| ApiReadySignal
-    ApiReadySignal -->|"triggers Gerard activation"| Archibald
-    Archibald -->|"delegation plan<br/>(API contract subtasks)"| Gerard
-    Gerard -->|"reads frontend source"| Femke
-    Gerard -->|"produces API contract"| ApiContract
-    Gerard -->|"adapter/gateway code"| FinalArtefacts
-    Gerard -->|"contract tests"| FinalArtefacts
-    Gerard -->|"Gerard-ready signal"| GerardReadySignal
-    GerardReadySignal -->|"triggers Alignment Agent review"| ReviewRequest
-    ReviewDecision -->|"greenlightForNextAgent: true<br/>nextAgentInPipeline: Naut"| Archibald
-    Archibald -->|"reads Alignment Agent decision<br/>before Naut activation"| ReviewDecision
-    Archibald -->|"delegation plan<br/>(backend subtasks<br/>after Alignment Agent approval)"| Naut
-    Naut -->|"reads API contract"| ApiContract
-
-    %% STRUCTURAL CHANGE RE-EVALUATION WORKFLOW
-    Femke -->|"structural change signal (Refactoring Mode)"| FemkeStructuralSignal
-    FemkeStructuralSignal -->|"triggers Gerard re-evaluation"| Archibald
-    Archibald -->|"delegation plan<br/>(Gerard re-evaluation)"| Gerard
-    Gerard -->|"re-validates contract"| ApiContract
-    Gerard -->|"delegates backend fixes"| Naut
-    Naut -->|"backend fix implementation"| BackendSrc["Backend Source Dir<br/>(.java source files)"]
-    Gerard -->|"verifies fix"| BackendSrc
-    Gerard -->|"reevaluation complete signal"| GerardReevalSignal
-    GerardReevalSignal -->|"closes re-eval cycle"| Archibald
-
-    Naut -->|"JUnit 5 tests (Testing Mode)"| BackendTests["Backend Test Dir<br/>(.java test files)"]
-    Naut -->|"production code (Implementation Mode)"| BackendSrc
-    Naut -->|"implementation summaries"| ImplSummaries
-    BackendTests -->|"reads for guidance"| BackendSrc
-    Naut -->|"test mod auth if plan changes"| Naut
-
-    Archibald -->|"architectural guidelines"| DBEngineer
-    DBEngineer -->|"schema definitions"| FinalArtefacts
-    DBEngineer -->|"migration scripts"| FinalArtefacts
-    DBEngineer -->|"optimized queries"| FinalArtefacts
-
-    Gerard -->|"reads frontend fetch patterns"| FrontendSrc["Frontend Source<br/>(fetch calls, API services)"]
-    Gerard -->|"reads backend routes"| BackendSrc
-    Gerard -->|"produces validation reports"| ValidationReports["Validation Reports"]
-    Gerard -->|"delegates fixes to"| CodingAgents["Coding Agents"]
+    Archibald -->|"produces"| DelegationPlan
+    DelegationPlan -->|"subtasks assigned to"| CodingAgents["Coding Agents<br/>(future agents)"]
 
     style AlignmentAgent fill:#f9f,stroke:#333,stroke-width:2px
-    style ReviewRequest fill:#ff9,stroke:#333,stroke-width:2px
-    style ReviewDecision fill:#9f9,stroke:#333,stroke-width:2px
-    style RejectionFeedback fill:#f99,stroke:#333,stroke-width:2px
+    style ReviewChannel fill:#ff9,stroke:#333,stroke-width:2px
     style FinalArtefacts fill:#9f9,stroke:#333,stroke-width:2px
+    style Archibald fill:#9cf,stroke:#333,stroke-width:2px
+    style ArchDecisions fill:#ff9,stroke:#333,stroke-width:2px
