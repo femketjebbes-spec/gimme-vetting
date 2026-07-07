@@ -19,9 +19,8 @@ variables:
 backend-build:
   stage: build
   image: maven:3.9-eclipse-temurin-17
-  working_directory: 5-backend
   script:
-    - mvn clean compile
+    - cd 5-backend && mvn clean compile
   artifacts:
     paths:
       - 5-backend/business-service/target/*.jar
@@ -33,10 +32,8 @@ backend-build:
 frontend-build:
   stage: build
   image: node:${NODE_VERSION}-alpine
-  working_directory: 4-frontend
   script:
-    - npm ci
-    - npm run build
+    - cd 4-frontend && npm ci && npm run build
   artifacts:
     paths:
       - 4-frontend/dist
@@ -48,10 +45,9 @@ frontend-build:
 backend-test:
   stage: test
   image: maven:3.9-eclipse-temurin-17
-  working_directory: 5-backend
   script:
-    - mvn test
-    - mvn verify -DskipUnitTests=true
+    - cd 5-backend && mvn test
+    - cd 5-backend && mvn verify -DskipUnitTests=true
   artifacts:
     reports:
       junit:
@@ -71,11 +67,10 @@ backend-test:
 frontend-test:
   stage: test
   image: node:${NODE_VERSION}-alpine
-  working_directory: 4-frontend
   script:
-    - npm ci
-    - npm run lint || true
-    - npm test -- --ci --coverage --json --coverageReporters=json-summary --outputFile=.jest-results.json
+    - cd 4-frontend && npm ci
+    - cd 4-frontend && npm run lint || true
+    - cd 4-frontend && npm test -- --ci --coverage --json --coverageReporters=json-summary --outputFile=.jest-results.json
   artifacts:
     reports:
       junit:
@@ -116,13 +111,12 @@ backend-deploy-staging:
   image: amazon/aws-cli:latest
   script:
     - aws s3 cp 5-backend/business-service/target/*.jar s3://${AWS_BACKEND_BUCKET_STAGING}/app.jar
-    - aws s3 cp 5-backend/business-service/target/*.jar s3://${AWS_BACKEND_BUCKET_STAGING}/app.jar.old || true
-    - aws s3 cp s3://${AWS_BACKEND_BUCKET_STAGING}/app.jar.old s3://${AWS_BACKEND_BUCKET_STAGING}/app.jar
+    - aws s3 cp s3://${AWS_BACKEND_BUCKET_STAGING}/app.jar s3://${AWS_BACKEND_BUCKET_STAGING}/app.jar.old || true
   environment:
     name: staging
     url: https://backend-staging.gimmevettingsolution.com
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
   dependencies:
     - backend-build
 
@@ -133,13 +127,13 @@ frontend-deploy-staging:
   stage: deploy-staging
   image: node:${NODE_VERSION}-alpine
   script:
-    - apt-get update && apt-get install -y aws-cli
+    - apk add --no-cache aws-cli
     - aws s3 sync 4-frontend/dist/ s3://${AWS_FRONTEND_BUCKET_STAGING}/ --delete
   environment:
     name: staging
     url: https://staging.gimmevettingsolution.com
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
   dependencies:
     - frontend-build
 
@@ -154,12 +148,12 @@ backend-deploy-production:
   environment:
     name: production
     url: https://backend.gimmevettingsolution.com
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+  allow_failure: false
   dependencies:
     - backend-build
-  when: manual
-  allow_failure: false
 
 # ======================
 # FRONTEND - DEPLOY TO PRODUCTION
@@ -168,14 +162,14 @@ frontend-deploy-production:
   stage: deploy-production
   image: node:${NODE_VERSION}-alpine
   script:
-    - apt-get update && apt-get install -y aws-cli
+    - apk add --no-cache aws-cli
     - aws s3 sync 4-frontend/dist/ s3://${AWS_FRONTEND_BUCKET_PRODUCTION}/ --delete
   environment:
     name: production
     url: https://gimmevettingsolution.com
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+  allow_failure: false
   dependencies:
     - frontend-build
-  when: manual
-  allow_failure: false
