@@ -1,33 +1,36 @@
-# Architect Session History
+# Session History
 
-Summary of each session conducted by the Architect agent.
+## Session 5 — 2026-07-07 — WI-002 Excel File Upload and Parsing
 
-## Session 1 - 2026-07-02
+### What Was Explored
 
-**Explored:** The Architect agent's role boundaries, inputs, outputs, and relationship to existing agents (Robbie and Alignment Agent). Clarified that the agent combines task delegation and architectural advice into a single role. Established socratic questioning as the primary method for uncovering architectural requirements.
+User requested implementation of the next work item. After reviewing work items.md and the completion status of WI-001 (fully approved by Alignment Agent), WI-002 was identified as the correct next item. It is the entry point of the MVP Excel intake pipeline with no upstream dependencies.
 
-**Decided:** The Architect activates on direct user task input. Architecture decisions are stored separately at `agent-definitions/architecture-decisions.md`. Security is a first-class concern in all architectural questioning. The agent uses the same socratic methodology as Robbie.
+Architectural decisions D-024 through D-029 and security requirements S-007 through S-011 were documented in architecture-decisions.md. The user confirmed strict column name matching (no aliases accepted, case-insensitive).
 
-**Remains Open:** The specific coding agents the Architect will delegate to. The technology stack. Compliance or security standards applicable to the project.
+### What Was Decided
 
-**Assumptions:** Centralised architectural knowledge improves delegation consistency. Coding agents will be defined after the Architect.
+1. **D-024**: Strict column name matching — only the five allowlisted column names accepted (case-insensitive). No aliases.
+2. **D-025**: Format support (.xlsx, .csv), optional header row, column-position fallback mapping.
+3. **D-026**: No authentication for MVP. Javadoc/JSDoc notes required.
+4. **D-027**: No file size limit for MVP.
+5. **D-028**: Synchronous processing model.
+6. **D-029**: Apache POI 5.2.5 mandated with XML entity expansion disabled.
+7. **S-007**: Server-side MIME type validation.
+8. **S-008**: Column name allowlist enforcement.
+9. **S-010**: Filename sanitization against path traversal.
+10. **S-011**: Temporary file cleanup policy for return Excel files.
 
-## Session 2 - 2026-07-06
+Gerard produced `docs/api-contract-wi-002.md` (version 2.0.0). Alignment Agent approved. Femke produced frontend component `ExcelUpload.jsx` with 16 passing Jest tests. Naut produced backend implementation with 69 passing Maven tests. Alignment Agent approved Naut's backend implementation.
 
-**Explored:** The handover mechanism between Femke (Frontend Agent), Gerard (API-Agent), and Archibald. The user specified that Femke should signal the architect when the API requirements document is ready, and the architect should activate Gerard.
+### What Remains Open
 
-**Decided:** A three-phase signal-based handover chain was specified. Femke produces `docs/api-ready-signal.md` upon completing the API requirements document. Archibald reads this signal as the trigger to delegate Gerard. Gerard produces `docs/gerard-ready-signal.md` upon completing all API subtasks. Archibald reads Gerard's signal before assigning backend subtasks to Naut. The workflow enforcement in Archibald was updated to monitor for both signal files. A handover violation was defined as a new monitoring error type. The delegation plan template for Gerard was documented with subtask details.
+- WI-003 (Per-Row Mandatory Field Validation) — downstream of WI-002
+- WI-004 (Return Excel Generation) — downstream of WI-002 and WI-003
+- WI-005 (Separate PoC Upload Endpoint) — parallel after WI-001
 
-**Remains Open:** The exact moment Archibald reads the signal files (polling vs event-driven). Whether signals should be version-controlled or transient artefacts.
+### Assumptions Made
 
-**Assumptions:** Archibald actively monitors for signal file existence. Signal files are well-known and written to the workspace root. Gerard produces all required subtasks before writing its completion signal. Naut waits for Gerard's signal before activating.
-
-## Session 3 - 2026-07-06
-
-**Explored:** The handover protocol between Gerard (API-Agent) and Naut (Backend Agent). The user requested that the Gerard-to-Naut transition replicate the Femke-to-Gerard pattern: Gerard signals completion, the Alignment Agent verifies Gerard's work, and only after Alignment Agent approval does the Architect delegate to Naut.
-
-**Decided:** The Architect's Sequential Workflow Enforcement was updated to require reading the Alignment Agent decision before activating Naut. A new monitoring error type (Alignment Agent gate violation) was added to the Persistent Monitoring Layer, blocking delegation if `docs/alignment-review-request.md` lacks Alignment Agent approval for Gerard. Naut's trigger was updated to require confirmed Alignment Agent approval of Gerard's work. The Alignment Agent's Pipeline Gate Enforcement now explicitly documents the Architect-reading-behaviour for the API-to-Backend sequence. The architecture flow diagram was updated to show the ReviewDecision -> Archibald -> Naut chain. An architecture decision (Session 4) was recorded documenting this symmetric gate enforcement pattern.
-
-**Remains Open:** Whether Naut's own completion should similarly require a post-implementation Alignment Agent review before the pipeline is considered fully closed (Naut already submits Alignment Agent review requests, but downstream handover does not exist).
-
-**Assumptions:** The Alignment Agent decision is appended to `docs/alignment-review-request.md` and remains readable. Archibald actively reads and parses the Alignment Agent compliance decision before producing any backend delegation plan.
+- Apache POI 5.2.5 is sufficient for MVP file size and performance requirements. EasyExcel can be evaluated if large-file performance becomes critical (AUNV-006).
+- Synchronous processing is acceptable for MVP. Async processing can be evaluated if file sizes or processing times become problematic.
+- Temporary file cleanup for return Excel files uses server-side temporary directory with no explicit retention period for MVP. This is a minor operational gap.
