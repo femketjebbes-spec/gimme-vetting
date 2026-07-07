@@ -47,3 +47,28 @@ Affected Agents: Naut
 Rationale: W-005 (Domain Model) defines the PoC entity but not its storage mechanism. The storage decision depends on external factors (who provides PoC files, where they reside) that are outside WI-001 scope. A configurable path decouples the PoC matching logic from the storage mechanism.
 Security Implications: Runtime configuration must not expose the PoC store path in error messages or logs. The storage credentials or access keys must be stored in a secure configuration store, not in version-controlled files. The file system or object storage access layer must enforce access controls.
 Affected Agents: Naut, Database Engineer
+
+[2026-07-07] [Session 5] ARCHITECTURAL DECISION: WI-002 Excel upload endpoint accepts exactly the column names from the requirements specification (case-insensitive): "invoice number", "debtor name", "address", "phone number", "bank account number". No aliases or alternative column name variants are accepted. Files with unrecognized column names shall be rejected with a structured error response.
+Rationale: The user confirmed strict column name enforcement in Session 5. This simplifies the parsing logic and prevents silent mismapping when a client uses unfamiliar column names. The error response enables the client to correct their Excel template.
+Security Implications: Rejecting unknown column names prevents unexpected field mapping that could cause data loss or incorrect invoice processing. No column name injection vectors exist since column names are validated against a fixed allowlist.
+Affected Agents: Gerard, Naut
+
+[2026-07-07] [Session 5] ARCHITECTURAL DECISION: WI-002 supports .xlsx and .csv file formats. Header row is optional. When no header row is present, column order determines field mapping: column 0 = invoiceNumber, column 1 = debtorName, column 2 = address, column 3 = phoneNumber, column 4 = bankAccountNumber.
+Rationale: Confirmed by user in Session 5. This decision covers both format support and the fallback mapping mechanism when headers are absent.
+Security Implications: No direct security implications. File type validation must enforce MIME type checking to prevent upload of executable or malicious files disguised as Excel files.
+Affected Agents: Gerard, Naut
+
+[2026-07-07] [Session 5] ARCHITECTURAL DECISION: WI-002 endpoint has no authentication for MVP. No file size limit is enforced for MVP.
+Rationale: Confirmed by user in Session 5. The client portal is unauthenticated for MVP purposes. File size limits are deferred to a future iteration.
+Security Implications: No authentication on the upload endpoint allows unauthenticated file uploads. This is a documented MVP limitation that must be flagged for remediation in a future iteration. Absence of file size limits creates a denial-of-service risk via large file uploads. The architect recommends designing a size boundary but deferring enforcement to MVP+1.
+Affected Agents: Gerard, Naut, Femke
+
+[2026-07-07] [Session 5] ARCHITECTURAL DECISION: WI-002 synchronous processing model. The client uploads an Excel file, the server processes all rows through parsing, mandatory field validation, and PoC existence verification, then returns the result (including a download link for the return Excel) in the same HTTP response cycle.
+Rationale: Confirmed by user in Session 5 for MVP. Synchronous processing simplifies the MVP architecture. If large files cause performance issues, async processing can be evaluated later (AUNV-006).
+Security Implications: Synchronous processing ties client connections to processing time. Large files held in memory during processing increase the attack surface for memory exhaustion DoS. Streaming processing (Apache POI SXSSF) is recommended to mitigate this risk.
+Affected Agents: Gerard, Naut, Femke
+
+[2026-07-07] [Session 5] ARCHITECTURAL DECISION: Apache POI is the recommended Excel parsing library for WI-002 through WI-004.
+Rationale: Apache POI is the industry standard for Java Excel processing, supports both .xlsx and .csv formats, and is consistent across the parsing and generation work items. EasyExcel can be evaluated later if large-file performance becomes critical.
+Security Implications: Apache POI has had historical vulnerabilities related to XML external entity injection in .xlsx files (ZIP slip vulnerabilities). The version used must be the latest patched version. XML entity expansion must be disabled in the parser configuration.
+Affected Agents: Naut
