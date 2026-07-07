@@ -44,3 +44,11 @@ Rationale: Data enrichment removed, mandatory field validation externalized, rej
 [2026-07-06] [Session 2] DECISION: RQ-005 (Warning Logging for Unavailable Data Sources) demoted from "Must have" to lower priority.
 Assumptions: None.
 Rationale: RQ-005 provides no direct stakeholder value. It is an internal system behaviour (audit trail logging) that does not produce observable output for end users. Priority adjusted to lower based on user decision. Diagram may omit this requirement until priority is raised again.
+
+[2026-07-07] [Session 3] DECISION: RQ-007 from the MoSCoW whiteboard is documented as redundant with RQ-001 and not added as a separate requirement.
+Assumptions: None.
+Rationale: RQ-007 on the whiteboard reads "Invoice RQ existence verification submitted" and is placed in the Must have column. This is functionally identical to RQ-001 (PoC Existence Verification). No new spec entry is created. If RQ-007 was intended to describe a distinct mechanism, it must be re-specified with a different description.
+
+[2026-07-07] [Session 3] DECISION: Whiteboard numbering for Batch Acceptance (labelled RQ-005) is corrected to RQ-004 in the spec.
+Assumptions: None.
+Rationale: The whiteboard labels Batch Acceptance as RQ-005, creating a numbering collision with the spec's RQ-005 (Warning Logging). The spec ID RQ-004 for Batch Acceptance is correct. The whiteboard label is misnumbered. No spec change required.

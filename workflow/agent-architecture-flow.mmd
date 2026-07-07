@@ -34,6 +34,7 @@ flowchart LR
         GerardReadySignal["Gerard-Ready Signal<br/>(docs/gerard-ready-signal.md)"]
         FemkeStructuralSignal["Femke Structural Change Signal<br/>(docs/femke-structural-change-signal.md)"]
         GerardReevalSignal["Gerard Re-evaluation Complete Signal<br/>(docs/gerard-reevaluation-complete-signal.md)"]
+        ImplSummaries["Implementation Summaries"]
     end
 
     UserTask -->|"feature request"| Robbie
@@ -76,6 +77,7 @@ flowchart LR
     Archibald -->|"delegation plan<br/>(frontend subtasks)"| Femke
     Femke -->|"HTML/JS/CSS frontend code"| FinalArtefacts
     Femke -->|"API requirements"| ApiRequirements
+    ApiRequirements -->|"API requirements"| Gerard
     Femke -->|"API-ready signal"| ApiReadySignal
     ApiReadySignal -->|"triggers Gerard activation"| Archibald
     Archibald -->|"delegation plan<br/>(API contract subtasks)"| Gerard
@@ -88,6 +90,7 @@ flowchart LR
     ReviewDecision -->|"greenlightForNextAgent: true<br/>nextAgentInPipeline: Naut"| Archibald
     Archibald -->|"reads Alignment Agent decision<br/>before Naut activation"| ReviewDecision
     Archibald -->|"delegation plan<br/>(backend subtasks<br/>after Alignment Agent approval)"| Naut
+    Naut -->|"reads API contract"| ApiContract
 
     %% STRUCTURAL CHANGE RE-EVALUATION WORKFLOW
     Femke -->|"structural change signal (Refactoring Mode)"| FemkeStructuralSignal
@@ -102,6 +105,7 @@ flowchart LR
 
     Naut -->|"JUnit 5 tests (Testing Mode)"| BackendTests["Backend Test Dir<br/>(.java test files)"]
     Naut -->|"production code (Implementation Mode)"| BackendSrc
+    Naut -->|"implementation summaries"| ImplSummaries
     BackendTests -->|"reads for guidance"| BackendSrc
     Naut -->|"test mod auth if plan changes"| Naut
 

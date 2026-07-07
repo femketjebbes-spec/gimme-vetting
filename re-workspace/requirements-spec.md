@@ -152,3 +152,13 @@ Gimme shall log a warning whenever an external data source (Uncooperative Regist
 | OQ-004 | What is the downstream workflow for invoices after case analyst batch acceptance (PoC validation and beyond)? | Resolved - out of scope; system output is debtor dossiers |
 | OQ-005 | What non-functional requirements apply (security, audit, availability, data retention)? | Deferred - NFRs deferred to future session |
 | OQ-006 | What is the error handling mechanism when data sources are unavailable during intake? | Resolved - log warning and proceed |
+
+---
+
+## Whiteboard Numbering Resolution
+
+The MoSCoW whiteboard introduced a numbering collision and a redundant requirement. The following clarifications apply:
+
+- **RQ-004 (Batch Acceptance by Case Analyst):** The whiteboard labels this requirement as RQ-005. The spec ID RQ-004 is correct. The whiteboard label is misnumbered. No spec change required.
+- **RQ-005 (Warning Logging for Unavailable Data Sources):** The spec ID RQ-005 is correct and matches the whiteboard's "RQ5" label. The whiteboard places this in the Should have column while the spec classifies it as Must have. This discrepancy is noted but not resolved per user instruction.
+- **RQ-007 (PoC Existence Verification):** The whiteboard introduces RQ-007 in the Must have column. This requirement is functionally identical to RQ-001 (PoC Existence Verification). RQ-007 is documented as redundant. No new spec entry is created. If RQ-007 was intended to describe a different mechanism (e.g., content-based PoC validation rather than filename matching), it must be re-specified with a distinct description.
