@@ -6,6 +6,20 @@
 
 ---
 
+## First Implementation Work Item: WI-001 (PoC Existence Verification)
+
+A fully formalised work item definition exists at:
+- **File:** [re-workspace/work-items/wi-001-poc-existence-verification.md](re-workspace/work-items/wi-001-poc-existence-verification.md)
+- **Parent Requirement:** RQ-001 (PoC Existence Verification)
+- **Parent Work Stream:** W-002 (Invoice Intake and PoC Matching Engine)
+- **Status:** Ready for implementation
+- **Gherkin Scenarios:** 5 (2 pass scenarios, 3 edge-case scenarios)
+- **Quality Validation:** ISO 29148 — PASS (with minor completeness notes resolved by acceptance criteria)
+
+This work item is the recommended starting point for implementation. See the formalised definition for full details on acceptance criteria, design decisions, test strategy, and risks.
+
+---
+
 ## W-001: External Registry Interface Definition
 
 **Type:** Interface specification
@@ -241,6 +255,134 @@ W-003 depends on W-002 (needs accepted invoices from the pipeline).
 
 ---
 
+## MVP Excel Intake Work Items (Session 5)
+
+These work items address the Excel batch intake pipeline required for the MVP client portal.
+
+### WI-002: Excel File Upload and Parsing
+
+**Parent Requirement:** RQ-006 (Excel Batch Intake)
+**Work Stream:** W-007 (Excel Batch Intake Pipeline)
+**Status:** Not started
+**Dependencies:** None
+**Priority:** Must have (MVP)
+
+**Purpose:** Define the Excel file upload interface and parsing logic that reads invoice data from an Excel file.
+
+**Scope:**
+- POST endpoint for Excel file upload (single file, defined column structure)
+- Excel parsing using a library (Apache POI or similar) to read rows into domain objects
+- Column-to-field mapping: invoiceNumber, debtorName, address, bankAccountNumber, phoneNumber
+- Validation that each row contains the expected number of columns
+- Maximum file size enforcement
+- Error handling for malformed Excel files (corrupted, non-Excel format)
+
+**Output:**
+- API contract for Excel upload endpoint (to be produced by Gerard)
+- Excel file column schema (to be confirmed with user: column names, order, header row presence)
+- Excel format specification (.xlsx, .xls, or .csv)
+- Parsing logic design
+
+**Assumptions to Verify:**
+- Excel format: .xlsx vs .xls vs .csv
+- Whether the file has a header row
+- Maximum file size
+- Column order and names
+
+---
+
+### WI-003: Per-Row Mandatory Field Validation
+
+**Parent Requirement:** RQ-007 (Mandatory Field Validation)
+**Work Stream:** W-007 (Excel Batch Intake Pipeline)
+**Status:** Not started
+**Dependencies:** WI-002 (Excel parsing produces row objects)
+**Priority:** Must have (MVP)
+
+**Purpose:** Validate each row of the parsed Excel file for mandatory field completeness.
+
+**Scope:**
+- For each row, check: debtorName, address, bankAccountNumber, phoneNumber, invoiceNumber are non-empty
+- Record which specific fields are missing per failing row
+- Do NOT store failing rows in the database
+- Group failing rows for the return Excel (RQ-008)
+- Pass passing rows to the next validation gate (PoC existence, RQ-001)
+
+**Output:**
+- Validation logic implementation
+- Per-row validation result data structure (row index, list of missing field names)
+- Unit tests for each validation scenario
+
+**Note:** This requirement was previously external. The specification has been updated (Session 5) to move it internal.
+
+---
+
+### WI-004: Return Excel Generation
+
+**Parent Requirement:** RQ-008 (Return Excel with Missing Data)
+**Work Stream:** W-007 (Excel Batch Intake Pipeline)
+**Status:** Not started
+**Dependencies:** WI-002 (parsing), WI-003 (validation results)
+**Priority:** Must have (MVP)
+
+**Purpose:** Generate a return Excel file containing only the rows that failed validation, with missing fields identified.
+
+**Scope:**
+- Return Excel contains only failing rows (not all rows)
+- Each failing row is returned with all original column data intact
+- An additional column identifies the validation issue: "MISSING_FIELDS" with field names listed, or "MISSING_POC" for rows that passed mandatory field validation but had no matching PoC file
+- Excel format matches the upload format (same column structure)
+- File is returned to the client as a download link in the client portal
+- Passing rows are NOT included in the return Excel
+
+**Output:**
+- Excel generation logic (Apache POI or similar)
+- Return Excel format specification
+- Download link mechanism in the client portal response
+
+---
+
+### WI-005: PoC File Upload Endpoint
+
+**Parent Requirement:** RQ-009 (Separate PoC Upload)
+**Work Stream:** W-007 (Excel Batch Intake Pipeline)
+**Status:** Not started
+**Dependencies:** WI-001 (existing PoCStoreService), W-002 (PoC Matching Engine already has PoC store)
+**Priority:** Should have (deferred from MVP if necessary)
+
+**Purpose:** Provide a client portal endpoint for uploading PoC files separately from the Excel invoice batch.
+
+**Scope:**
+- POST endpoint for PoC file upload (PDF)
+- Filename validation: must match invoice number format per D-001 (case-insensitive)
+- Store in the same PoC store as the single-invoice intake path (configurable path per D-003)
+- Display list of invoice numbers missing PoC files (from return Excel, RQ-008) in the client portal UI
+
+**Output:**
+- API contract for PoC upload endpoint
+- PoC file storage integration with existing FileBackedPoCStoreService
+- Client portal UI specification for PoC upload screen
+
+**Note:** The client portal UI is outside Robbie's RE scope. The architect will produce the interface design.
+
+---
+
+### MVP Work Item Dependency Graph
+
+```
+WI-002 (Excel Upload and Parsing) ──┐
+                                       │
+WI-003 (Per-Row Validation) ◄─────────┤
+                                       ├──► WI-004 (Return Excel Generation)
+WI-001 (PoCStoreService) ────────────────────────►
+                                       │
+WI-005 (PoC Upload Endpoint) ───────────────► (parallel, after WI-001)
+```
+
+WI-002 is the entry point. WI-003 depends on WI-002 output. WI-004 depends on both WI-002 and WI-003. WI-005 can proceed in parallel with WI-002 through WI-004 once WI-001 is complete.
+
+---
+
 ## Open Items for the Architect
 
 | ID | Item | Source | Action Required |
@@ -248,14 +390,16 @@ W-003 depends on W-002 (needs accepted invoices from the pipeline).
 | OQ-005 | Non-functional requirements are deferred | re-workspace/open-questions.md, line 44-46 | Architect should flag NFR gaps to user before design proceeds. Security, audit, availability, and data retention are likely necessary for financial/legal data. |
 | OQ-007 | Rejection overview requirement (RQ-006) was removed | re-workspace/assumption-log.md, line 44-46 | Confirm with user whether a rejection overview is still needed. The assumption log marks this as moot. |
 | OQ-008 | Priority of RQ-005 (Warning Logging) was demoted | re-workspace/decision-log.md, line 44-46 | Architect should confirm whether to include this in the current design scope. |
-| OQ-009 | Form system that enforces mandatory fields is external to Gimme | re-workspace/requirements-spec.md, lines 23-31 | Architect must design the intake interface to match whatever format the form system produces. Interface contract must be discovered. |
+| OQ-009 | Excel file column schema | re-workspace/requirements-spec.md, OQ-007 through OQ-010 | Architect must confirm column names, order, header row presence, and file format (.xlsx/.xls/.csv) before design proceeds. |
+| OQ-010 | Client portal authentication | re-workspace/requirements-spec.md, OQ-011 | Architect must confirm whether authentication is required for the client portal before design proceeds. |
 
 ---
 
 ## Constraints on Architectural Design
 
-1. The architect must not add requirements beyond those in RQ-001 through RQ-005. Any additional capability must be flagged as scope expansion.
-2. The architect must not assume the existence of external data sources. W-006 verification must complete before real integration is designed.
+1. The architect must not add requirements beyond those in RQ-001 through RQ-009. Any additional capability must be flagged as scope expansion.
+2. The architect must not assume the existence of external data sources (RQ-002, RQ-003). W-006 verification must complete before real integration is designed.
 3. The architect must not design post-acceptance workflows. The system output is debtor dossiers. What happens after is out of scope.
-4. The architect must not design mandatory field validation. That is enforced at the form level, external to Gimme.
+4. The architect must design mandatory field validation internally. The specification was updated in Session 5: mandatory field enforcement is no longer external.
 5. Non-functional requirements are deferred. The architect should document NFR assumptions and flag gaps but must not design NFR capabilities without user confirmation.
+6. The architect must produce UI specifications for the client portal as integration with the frontend agent. The architect does not implement frontend code.

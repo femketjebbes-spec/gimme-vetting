@@ -44,3 +44,13 @@ Rationale: User clarified in Session 2 that Type A (incomplete data) rejections 
 [2026-07-06] [Session 2] ASSUMPTION: RQ-006 (Rejection Overview) generates an overview for all Type A rejections.
 Status: Moot
 Rationale: Requirements were restructured in Session 2. RQ-006 (Rejection Overview) was removed. Data enrichment (RQ-005) was removed from scope. The current specification (RQ-001 through RQ-005) does not include a rejection overview requirement. If a rejection overview is needed, it must be specified as a new requirement.
+
+[2026-07-07] [Session 5] ASSUMPTION: Mandatory field enforcement is performed internally by Gimme, not by an external form.
+Status: Verified
+Rationale: User clarified in Session 5 that the upstream Excel may contain incomplete rows. Case analysts do not want to manually check for empty fields. Gimme validates mandatory fields at intake and returns incomplete rows with missing fields flagged.
+
+[2026-07-07] [Session 5] ASSUMPTION: Excel batch intake is synchronous (upload, process, return in one request cycle).
+Status: Unverified
+Rationale: User described synchronous flow but did not confirm. If the Excel file is large, processing may need to be asynchronous with a download link provided after completion.
+Status: Moot
+Rationale: Requirements were restructured in Session 2. RQ-006 (Rejection Overview) was removed. Data enrichment (RQ-005) was removed from scope. The current specification (RQ-001 through RQ-005) does not include a rejection overview requirement. If a rejection overview is needed, it must be specified as a new requirement.

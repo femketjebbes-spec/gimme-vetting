@@ -19,9 +19,10 @@ The following requirements from the source document are explicitly out of scope:
 
 ---
 
-## Mandatory Field Enforcement (External)
+## Mandatory Field Enforcement (Internal)
 
-The following fields are enforced as mandatory at the form interface level (outside Gimme). Incomplete submissions are blocked at the form and do not enter the system:
+The following fields are enforced as mandatory by Gimme at the point of intake. Incomplete rows are returned to the client with missing fields flagged for correction. This applies to both the single-invoice API intake (POST /api/v1/intake) and the Excel batch intake (Session 5).
+
 - Debtor name
 - Address
 - Bank account number (rekeningnummer)
@@ -130,6 +131,76 @@ Gimme shall log a warning whenever an external data source (Uncooperative Regist
 
 ---
 
+### RQ-006: Excel Batch Intake
+
+Gimme shall provide a client portal endpoint where external clients can upload an Excel file containing multiple invoices, one per row.
+
+- Each row in the Excel file represents one invoice submission.
+- The Excel file shall use a defined column structure matching the mandatory fields: invoiceNumber, debtorName, address, bankAccountNumber, phoneNumber.
+- Gimme shall process each row independently, applying mandatory field validation (RQ-007) and PoC existence verification (RQ-001) per row.
+- Rows that pass all validation gates are stored as invoices in QUEUED state.
+- Rows that fail validation are not stored and are flagged for client correction.
+- Processing is synchronous: the client uploads, Gimme processes, Gimme returns the result file in the same request cycle.
+
+**Business Objective:** OPE-001 (Reduce case analyst workload)
+**Source:** Session 5 — MVP client portal requirement
+**Verification Method:** Upload an Excel file with known mix of valid and invalid rows; verify that valid rows are stored and invalid rows are returned in the result file.
+**Priority:** Must have (MVP)
+
+---
+
+### RQ-007: Mandatory Field Validation (Per-Row)
+
+Gimme shall validate each row of the uploaded Excel file for mandatory field completeness.
+
+- The following fields are mandatory per row: debtorName, address, bankAccountNumber, phoneNumber, invoiceNumber.
+- A row is considered incomplete if any of these fields is empty or missing.
+- The client shall receive the incomplete rows back in the return Excel file (RQ-008) with the specific missing fields identified.
+- Incomplete rows are not stored in the system.
+- The client may re-submit corrected rows via the same Excel upload interface.
+- Validation errors per row are recorded with the specific field name(s) that are missing.
+
+**Business Objective:** OPE-001 (Reduce case analyst workload)
+**Source:** Session 5 — case analysts do not want to manually check for empty fields
+**Verification Method:** Upload an Excel file with rows missing different fields; verify that only incomplete rows appear in the return Excel.
+**Priority:** Must have (MVP)
+
+---
+
+### RQ-008: Return Excel with Missing Data
+
+Gimme shall produce a return Excel file containing only the rows that failed validation.
+
+- The return Excel file shall include all original column data from each failing row (returned fully, not truncated).
+- The return Excel file shall include an additional column indicating the validation issue per row: "MISSING_FIELDS" with a list of missing field names, or "MISSING_POC" for rows that passed mandatory field validation but had no matching PoC file.
+- The return Excel file shall be available for download via the client portal at the end of the upload request cycle.
+- The return Excel file shall be formatted such that the client can fill in missing fields directly within the file and re-upload.
+- Rows that passed all validation gates are NOT included in the return Excel file.
+
+**Business Objective:** OPE-001 (Reduce case analyst workload)
+**Source:** Session 5 — client needs to see what is missing and re-upload
+**Verification Method:** Upload an Excel file with 10 rows, 3 invalid (missing fields), 2 missing PoC, 5 valid. Verify return Excel contains exactly 5 rows (3 missing fields + 2 missing PoC).
+**Priority:** Must have (MVP)
+
+---
+
+### RQ-009: Separate PoC Upload Endpoint
+
+Gimme shall provide a client portal endpoint for uploading PoC files separately from the Excel invoice batch.
+
+- The client can upload PoC files (PDF) via the client portal.
+- Each uploaded PoC file must be named according to the convention: the invoice number (System Identifier) matches the PoC filename (case-insensitive, per D-001).
+- Uploaded PoC files are stored in the same PoC store as the single-invoice intake path (configurable path, per D-003).
+- The client portal shall display a list of invoice numbers that are missing PoC files (from the return Excel, RQ-008), enabling the client to upload the corresponding PoC files.
+- PoC upload is independent of the Excel upload. The client receives the return Excel, then uploads the missing PoC files separately, then re-uploads the corrected Excel.
+
+**Business Objective:** OPE-001 (Reduce case analyst workload)
+**Source:** Session 5 — client needs separate PoC upload mechanism
+**Verification Method:** Upload a PoC file named correctly; verify that a previously rejected invoice (missing PoC) would now pass the PoC existence gate.
+**Priority:** Should have (deferred from MVP if necessary)
+
+---
+
 ## Requirements Summary
 
 | ID | Description | Priority | Type | Dependency |
@@ -139,6 +210,10 @@ Gimme shall log a warning whenever an external data source (Uncooperative Regist
 | RQ-003 | Payment Plan Check | Must have | Type B (Business Rule) | External registry (provided during implementation) |
 | RQ-004 | Batch Acceptance by Case Analyst | Must have | N/A (Post-acceptance) | Case management system |
 | RQ-005 | Warning Logging for Unavailable Data Sources | Must have | N/A | System logging infrastructure |
+| RQ-006 | Excel Batch Intake | Must have (MVP) | N/A (Intake mechanism) | Client portal |
+| RQ-007 | Mandatory Field Validation (Per-Row) | Must have (MVP) | N/A (Validation) | Excel parsing library |
+| RQ-008 | Return Excel with Missing Data | Must have (MVP) | N/A (Output) | Excel generation library |
+| RQ-009 | Separate PoC Upload Endpoint | Should have | N/A (Intake mechanism) | File storage system |
 
 ---
 
@@ -148,10 +223,15 @@ Gimme shall log a warning whenever an external data source (Uncooperative Regist
 |----|----------|--------|
 | OQ-001 | What is the current state of the Uncooperative Register as a data source? | Resolved - external entity provides during implementation |
 | OQ-002 | What is the current state of the payment plan database (incassolijst) as a data source? | Resolved - external entity provides during implementation |
-| OQ-003 | What fields are mandatory for dossier submission? | Resolved - enforced externally by form: name, address, rekeningnummer, phone, invoice number |
+| OQ-003 | What fields are mandatory for dossier submission? | Resolved - enforced by Gimme at intake: name, address, rekeningnummer, phone, invoice number |
 | OQ-004 | What is the downstream workflow for invoices after case analyst batch acceptance (PoC validation and beyond)? | Resolved - out of scope; system output is debtor dossiers |
 | OQ-005 | What non-functional requirements apply (security, audit, availability, data retention)? | Deferred - NFRs deferred to future session |
 | OQ-006 | What is the error handling mechanism when data sources are unavailable during intake? | Resolved - log warning and proceed |
+| OQ-007 | What is the Excel file column structure for batch upload? | Pending - to be confirmed before implementation |
+| OQ-008 | Does the Excel file have a header row? What is the column order? | Pending - to be confirmed before implementation |
+| OQ-009 | What Excel file format is required (.xlsx, .xls, .csv)? | Pending - to be confirmed before implementation |
+| OQ-010 | What is the maximum file size for the Excel upload? | Pending - to be confirmed before implementation |
+| OQ-011 | Does the client portal need authentication? | Pending - to be confirmed, currently unspecified |
 
 ---
 

@@ -32,3 +32,18 @@ Affected Agents: Femke
 Rationale: The existing Femke-to-Gerard handover requires Archibald to read the Alignment Agent decision before activating Gerard. The Gerard-to-Naut handover previously lacked this explicit check — Archibald only read `docs/gerard-ready-signal.md` without verifying Alignment Agent approval. This asymmetry created a gap where Naut could potentially activate before Gerard's compliance was verified. Symmetric handover gates ensure consistent quality enforcement across all pipeline transitions. Archibald's monitoring layer gains a new violation type (Alignment Agent gate violation) that blocks delegation if the compliance decision is missing or shows REJECTED status.
 Security Implications: Prevents backend implementation from proceeding on unverified API contracts. An unverified contract could contain endpoint mismatches, missing authentication requirements, or incorrect error mappings that Naut would then implement incorrectly. The Alignment Agent gate ensures Gerard's contract work is requirements-compliant before Naut begins backend development.
 Affected Agents: Gerard, Naut, Archibald, Alignment Agent
+
+[2026-07-07] [Session 4] ARCHITECTURAL DECISION: WI-001 PoC filename matching shall be case-insensitive. The matching algorithm performs full-string comparison after lowercase normalisation of both the PoC filename and the invoice number. No substring matching, pattern matching, or fuzzy matching is permitted.
+Rationale: The requirements spec (RQ-001) does not specify case-sensitivity. Upstream systems may produce PoC filenames with varying case conventions. Case-insensitive matching accommodates this variation without requiring a transformation layer. The algorithm is deterministic and unambiguous.
+Security Implications: Case-insensitive matching reduces false Type A rejections caused by naming convention mismatches, which prevents clients from being blocked by non-functional issues. The full-string comparison (not substring) prevents matching attacks where a malicious filename could partially match a legitimate invoice number.
+Affected Agents: Naut, Gerard
+
+[2026-07-07] [Session 4] ARCHITECTURAL DECISION: WI-001 shall tolerate multiple PoC files for a single invoice number. Finding at least one matching filename is sufficient to pass the PoC existence gate. No deduplication or duplicate rejection logic is required.
+Rationale: RQ-001 does not specify behaviour for multiple PoC files. The stakeholder confirmed that one match is sufficient. Deduplication is not a business requirement and would add unnecessary complexity to the intake pipeline.
+Security Implications: Tolerating multiple PoC files does not introduce security risk. The PoC files are sourced from the legitimate upstream system, not from the client submitting the invoice.
+Affected Agents: Naut
+
+[2026-07-07] [Session 4] ARCHITECTURAL DECISION: The PoC store location shall be a configurable path or storage bucket, with no architectural assumption about shared filesystem versus object storage. The configuration value shall be injected at runtime via application configuration.
+Rationale: W-005 (Domain Model) defines the PoC entity but not its storage mechanism. The storage decision depends on external factors (who provides PoC files, where they reside) that are outside WI-001 scope. A configurable path decouples the PoC matching logic from the storage mechanism.
+Security Implications: Runtime configuration must not expose the PoC store path in error messages or logs. The storage credentials or access keys must be stored in a secure configuration store, not in version-controlled files. The file system or object storage access layer must enforce access controls.
+Affected Agents: Naut, Database Engineer
