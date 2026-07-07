@@ -4,6 +4,7 @@ import com.gimmevettingsolution.intake.dto.ExcelUploadResponse;
 import com.gimmevettingsolution.intake.dto.InvalidFileFormatResponse;
 import com.gimmevettingsolution.intake.dto.ColumnNameMismatchResponse;
 import com.gimmevettingsolution.intake.service.ExcelParsingService;
+import com.gimmevettingsolution.intake.service.MandatoryFieldValidationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -41,7 +42,8 @@ class ExcelIntakeControllerTest {
     @BeforeEach
     void setUp() throws IOException {
         ExcelParsingService parsingService = new ExcelParsingService();
-        ExcelIntakeController controller = new ExcelIntakeController(parsingService);
+        MandatoryFieldValidationService validationService = new MandatoryFieldValidationService();
+        ExcelIntakeController controller = new ExcelIntakeController(parsingService, validationService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
