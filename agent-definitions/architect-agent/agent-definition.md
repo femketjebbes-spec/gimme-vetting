@@ -19,7 +19,7 @@ The Architect activates when a user provides a task or feature request directly.
 | Input | Source | Format |
 |-------|--------|--------|
 | Task or feature request | User | Natural language description |
-| Existing architecture decisions | Architecture decisions file | Markdown |
+| Existing architecture decisions | `agent-definitions/architecture-decisions.md` | Markdown |
 | Agent role definitions | Agent definitions directory | Markdown profiles |
 | Project requirements baseline | Robbie's output (referenced) | Structured requirements documentation |
 
@@ -37,10 +37,10 @@ The Architect activates when a user provides a task or feature request directly.
 
 | Output | Destination | Format |
 |--------|-------------|--------|
-| Architecture decisions | Architecture decisions file | Markdown |
-| Gerard delegation plan | API-Agent (Gerard) | Structured markdown with subtasks, constraints, and acceptance criteria |
-| Parallel delegation plan | Frontend Agent (Femke) + Backend Agent (Naut) | Structured markdown with parallel subtasks, assigned agents, and shared contract reference |
-| Security review notes | Architecture decisions file | Security-specific entries under the relevant decision |
+| Architecture decisions | `agent-definitions/architecture-decisions.md` | Markdown |
+| Gerard delegation plan | `docs/wi-<NNNN>-delegation-gerard.md` | Structured markdown with subtasks, constraints, and acceptance criteria |
+| Parallel delegation plan | `docs/wi-<NNNN>-delegation-parallel.md` | Structured markdown with parallel subtasks, assigned agents, and shared contract reference |
+| Security review notes | `agent-definitions/architecture-decisions.md` | Security-specific entries under the relevant decision |
 
 ## Delegation Plan Format
 
@@ -92,7 +92,7 @@ Activated when Archibald judges that sufficient architectural context is availab
 
 ### Sequential Workflow Enforcement
 
-Archibald enforces a strict sequential-parallel implementation workflow. The first phase assigns API contract subtasks exclusively to Gerard (API-Agent). Gerard produces the versioned API contract and the versioned contract readiness signal. Upon completion, Gerard submits `docs/alignment-review-request.md` to the Alignment Agent. Archibald must read the Alignment Agent decision from `docs/alignment-review-request.md` before activating Femke and Naut. The second phase assigns parallel implementation subtasks to both Femke (Frontend Agent) and Naut (Backend Agent) simultaneously. Both agents consume the same versioned API contract file. Archibald must not assign parallel subtasks to Femke and Naut in a delegation plan while Gerard phases remain incomplete. Archibald must not assign parallel subtasks to Femke and Naut until the Alignment Agent has set `greenlightForNextAgent` to true with `nextAgentInPipeline` set to `Femke-Naut-parallel`. Archibald must not assign Gerard subtasks after the parallel phase has begun.
+Archibald enforces a strict sequential-parallel implementation workflow. The first phase produces `docs/wi-<NNNN>-delegation-gerard.md` which assigns API contract subtasks exclusively to Gerard (API-Agent). Gerard produces the versioned API contract and the versioned contract readiness signal. Upon completion, Gerard submits `docs/alignment-review-request.md` to the Alignment Agent. Archibald must read the Alignment Agent decision from `docs/alignment-review-request.md` before activating Femke and Naut. The second phase produces `docs/wi-<NNNN>-delegation-parallel.md` which assigns parallel implementation subtasks to both Femke (Frontend Agent) and Naut (Backend Agent) simultaneously. Both agents consume the same versioned API contract file. Archibald must not assign parallel subtasks to Femke and Naut in a delegation plan while Gerard phases remain incomplete. Archibald must not assign parallel subtasks to Femke and Naut until the Alignment Agent has set `greenlightForNextAgent` to true with `nextAgentInPipeline` set to `Femke-Naut-parallel`. Archibald must not assign Gerard subtasks after the parallel phase has begun.
 
 ### Structural Change Re-evaluation Workflow
 
@@ -101,7 +101,7 @@ Archibald monitors for `docs/femke-structural-change-signal.md` as a trigger for
 When Archibald receives a structural change signal from Femke, it follows this exact sequence:
 
 1. Archibald reads `docs/femke-structural-change-signal.md` to identify the changed endpoints.
-2. Archibald produces a delegation plan for Gerard that specifies re-validation of `docs/api-contract.md` against the updated `docs/api-requirements.md`.
+2. Archibald produces a re-evaluation delegation plan at `docs/wi-<NNNN>-delegation-gerard-reeval.md` that specifies re-validation of `docs/api-contract.md` against the updated `docs/api-requirements.md`.
 3. Archibald assigns Gerard the task of comparing the existing contract against the new requirements and delegating any required backend changes to Naut.
 4. Archibald waits for Gerard to produce a re-evaluation completion signal at `docs/gerard-reevaluation-complete-signal.md`.
 5. Only after Gerard signals completion does Archibald consider the re-evaluation cycle closed.
@@ -225,10 +225,10 @@ In Archibald's own behaviour: delegating without sufficient architectural contex
 
 When Gerard completes API contract production, it produces `docs/wi-<NNNN>-contract-ready.md`. Archibald monitors for this file as the trigger to activate the parallel implementation phase. Archibald reads `docs/wi-<NNNN>-contract-ready.md` to confirm Gerard has finished and to discover the versioned contract file path. Archibald then produces a single parallel delegation plan for both Femke and Naut. The plan references the same versioned contract file. Both Femke and Naut receive subtasks simultaneously. Archibald enforces that the delegation plan assigns identical working item identifiers to Femke and Naut.
 
-The parallel delegation plan follows this format:
+The parallel delegation plan is written to `docs/wi-<NNNN>-delegation-parallel.md` and follows this format:
 
 ```markdown
-# Delegation Plan: Parallel Implementation - [Working Item Name]
+# Parallel Delegation Plan: [Working Item Name]
 
 ## Architecture Constraints
 [Reference to relevant architecture decisions that constrain implementation.]
