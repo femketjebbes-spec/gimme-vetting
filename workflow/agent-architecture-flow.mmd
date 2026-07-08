@@ -33,17 +33,8 @@ flowchart LR
         ApiRequirements["API Requirements<br/>(docs/api-requirements.md)"]
         FemkeStructuralSignal["Femke Structural Change Signal<br/>(docs/femke-structural-change-signal.md)"]
         GerardReevalSignal["Gerard Re-evaluation Complete Signal<br/>(docs/gerard-reevaluation-complete-signal.md)"]
-<<<<<<< HEAD
-<<<<<<< HEAD
-        ImplSummaries["Implementation Summaries"]
-=======
         GerardDelegation["Gerard Delegation Plan<br/>(docs/wi-<NNNN>-delegation-gerard.md)"]
         ParallelDelegation["Parallel Delegation Plan<br/>(docs/wi-<NNNN>-delegation-parallel.md)"]
->>>>>>> 6803b59 (roommodes handmatig geplakt in de role description vanuit alle agent-definition files)
-=======
-        GerardDelegation["Gerard Delegation Plan<br/>(docs/wi-<NNNN>-delegation-gerard.md)"]
-        ParallelDelegation["Parallel Delegation Plan<br/>(docs/wi-<NNNN>-delegation-parallel.md)"]
->>>>>>> 16d724a38d3fb19d49612ad17bd4949535592785
     end
 
     UserTask -->|"feature request"| Robbie
@@ -82,22 +73,7 @@ flowchart LR
     Archibald -->|"reads"| ReviewDecision
     Archibald -->|"writes"| ArchDecisions
 
-<<<<<<< HEAD
 
-    %% NEW SEQUENTIAL-PARALLEL WORKFLOW
-    %% PHASE 1: Gerard (Sequential)
-<<<<<<< HEAD
-
-    Archibald -->|"delegation plan<br/>(API contract subtasks)"| Gerard
-=======
-    Archibald -->|"produces<br/>docs/wi-<NNNN>-delegation-gerard.md"| GerardDelegation
-    GerardDelegation -->|"reads delegation plan"| Gerard
->>>>>>> 6803b59 (roommodes handmatig geplakt in de role description vanuit alle agent-definition files)
-    Gerard -->|"produces versioned API contract"| ApiContractVersioned
-    Gerard -->|"adapter/gateway code"| FinalArtefacts
-    Gerard -->|"contract tests"| FinalArtefacts
-
-=======
     %% NEW SEQUENTIAL-PARALLEL WORKFLOW
     %% PHASE 1: Gerard (Sequential)
     Archibald -->|"produces<br/>docs/wi-<NNNN>-delegation-gerard.md"| GerardDelegation
@@ -105,7 +81,7 @@ flowchart LR
     Gerard -->|"produces versioned API contract"| ApiContractVersioned
     Gerard -->|"adapter/gateway code"| FinalArtefacts
     Gerard -->|"contract tests"| FinalArtefacts
->>>>>>> 16d724a38d3fb19d49612ad17bd4949535592785
+
     Gerard -->|"Versioned Ready Signal"| VersionedReadySignal
     VersionedReadySignal -->|"triggers Alignment Agent review"| ReviewRequest
     ReviewDecision -->|"greenlightForNextAgent: true<br/>nextAgentInPipeline: Femke-Naut-parallel"| Archibald
@@ -132,18 +108,12 @@ flowchart LR
     Gerard -->|"reevaluation complete signal"| GerardReevalSignal
     GerardReevalSignal -->|"closes re-eval cycle"| Archibald
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 16d724a38d3fb19d49612ad17bd4949535592785
     Gerard -->|"reads frontend source"| Femke
     Gerard -->|"reads backend routes"| BackendSrc
     Gerard -->|"produces validation reports"| ValidationReports["Validation Reports"]
     Gerard -->|"delegates fixes to"| CodingAgents["Coding Agents"]
-<<<<<<< HEAD
 
-=======
->>>>>>> 16d724a38d3fb19d49612ad17bd4949535592785
 
     Archibald -->|"architectural guidelines"| DBEngineer
     DBEngineer -->|"schema definitions"| FinalArtefacts
