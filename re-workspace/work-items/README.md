@@ -7,13 +7,15 @@ Structured work items for the Gimme Vetting Solution, organized by implementatio
 ```
 work-items/
 ├── README.md                    # This file
-└── MVP-1/                       # MVP 1 Work Items
-    ├── wi-001-poc-existence-verification.md
-    ├── wi-002-excel-file-upload-and-parsing.md
-    ├── wi-003-per-row-mandatory-field-validation.md
-    ├── wi-004-return-excel-generation.md
-    ├── wi-005-separate-poc-upload-endpoint.md
-    └── wi-006-project-build-orchestration.md
+├── MVP-1/                       # MVP 1 Core Work Items
+│   ├── wi-001-poc-existence-verification.md
+│   ├── wi-002-excel-file-upload-and-parsing.md
+│   ├── wi-003-per-row-mandatory-field-validation.md
+│   ├── wi-004-return-excel-generation.md
+│   ├── wi-005-separate-poc-upload-endpoint.md
+│   └── wi-006-project-build-orchestration.md
+└── MVP-1 touchups/              # MVP 1 Touchups (convenience features)
+    └── wi-007-download-template-excel.md
 ```
 
 ## MVP-1 Scope
@@ -49,6 +51,22 @@ WI-006 (Build Orchestration) ─────────────────
 - WI-001 can proceed independently
 - WI-005 can proceed in parallel with WI-002 through WI-004
 - WI-006 is independent and should be completed first to enable all other work
+
+---
+
+## MVP-1 Touchups
+
+Touchups are convenience features that improve the user experience but are not critical to the core MVP pipeline.
+
+### WI-007: Download Template Excel Sheet
+
+| ID | Title | Parent Requirement | Priority | Dependencies |
+|----|-------|-------------------|----------|--------------|
+| WI-007 | Download Template Excel Sheet | RQ-006 | Should have | None |
+
+**Purpose:** Provide a downloadable Excel template file with correct column headers so users can fill in their invoice data before uploading.
+
+**File:** [wi-007-download-template-excel.md](MVP-1%20touchups/wi-007-download-template-excel.md)
 
 ## Master Reference
 

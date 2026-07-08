@@ -419,6 +419,32 @@ These work items address the Excel batch intake pipeline required for the MVP cl
 
 ---
 
+### WI-007: Download Template Excel Sheet
+
+**Parent Requirement:** RQ-006 (Excel Batch Intake)
+**Work Stream:** W-007 (Excel Batch Intake Pipeline)
+**Status:** Proposed
+**Dependencies:** None (independent feature)
+**Priority:** Should have (MVP convenience feature)
+
+**Purpose:** Provide a downloadable Excel template file that users can fill in with their invoice data before uploading.
+
+**Scope:**
+- GET endpoint `/api/v1/intake/excel/template` that returns a pre-formatted .xlsx template
+- Template contains exactly 5 columns: `invoice number`, `debtor name`, `address`, `phone number`, `bank account number`
+- Template is generated using Apache POI (same library as existing parsing/generation logic)
+- Frontend download button near the Excel upload component
+- Template file name: `invoice-intake-template.xlsx`
+
+**Output:**
+- Backend endpoint in `ExcelIntakeController`
+- Template generation method in `ExcelParsingService` (or dedicated template service)
+- Frontend download button in the Excel upload component
+
+**Note:** This is a convenience feature to reduce upload errors from column name mismatches.
+
+---
+
 ### MVP Work Item Dependency Graph
 
 ```

@@ -447,3 +447,54 @@ describe('ExcelUpload Component', () => {
     });
   });
 });
+
+describe('Download Template Button', () => {
+  it('renders a Download Template button', () => {
+    render(<ExcelUpload />);
+    const downloadButton = screen.getByRole('button', { name: /download template/i });
+    expect(downloadButton).toBeInTheDocument();
+  });
+
+  it('triggers a GET request to the template endpoint on click', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      blob: async () => new Blob(),
+      headers: new Map([['content-disposition', 'attachment; filename="invoice-intake-template.xlsx"']]),
+    });
+
+    render(<ExcelUpload />);
+    const downloadButton = screen.getByRole('button', { name: /download template/i });
+
+    fireEvent.click(downloadButton);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/v1/intake/excel/template',
+        expect.objectContaining({
+          method: 'GET',
+        })
+      );
+    });
+  });
+
+  it('uses the correct endpoint path /api/v1/intake/excel/template', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      blob: async () => new Blob(),
+    });
+
+    render(<ExcelUpload />);
+    const downloadButton = screen.getByRole('button', { name: /download template/i });
+
+    fireEvent.click(downloadButton);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/v1/intake/excel/template',
+        expect.any(Object)
+      );
+    });
+  });
+});

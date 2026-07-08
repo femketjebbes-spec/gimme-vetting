@@ -187,3 +187,42 @@ or
 | `errorDetail` | string | Technical description of the failure. |
 
 **Frontend behaviour:** Display the message "An unexpected error occurred during processing." in an error alert div.
+
+### GET /api/v1/intake/excel/template
+
+| Attribute | Value |
+|-----------|-------|
+| HTTP Method | GET |
+| Path | `/api/v1/intake/excel/template` |
+| Authentication | No (MVP, per D-020) |
+
+#### Request
+
+No parameters, no request body.
+
+#### Expected Response — 200 OK (Template Download)
+
+Binary response: a valid `.xlsx` Excel file.
+
+| Header | Value |
+|--------|-------|
+| `Content-Type` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` |
+| `Content-Disposition` | `attachment; filename="invoice-intake-template.xlsx"` |
+
+**Frontend behaviour:** On successful response, create a blob URL from the response body, create an anchor element with `download` attribute set to the filename from `Content-Disposition` header (default `invoice-intake-template.xlsx`), trigger a click to initiate the browser file download, then clean up the blob URL and anchor element.
+
+#### Expected Response — 500 Internal Server Error
+
+```json
+{
+  "status": "INTERNAL_ERROR",
+  "errorDetail": "Template generation failed"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | `"INTERNAL_ERROR"` |
+| `errorDetail` | string | Human-readable error description. |
+
+**Frontend behaviour:** Display the message "An unexpected error occurred during processing." in an error alert div. No server-internal error messages are exposed to the user.
