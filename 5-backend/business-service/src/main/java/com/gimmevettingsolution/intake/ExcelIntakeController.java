@@ -95,7 +95,7 @@ public class ExcelIntakeController {
                 int failIdx = 0;
                 for (ExcelInvoiceRow originalRow : rowList) {
                     boolean isFailing = validationResult.getFailingRows().stream()
-                            .noneMatch(rf -> rf.getRowIndex() == (originalRow != null ? originalRow.getRowIndex() : -1));
+                            .anyMatch(rf -> rf.getRowIndex() == (originalRow != null ? originalRow.getRowIndex() : -1));
                     if (isFailing) {
                         failingRowsForExcel[failIdx++] = originalRow;
                     }
