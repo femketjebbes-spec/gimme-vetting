@@ -75,12 +75,10 @@ frontend-test:
   script:
     - npm --prefix 4-frontend ci
     - npm --prefix 4-frontend run lint || true
-    - npm --prefix 4-frontend test -- --ci --coverage --json --coverageReporters=json-summary --outputFile=.jest-results.json
+    - npm --prefix 4-frontend test -- --ci --coverage --coverageReporters=json-summary --coverageReporters=cobertura --outputFile=.jest-results.json
   dependencies: []
   artifacts:
     reports:
-      junit:
-        - 4-frontend/junit.xml
       coverage_report:
         coverage_format: cobertura
         path: 4-frontend/coverage/cobertura-coverage.xml
