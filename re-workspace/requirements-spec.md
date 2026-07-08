@@ -205,11 +205,11 @@ Gimme shall provide a client portal endpoint for uploading PoC files separately 
 
 | ID | Description | Priority | Type | Dependency |
 |----|-------------|----------|------|------------|
-| RQ-001 | PoC Existence Verification | Must have | Type A (Missing PoC) | File upload system |
-| RQ-002 | Uncooperative Register Check | Must have | Type B (Business Rule) | External registry (provided during implementation) |
-| RQ-003 | Payment Plan Check | Must have | Type B (Business Rule) | External registry (provided during implementation) |
-| RQ-004 | Batch Acceptance by Case Analyst | Must have | N/A (Post-acceptance) | Case management system |
-| RQ-005 | Warning Logging for Unavailable Data Sources | Must have | N/A | System logging infrastructure |
+| RQ-001 | PoC Existence Verification | Must have (MVP) | Type A (Missing PoC) | File upload system |
+| RQ-002 | Uncooperative Register Check | Out of scope for MVP | Type B (Business Rule) | External registry (provided during implementation) |
+| RQ-003 | Payment Plan Check | Out of scope for MVP | Type B (Business Rule) | External registry (provided during implementation) |
+| RQ-004 | Batch Acceptance by Case Analyst | Out of scope for MVP | N/A (Post-acceptance) | Case management system |
+| RQ-005 | Warning Logging for Unavailable Data Sources | Out of scope for MVP | N/A | System logging infrastructure |
 | RQ-006 | Excel Batch Intake | Must have (MVP) | N/A (Intake mechanism) | Client portal |
 | RQ-007 | Mandatory Field Validation (Per-Row) | Must have (MVP) | N/A (Validation) | Excel parsing library |
 | RQ-008 | Return Excel with Missing Data | Must have (MVP) | N/A (Output) | Excel generation library |

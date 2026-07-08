@@ -73,3 +73,43 @@ Rationale: Delegation plan specifies `npm run build` for frontend build target.
 [2026-07-07] [Session 2] DECISION: check-tools target verifies mvn, node, npm availability before build targets execute.
 Assumptions: Standard POSIX `command -v` is available for tool detection.
 Rationale: NFR-002 from WI-006 requires clear error messages for missing tools.
+
+[2026-07-08] [Session 1] DECISION: `ExcelParsingService.generateReturnExcel()` uses 4-param overload instead of changing existing 2-param signature.
+Assumptions: All 3 existing test callers use only the 2-param method and check only file existence.
+Rationale: Delegation plan mandates backward compatibility. Changing the 2-param signature breaks compilation.
+
+[2026-07-08] [Session 1] DECISION: CSV output uses `writer.write()` + `writer.newLine()` as separate statements.
+Assumptions: `BufferedWriter.append()` returns `Writer`, not `BufferedWriter`, so `.newLine()` cannot be chained.
+Rationale: Java standard library behavior. Chaining causes compilation error.
+
+[2026-07-08] [Session 1] DECISION: Issue format uses `"MISSING_FIELDS: "` (with space) instead of `"MISSING_FIELDS:"` (without space).
+Assumptions: Existing tests check file existence only, not issue content format.
+Rationale: Delegation plan spec requires space after colon for consistency.
+
+[2026-07-08] [Session 1] TEST-SPEC: `ExcelParsingServiceReturnExcelTest.java` maps to WI-004 Subtask 5 (all 12 tests).
+Purpose: Validates return Excel generation: row count, column data, issue format, null handling, XLSX format, CSV format, CSV escaping (commas, double quotes), backward compatibility.
+Derived from: WI-004 delegation plan, RQ-008, D-012, D-013, D-028, D-029
+
+[2026-07-08] [Session 1] TEST-SPEC: `ExcelIntakeControllerTest.java` integration test maps to WI-004 Subtask 5 (Test 10).
+Purpose: End-to-end upload -> download flow verification.
+Derived from: WI-004 delegation plan Subtask 5
+
+[2026-07-08] [Session 2] DECISION: Invoice number extracted from uploaded filename by stripping `.pdf` extension (case-insensitive) and lowercasing the result.
+Assumptions: The frontend sends the file with the invoice number encoded in the filename.
+Rationale: Per D-001 case-insensitive matching and the delegation plan. Consistent with `hasMatchingPoC()` algorithm which also lowercases during comparison.
+
+[2026-07-08] [Session 2] DECISION: `SecurityException` thrown from `store()` for path traversal, caught at controller level and mapped to 400 response.
+Assumptions: The SAFE_PATTERN regex is the same as used in `hasMatchingPoC()`.
+Rationale: Delegation plan specifies catching `SecurityException` from filename validation.
+
+[2026-07-08] [Session 2] DECISION: `RuntimeException` wraps `IOException` from `Files.copy()` in `store()`.
+Assumptions: `IOException` during file storage should propagate as a 500 response.
+Rationale: Clean separation between validation errors (400) and storage errors (500). Controller catches all exceptions and maps to appropriate HTTP status.
+
+[2026-07-08] [Session 2] TEST-SPEC: `PoCStoreServiceTest.java` store() unit tests map to delegation plan Subtask 1 (store() implementation).
+Purpose: Validates file storage, overwrite behaviour, path traversal rejection, directory creation.
+Derived from: WI-005 delegation plan Subtask 1, D-001, D-003, D-016
+
+[2026-07-08] [Session 2] TEST-SPEC: `PoCUploadControllerTest.java` integration tests map to delegation plan Subtask 1 (controller implementation).
+Purpose: Validates POST /api/v1/poc-upload endpoint: successful PDF upload (200), non-PDF rejection (400), path traversal rejection (400), duplicate upload (200), filename without extension (200).
+Derived from: WI-005 delegation plan Subtask 1, docs/api-contract-wi-005.md

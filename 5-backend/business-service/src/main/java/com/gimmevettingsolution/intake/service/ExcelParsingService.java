@@ -472,19 +472,53 @@ public class ExcelParsingService {
      * @param outputDir   the directory to write the file to
      * @return path to the generated file, or null if no failing rows
      */
+    /**
+     * Generate a return Excel file containing only rows that failed validation.
+     * Backward-compatible 2-param method delegates to 4-param overload with defaults.
+     *
+     * @param failingRows the rows that failed validation
+     * @param outputDir   the directory to write the file to
+     * @return path to the generated file, or null if no failing rows
+     */
     public Path generateReturnExcel(ExcelInvoiceRow[] failingRows, Path outputDir) throws IOException {
+        String defaultFilename = "return-excel.xlsx";
+        return generateReturnExcel(failingRows, outputDir, defaultFilename, false);
+    }
+
+    /**
+     * Generate a return Excel file containing only rows that failed validation.
+     * Supports both XLSX and CSV output formats.
+     *
+     * @param failingRows the rows that failed validation
+     * @param outputDir   the directory to write the file to
+     * @param filename    the output filename (must include extension)
+     * @param isCsv       true to generate CSV, false for XLSX
+     * @return path to the generated file, or null if no failing rows
+     */
+    public Path generateReturnExcel(ExcelInvoiceRow[] failingRows, Path outputDir, String filename, boolean isCsv) throws IOException {
         if (failingRows == null || failingRows.length == 0) {
             return null;
         }
 
-        Path outputFile = outputDir.resolve("return-excel.xlsx");
+        Path outputFile = outputDir.resolve(filename);
+        String[] headers = {"invoice number", "debtor name", "address", "phone number", "bank account number", "Issue"};
 
+        if (isCsv) {
+            return generateReturnCsv(failingRows, outputFile, headers);
+        } else {
+            return generateReturnXlsx(failingRows, outputFile, headers);
+        }
+    }
+
+    /**
+     * Generate return Excel in XLSX format using Apache POI.
+     */
+    private Path generateReturnXlsx(ExcelInvoiceRow[] failingRows, Path outputFile, String[] headers) throws IOException {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Failed Rows");
 
             // Create header row
             Row headerRow = sheet.createRow(0);
-            String[] headers = {"invoice number", "debtor name", "address", "phone number", "bank account number", "Issue"};
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -495,14 +529,12 @@ public class ExcelParsingService {
             for (ExcelInvoiceRow row : failingRows) {
                 Row dataRow = sheet.createRow(rowNum);
 
-                String issue = buildIssue(row);
-
                 dataRow.createCell(0).setCellValue(row.getInvoiceNumber() != null ? row.getInvoiceNumber() : "");
                 dataRow.createCell(1).setCellValue(row.getDebtorName() != null ? row.getDebtorName() : "");
                 dataRow.createCell(2).setCellValue(row.getAddress() != null ? row.getAddress() : "");
                 dataRow.createCell(3).setCellValue(row.getPhoneNumber() != null ? row.getPhoneNumber() : "");
                 dataRow.createCell(4).setCellValue(row.getBankAccountNumber() != null ? row.getBankAccountNumber() : "");
-                dataRow.createCell(5).setCellValue(issue);
+                dataRow.createCell(5).setCellValue(buildIssue(row));
 
                 rowNum++;
             }
@@ -516,7 +548,56 @@ public class ExcelParsingService {
     }
 
     /**
+     * Generate return Excel in CSV format with RFC 4180 escaping.
+     */
+    private Path generateReturnCsv(ExcelInvoiceRow[] failingRows, Path outputFile, String[] headers) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile.toFile()))) {
+            writer.write(String.join(",", headers));
+            writer.newLine();
+            for (ExcelInvoiceRow row : failingRows) {
+                writer.write(formatCsvRow(row));
+                writer.newLine();
+            }
+        }
+
+        return outputFile;
+    }
+
+    /**
+     * Format a single row as a CSV string with RFC 4180 escaping.
+     */
+    private String formatCsvRow(ExcelInvoiceRow row) {
+        String[] values = {
+                csvEscape(row.getInvoiceNumber()),
+                csvEscape(row.getDebtorName()),
+                csvEscape(row.getAddress()),
+                csvEscape(row.getPhoneNumber()),
+                csvEscape(row.getBankAccountNumber()),
+                csvEscape(buildIssue(row))
+        };
+        return String.join(",", values);
+    }
+
+    /**
+     * RFC 4180 CSV escaping.
+     * Values containing commas, double quotes, or newlines are enclosed in double quotes.
+     * Double quotes within the value are escaped by doubling them.
+     */
+    private String csvEscape(String value) {
+        if (value == null) {
+            return "";
+        }
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
+    }
+
+    /**
      * Build the issue description for a failing row.
+     *
+     * @param row the failing row
+     * @return issue description string
      */
     private String buildIssue(ExcelInvoiceRow row) {
         List<String> issues = new ArrayList<>();
@@ -545,7 +626,7 @@ public class ExcelParsingService {
         }
 
         if (hasMissingFields) {
-            issues.add("MISSING_FIELDS:" + String.join(", ", missingFields));
+            issues.add("MISSING_FIELDS: " + String.join(", ", missingFields));
         }
 
         if (issues.isEmpty()) {
@@ -553,5 +634,17 @@ public class ExcelParsingService {
         }
 
         return String.join("; ", issues);
+    }
+
+    /**
+     * Build the issue description with an explicit issue string.
+     * Used for PoC failure integration (e.g., "MISSING_POC").
+     *
+     * @param row           the failing row (unused but kept for API consistency)
+     * @param explicitIssue the explicit issue string
+     * @return the explicit issue string
+     */
+    String buildIssue(ExcelInvoiceRow row, String explicitIssue) {
+        return explicitIssue;
     }
 }

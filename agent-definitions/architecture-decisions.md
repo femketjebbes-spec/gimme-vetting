@@ -77,3 +77,18 @@ Affected Agents: Naut
 Rationale: Option B (Makefile) was selected over Option A (shell script) and Option C (root package.json) by the WI-006 specification. Make provides incremental build support, clear dependency declarations, and is the standard convention for multi-language projects.
 Security Implications: None. Build orchestration does not affect the product security surface.
 Affected Agents: Naut
+
+[2026-07-08] [Session 7] ARCHITECTURAL DECISION: WI-005 PoC upload endpoint shall reject non-PDF files with a 400 Bad Request response containing a clear error message. The endpoint validates MIME type is `application/pdf` server-side.
+Rationale: Consistent with the existing pattern in ExcelIntakeController which validates MIME types for Excel uploads. Rejecting non-PDF files prevents storage bloat and client confusion. The error message must clearly indicate that only PDF files are accepted.
+Security Implications: MIME type validation prevents upload of malicious files disguised as PDF. Server-side validation is mandatory because client-side validation is bypassable. The MIME type must be verified against the actual file content (magic byte check) to prevent upload of executable files with `.pdf` extensions.
+Affected Agents: Gerard, Naut
+
+[2026-07-08] [Session 7] ARCHITECTURAL DECISION: WI-005 PoC upload shall overwrite existing files when a duplicate filename is uploaded.
+Rationale: Consistent with D-002 (multiple PoC files for same invoice are not an error) and the simplest storage strategy. Overwrite behaviour avoids storage bloat from duplicate files. The client can re-upload a corrected PoC file without needing a cleanup mechanism.
+Security Implications: No security risk. The existing path traversal protection in FileBackedPoCStoreService (SAFE_PATTERN) applies to uploads as well. The overwrite is atomic via `Files.move()` with `REPLACE_EXISTING`.
+Affected Agents: Naut
+
+[2026-07-08] [Session 7] ARCHITECTURAL DECISION: WI-005 PoC upload endpoint path is POST /api/v1/poc-upload. The request body is multipart/form-data with a single field named `file`. The filename is extracted from the uploaded file and used for PoC matching. No additional parameter for invoice number is required because the invoice number is encoded in the filename.
+Rationale: This is the simplest API design. The filename-to-invoice-number mapping is already established by D-001 (case-insensitive matching). Adding a separate invoice number parameter would create duplication and potential mismatch between filename and stated invoice number.
+Security Implications: The filename must be sanitized against path traversal (same pattern as ExcelIntakeController). The endpoint must not accept a filename that resolves to a path outside the PoC store directory.
+Affected Agents: Gerard, Naut

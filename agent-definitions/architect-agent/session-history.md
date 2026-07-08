@@ -34,3 +34,77 @@ Gerard produced `docs/api-contract-wi-002.md` (version 2.0.0). Alignment Agent a
 - Apache POI 5.2.5 is sufficient for MVP file size and performance requirements. EasyExcel can be evaluated if large-file performance becomes critical (AUNV-006).
 - Synchronous processing is acceptable for MVP. Async processing can be evaluated if file sizes or processing times become problematic.
 - Temporary file cleanup for return Excel files uses server-side temporary directory with no explicit retention period for MVP. This is a minor operational gap.
+
+## Session 7 — 2026-07-08 — WI-005 Separate PoC Upload Endpoint (Gerard Phase)
+
+### What Was Explored
+
+User requested implementation of WI-005. The work item specifies a separate PoC upload endpoint for the client portal, allowing clients to upload PoC files (PDF) by invoice number filename independently of the Excel batch upload pipeline.
+
+Two architectural decisions from the WI-005 specification required resolution: (1) file type enforcement for uploaded PoC files — the specification allowed either rejection or silent ignore of non-PDF files; (2) duplicate filename handling — the specification allowed either overwrite or reject. Both were resolved by the architect.
+
+The existing `PoCStoreService` interface and `FileBackedPoCStoreService` implementation were reviewed. No `store()` method exists yet. The new endpoint will need to add a `store(MultipartFile file)` method to the interface.
+
+### What Was Decided
+
+1. **D-015**: PoC upload endpoint rejects non-PDF files with a 400 Bad Request. Server-side MIME type validation for `application/pdf`.
+2. **D-016**: Duplicate filename overwrites existing PoC file in the store.
+3. **D-017**: Endpoint path is `POST /api/v1/poc-upload`. Request is multipart/form-data with single field `file`. Invoice number is extracted from filename, not a separate parameter.
+4. `docs/wi-005-delegation-gerard.md` produced with two subtasks: (a) API contract definition for `docs/api-contract-wi-005.md`, (b) alignment review submission.
+5. `agent-definitions/architect-agent/models/2026-07-08-session7-wi005-delegation.mmd` produced as the delegation flow diagram.
+
+### What Remains Open
+
+- `docs/api-contract-wi-005.md` — to be produced by Gerard
+- Backend implementation by Naut (PoCUploadController, PoCStoreService.store())
+- Frontend implementation by Femke (display missing PoC invoice numbers, upload UI)
+- Alignment review approvals for both backend and frontend phases
+
+### Assumptions Made
+
+- The `PoCStoreService` will gain a `store(MultipartFile)` method. The method uses the same path traversal protection pattern (SAFE_PATTERN) as the `hasMatchingPoC()` method.
+- Filename sanitization for the upload endpoint uses the same approach as ExcelIntakeController: reject filenames containing path separators or matching the SAFE_PATTERN.
+- The frontend UI for displaying missing PoC invoice numbers will derive the list from the return Excel response produced by WI-004, or from a dedicated endpoint to be defined by Gerard.
+
+## Session 8 — 2026-07-08 — WI-005 Parallel Delegation (Naut and Femke Phase)
+
+### What Was Explored
+
+Alignment Agent approved Gerard's API contract for WI-005 with greenlightForNextAgent set to true. Contract readiness signal `docs/wi-005-contract-ready.md` confirmed. Parallel implementation phase activated.
+
+Existing code was reviewed to inform subtask constraints: `ExcelUpload.jsx` provides the frontend upload pattern for Femke to follow. `PoCStoreService` interface has only `hasMatchingPoC()` method — Naut must add `store(MultipartFile file)`. `FileBackedPoCStoreService` provides the implementation pattern for Naut (configurable path, SAFE_PATTERN, case-insensitive matching). No existing PoC upload code exists in either frontend or backend.
+
+### What Was Decided
+
+1. `docs/wi-005-delegation-parallel.md` produced with two parallel subtasks:
+   - Naut: Backend implementation — add `store()` method to `PoCStoreService` and `FileBackedPoCStoreService`, create `PoCUploadController` with `POST /api/v1/poc-upload`, write unit and integration tests.
+   - Femke: Frontend implementation — create PoC upload UI component, display missing PoC invoice numbers, add upload buttons and success/error feedback.
+2. Both agents consume the identical contract file: `docs/api-contract-wi-005.md` (version 5.0.0).
+3. Both agents must submit alignment review requests upon completion.
+
+### What Remains Open
+
+- Naut backend implementation and alignment review
+- Femke frontend implementation and alignment review
+- Pipeline completion after both alignment reviews are approved
+
+## Session 9 — 2026-07-08 — WI-005 Parallel Phase Completion
+
+### What Was Explored
+
+The Alignment Agent approved Naut's backend submission for WI-005 (review ID WI-005-NAUT-001, status APPROVED, greenlightForNextAgent: true). Femke's frontend submission was approved in a prior cycle. Both agents produced artefacts conforming to the versioned API contract (docs/api-contract-wi-005.md, version 5.0.0).
+
+Naut produced: PoCStoreService.java (interface addition), FileBackedPoCStoreService.java (store() implementation), PoCUploadController.java (POST /api/v1/poc-upload), PoCUploadSuccessResponse.java (DTO), PoCStoreServiceTest.java (6 new tests), PoCUploadControllerTest.java (12 new tests). All 28 new tests pass. Full backend suite: 114 tests, zero regressions.
+
+Femke produced: PoCUpload.jsx (frontend component), PoCUpload.test.jsx (15 Jest tests). All frontend tests pass.
+
+### What Was Decided
+
+1. Both Femke and Naut backend and frontend submissions for WI-005 are approved by the Alignment Agent.
+2. The parallel implementation phase for WI-005 is complete.
+3. No architectural drift detected — all artefacts conform to D-001, D-003, D-015, D-016, D-017.
+
+### What Remains Open
+
+- Integration testing of the complete PoC upload flow (frontend + backend + API contract)
+- Potential next work item: WI-003 (Per-Row Mandatory Field Validation) or WI-004 (Return Excel Generation)

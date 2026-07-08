@@ -208,6 +208,46 @@ class ExcelIntakeControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    // --- Subtask 5, Test 10: Full upload -> download integration ---
+
+    @Test
+    void uploadExcel_thenDownload_returnFileExistsWithContent() throws Exception {
+        // Upload a file with failing rows
+        byte[] xlsxBytes = createPartialXlsx(2);
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "test.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                xlsxBytes);
+
+        // Step 1: Upload and get the download link
+        String uploadContent = mockMvc.perform(multipart("/api/v1/intake/excel").file(file))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        // Extract download link from JSON response
+        // Expected format: /api/v1/intake/excel/download/return-<uuid>.xlsx
+        String downloadLink = extractDownloadLink(uploadContent);
+        assertNotNull(downloadLink);
+        assertTrue(downloadLink.startsWith("/api/v1/intake/excel/download/"));
+
+        // Extract filename from the link
+        String filename = downloadLink.substring(downloadLink.lastIndexOf("/") + 1);
+
+        // Step 2: Actually download the file
+        byte[] downloadedBytes = mockMvc.perform(get(downloadLink))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+
+        // Step 3: Verify file has content (not empty)
+        assertTrue(downloadedBytes.length > 0, "Downloaded file should not be empty");
+
+        // For XLSX, verify it starts with PK header (ZIP format)
+        // First two bytes should be 0x50 0x4B (PK)
+        assertEquals((byte) 0x50, downloadedBytes[0], "XLSX file should start with PK header");
+        assertEquals((byte) 0x4B, downloadedBytes[1], "XLSX file should start with PK header");
+    }
+
     // --- Helper Methods ---
 
     private byte[] createTestXlsx() throws IOException {
@@ -294,5 +334,16 @@ class ExcelIntakeControllerTest {
             workbook.write(baos);
             return baos.toByteArray();
         }
+    }
+
+    private String extractDownloadLink(String jsonResponse) {
+        // JSON format: "returnExcelDownloadLink":"/api/v1/intake/excel/download/return-<uuid>.xlsx"
+        int start = jsonResponse.indexOf("\"returnExcelDownloadLink\":\"");
+        if (start < 0) {
+            return null;
+        }
+        start = start + "\"returnExcelDownloadLink\":\"".length();
+        int end = jsonResponse.indexOf("\"", start);
+        return jsonResponse.substring(start, end);
     }
 }

@@ -109,3 +109,81 @@ This document specifies the API endpoints required by the ExcelUpload frontend c
 - The frontend performs client-side MIME type validation before upload. The backend performs server-side MIME type validation as mandated by S-007.
 - The upload button is disabled during processing (loading state) to prevent duplicate submissions.
 - The `returnExcelDownloadLink` is only rendered when `rowsFailed > 0`.
+
+### POST /api/v1/poc-upload
+
+| Attribute | Value |
+|-----------|-------|
+| HTTP Method | POST |
+| Path | `/api/v1/poc-upload` |
+| Content-Type | `multipart/form-data` |
+| Authentication | No (PoC phase, per D-026) |
+
+#### Request
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `file` | File | Yes | The PoC file to upload. Must be PDF. |
+
+**File format constraints (client-side):**
+
+| Format | Extension | MIME Type |
+|--------|-----------|-----------|
+| PDF | `.pdf` | `application/pdf` |
+
+#### Expected Response — 200 OK (Upload Successful)
+
+```json
+{
+  "status": "UPLOADED",
+  "invoiceNumber": "inv-2026-0042"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | Always `"UPLOADED"` on success. |
+| `invoiceNumber` | string | The invoice number extracted from the filename. |
+
+**Frontend behaviour:** Display a success message with the uploaded invoice number.
+
+#### Expected Response — 400 Bad Request (Non-PDF File or Path Traversal)
+
+```json
+{
+  "status": "INVALID_FILE_FORMAT",
+  "errorDetail": "Only PDF files are accepted. Uploaded file type: application/msword"
+}
+```
+
+or
+
+```json
+{
+  "status": "INVALID_FILE_FORMAT",
+  "errorDetail": "Path traversal detected in filename"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | `"INVALID_FILE_FORMAT"` |
+| `errorDetail` | string | Human-readable description of the error. |
+
+**Frontend behaviour:** Display the `errorDetail` message in an error alert div. Path traversal errors show "Path traversal detected in filename." Non-PDF errors show "Only PDF files are accepted."
+
+#### Expected Response — 500 Internal Server Error
+
+```json
+{
+  "status": "INTERNAL_ERROR",
+  "errorDetail": "Unexpected error during PoC upload"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | `"INTERNAL_ERROR"` |
+| `errorDetail` | string | Technical description of the failure. |
+
+**Frontend behaviour:** Display the message "An unexpected error occurred during processing." in an error alert div.
