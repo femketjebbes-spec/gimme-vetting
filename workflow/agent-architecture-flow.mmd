@@ -28,10 +28,9 @@ flowchart LR
         RejectionFeedback["Rejection Feedback<br/>(docs/alignment-rejection-feedback.md)"]
         FinalArtefacts["Approved Artefacts<br/>(workspace)"]
         ArchDecisions["Architecture Decisions<br/>(architecture-decisions.md)"]
+        ApiContractVersioned["Versioned API Contract<br/>(docs/api-contract-wi-<NNNN>.md)"]
+        VersionedReadySignal["Versioned Ready Signal<br/>(docs/wi-<NNNN>-contract-ready.md)"]
         ApiRequirements["API Requirements<br/>(docs/api-requirements.md)"]
-        ApiContract["API Contract<br/>(docs/api-contract.md)"]
-        ApiReadySignal["API-Ready Signal<br/>(docs/api-ready-signal.md)"]
-        GerardReadySignal["Gerard-Ready Signal<br/>(docs/gerard-ready-signal.md)"]
         FemkeStructuralSignal["Femke Structural Change Signal<br/>(docs/femke-structural-change-signal.md)"]
         GerardReevalSignal["Gerard Re-evaluation Complete Signal<br/>(docs/gerard-reevaluation-complete-signal.md)"]
         ImplSummaries["Implementation Summaries"]
@@ -73,41 +72,46 @@ flowchart LR
     Archibald -->|"reads"| ReviewDecision
     Archibald -->|"writes"| ArchDecisions
 
-    %% SEQUENTIAL WORKFLOW (signal-based handover, gated by Alignment Agent)
-    Archibald -->|"delegation plan<br/>(frontend subtasks)"| Femke
-    Femke -->|"HTML/JS/CSS frontend code"| FinalArtefacts
-    Femke -->|"API requirements"| ApiRequirements
-    ApiRequirements -->|"API requirements"| Gerard
-    Femke -->|"API-ready signal"| ApiReadySignal
-    ApiReadySignal -->|"triggers Gerard activation"| Archibald
+
+    %% NEW SEQUENTIAL-PARALLEL WORKFLOW
+    %% PHASE 1: Gerard (Sequential)
+
     Archibald -->|"delegation plan<br/>(API contract subtasks)"| Gerard
-    Gerard -->|"reads frontend source"| Femke
-    Gerard -->|"produces API contract"| ApiContract
+    Gerard -->|"produces versioned API contract"| ApiContractVersioned
     Gerard -->|"adapter/gateway code"| FinalArtefacts
     Gerard -->|"contract tests"| FinalArtefacts
-    Gerard -->|"Gerard-ready signal"| GerardReadySignal
-    GerardReadySignal -->|"triggers Alignment Agent review"| ReviewRequest
-    ReviewDecision -->|"greenlightForNextAgent: true<br/>nextAgentInPipeline: Naut"| Archibald
-    Archibald -->|"reads Alignment Agent decision<br/>before Naut activation"| ReviewDecision
-    Archibald -->|"delegation plan<br/>(backend subtasks<br/>after Alignment Agent approval)"| Naut
-    Naut -->|"reads API contract"| ApiContract
+
+    Gerard -->|"Versioned Ready Signal"| VersionedReadySignal
+    VersionedReadySignal -->|"triggers Alignment Agent review"| ReviewRequest
+    ReviewDecision -->|"greenlightForNextAgent: true<br/>nextAgentInPipeline: Femke-Naut-parallel"| Archibald
+    Archibald -->|"reads Alignment Agent decision<br/>before parallel activation"| ReviewDecision
+
+    %% PHASE 2: Femke + Naut (Parallel)
+    Archibald -->|"parallel delegation plan<br/>(frontend + backend subtasks)"| Femke
+    Archibald -->|"parallel delegation plan<br/>(frontend + backend subtasks)"| Naut
+    Femke -->|"HTML/JS/CSS frontend code"| FinalArtefacts
+    Femke -->|"API requirements"| ApiRequirements
+    Naut -->|"JUnit 5 tests (Testing Mode)"| BackendTests["Backend Test Dir<br/>(.java test files)"]
+    Naut -->|"production code (Implementation Mode)"| BackendSrc["Backend Source Dir<br/>(.java source files)"]
+    BackendTests -->|"reads for guidance"| BackendSrc
 
     %% STRUCTURAL CHANGE RE-EVALUATION WORKFLOW
     Femke -->|"structural change signal (Refactoring Mode)"| FemkeStructuralSignal
     FemkeStructuralSignal -->|"triggers Gerard re-evaluation"| Archibald
     Archibald -->|"delegation plan<br/>(Gerard re-evaluation)"| Gerard
-    Gerard -->|"re-validates contract"| ApiContract
+    Gerard -->|"re-validates contract"| ApiContractVersioned
     Gerard -->|"delegates backend fixes"| Naut
     Naut -->|"backend fix implementation"| BackendSrc["Backend Source Dir<br/>(.java source files)"]
     Gerard -->|"verifies fix"| BackendSrc
     Gerard -->|"reevaluation complete signal"| GerardReevalSignal
     GerardReevalSignal -->|"closes re-eval cycle"| Archibald
 
-    Naut -->|"JUnit 5 tests (Testing Mode)"| BackendTests["Backend Test Dir<br/>(.java test files)"]
-    Naut -->|"production code (Implementation Mode)"| BackendSrc
-    Naut -->|"implementation summaries"| ImplSummaries
-    BackendTests -->|"reads for guidance"| BackendSrc
-    Naut -->|"test mod auth if plan changes"| Naut
+
+    Gerard -->|"reads frontend source"| Femke
+    Gerard -->|"reads backend routes"| BackendSrc
+    Gerard -->|"produces validation reports"| ValidationReports["Validation Reports"]
+    Gerard -->|"delegates fixes to"| CodingAgents["Coding Agents"]
+
 
     Archibald -->|"architectural guidelines"| DBEngineer
     DBEngineer -->|"schema definitions"| FinalArtefacts
@@ -115,12 +119,11 @@ flowchart LR
     DBEngineer -->|"optimized queries"| FinalArtefacts
 
     Gerard -->|"reads frontend fetch patterns"| FrontendSrc["Frontend Source<br/>(fetch calls, API services)"]
-    Gerard -->|"reads backend routes"| BackendSrc
-    Gerard -->|"produces validation reports"| ValidationReports["Validation Reports"]
-    Gerard -->|"delegates fixes to"| CodingAgents["Coding Agents"]
 
     style AlignmentAgent fill:#f9f,stroke:#333,stroke-width:2px
     style ReviewRequest fill:#ff9,stroke:#333,stroke-width:2px
     style ReviewDecision fill:#9f9,stroke:#333,stroke-width:2px
     style RejectionFeedback fill:#f99,stroke:#333,stroke-width:2px
     style FinalArtefacts fill:#9f9,stroke:#333,stroke-width:2px
+    style VersionedReadySignal fill:#9cf,stroke:#333,stroke-width:2px
+    style ApiContractVersioned fill:#9cf,stroke:#333,stroke-width:2px
