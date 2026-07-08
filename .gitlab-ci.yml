@@ -98,13 +98,12 @@ frontend-test:
 security-scan:
   stage: security-scan
   image: aquasec/trivy:latest
-  entrypoint: [""]
   dependencies:
     - backend-build
     - frontend-build
   script:
-    - trivy fs --sec-type vuln --severity HIGH,CRITICAL --format sarif --output trivy-backend.sarif 5-backend || true
-    - trivy fs --sec-type vuln --severity HIGH,CRITICAL --format sarif --output trivy-frontend.sarif 4-frontend || true
+    - /bin/sh -c 'trivy fs --sec-type vuln --severity HIGH,CRITICAL --format sarif --output trivy-backend.sarif 5-backend || true'
+    - /bin/sh -c 'trivy fs --sec-type vuln --severity HIGH,CRITICAL --format sarif --output trivy-frontend.sarif 4-frontend || true'
   artifacts:
     paths:
       - trivy-backend.sarif
