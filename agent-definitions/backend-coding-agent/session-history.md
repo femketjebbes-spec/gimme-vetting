@@ -189,6 +189,7 @@ Summary of each session conducted by Naut.
 **Assumptions:** The Alignment Agent has approved Gerard's API contract work for WI-007 before Naut activated, confirmed via the parallel delegation plan.
 
 **Alignment Review:** Submitted cycle 1 to `docs/alignment-review-request.md`.
+<<<<<<< HEAD
 
 ## Session 4 - 2026-07-08
 
@@ -205,3 +206,5 @@ Summary of each session conducted by Naut.
 **Assumptions:** The existing test suite adequately covers the constructor behaviour. No architectural pattern was violated by the original code — this is a Spring Framework configuration issue.
 
 **Alignment Review:** Submitted cycle 1 to `docs/alignment-review-request.md`.
+=======
+>>>>>>> 4a4153c (wi-007 af)

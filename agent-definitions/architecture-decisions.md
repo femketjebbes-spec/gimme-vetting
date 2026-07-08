@@ -109,11 +109,14 @@ Security Implications: Path-based separation does not provide security isolation
 Affected Agents: Gerard, Naut
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 [2026-07-08] [Session 10] ARCHITECTURAL DECISION: The case analyst dashboard is served from the existing 4-frontend/ project using React Router with two routes: the client upload page (existing ExcelUpload component at /) and the analyst dashboard (AnalystDashboard component at /analyst). The main.jsx entry point is refactored to wrap both routes in a BrowserRouter.
 Rationale: The existing frontend at 4-frontend/ is the sole frontend project for MVP. The analyst dashboard is a separate view within the same application, sharing the same build pipeline, dependency management, and testing infrastructure. React Router provides client-side routing without requiring a separate server or entry point. This is simpler than adding a second Vite entry point or creating a new frontend project.
 Security Implications: Both routes serve from the same origin, so CORS is not a concern. The analyst route must not bypass the existing API. No new attack surface is introduced beyond the analyst dashboard UI itself. Future authentication (required per D-CA-002) must protect the /analyst route.
 Affected Agents: Femke
 =======
+=======
+>>>>>>> 4a4153c (wi-007 af)
 [2026-07-08] [Session 8] ARCHITECTURAL DECISION: WI-007 template download endpoint is GET /api/v1/intake/excel/template. The endpoint returns a pre-generated XLSX template file with exactly 5 column headers: `invoice number`, `debtor name`, `address`, `phone number`, `bank account number`. The template contains at least one empty data row as visual guide. The response uses `Content-Disposition: attachment; filename="invoice-intake-template.xlsx"` and `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
 Rationale: Users need a correctly-formatted template to avoid upload failures from column name mismatches. XLSX-only format is sufficient for MVP. The empty template (no example data, no validation rules, no formatting) keeps implementation simple and reduces maintenance burden.
 Security Implications: The template is a static server-generated resource. No authentication required (MVP). No file injection risk since the template is generated server-side. Response headers must not include server-internal path information.
@@ -123,4 +126,7 @@ Affected Agents: Gerard, Naut, Femke
 Rationale: Apache POI is already used throughout the project for Excel generation (D-008). Sharing the library and code patterns reduces dependency complexity. Constants prevent silent drift between the template headers and the validation allowlist used during upload.
 Security Implications: No direct security implications. The constant-based approach ensures template headers always match the validation allowlist, preventing mismatch issues that could cause user confusion or upload failures.
 Affected Agents: Naut
+<<<<<<< HEAD
 >>>>>>> e6d3e77 (wi-007 af)
+=======
+>>>>>>> 4a4153c (wi-007 af)

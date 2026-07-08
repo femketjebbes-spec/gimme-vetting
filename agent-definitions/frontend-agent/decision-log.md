@@ -14,6 +14,7 @@ Derived from: `docs/api-contract-wi-007.md` GET /api/v1/intake/excel/template re
 [2026-07-08] [Session 2] TEST-SPEC: `4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx` maps to WI-007 delegation subtask 1 (Frontend Implementation)
 Purpose: Validates that the Download Template button renders, triggers GET request to correct endpoint, and uses the correct API path
 Derived from: `docs/wi-007-delegation-parallel.md` Subtask 1
+<<<<<<< HEAD
 
 [2026-07-08] [Session 3] DECISION: Changed Content-Disposition filename regex from greedy `.+` to negated character class `[^";]+`
 Assumptions: The proxy server may append trailing whitespace or carriage return characters to the Content-Disposition header value. The greedy `.+` in the original regex `/filename="?(.+)"?$/i` captured these trailing characters, producing filenames like `invoice-intake-template.xlsx_`.
@@ -27,3 +28,5 @@ Derived from: `docs/api-contract-wi-007.md` GET /api/v1/intake/excel/template re
 [2026-07-08] [Session 3] TEST-SPEC: `4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx` Download Template Button describe block includes two regression tests
 Purpose: Test 1 validates that trailing whitespace in Content-Disposition header does not pollute the filename. Test 2 validates that a filename with trailing underscore character in the header is correctly extracted without stripping.
 Derived from: Bug report at `docs/bug-wi-007-download-filename-underscore.md`
+=======
+>>>>>>> 4a4153c (wi-007 af)

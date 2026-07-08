@@ -449,6 +449,7 @@ describe('ExcelUpload Component', () => {
 });
 
 describe('Download Template Button', () => {
+<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
   let appendChildSpy;
 
   beforeEach(() => {
@@ -461,12 +462,15 @@ describe('Download Template Button', () => {
     appendChildSpy.mockRestore();
   });
 
+=======
+>>>>>>> 4a4153c (wi-007 af):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
   it('renders a Download Template button', () => {
     render(<ExcelUpload />);
     const downloadButton = screen.getByRole('button', { name: /download template/i });
     expect(downloadButton).toBeInTheDocument();
   });
 
+<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
   it('extracts correct filename when Content-Disposition has trailing whitespace', async () => {
     appendChildSpy.mockClear();
 
@@ -529,15 +533,22 @@ describe('Download Template Button', () => {
     expect(anchorEl.download).toBe('invoice-intake-template.xlsx_');
   });
 
+=======
+>>>>>>> 4a4153c (wi-007 af):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
   it('triggers a GET request to the template endpoint on click', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
+<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
       blob: async () => new Blob(['template-content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
       headers: new Map([
         ['content-disposition', 'attachment; filename="invoice-intake-template.xlsx"'],
         ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
       ]),
+=======
+      blob: async () => new Blob(),
+      headers: new Map([['content-disposition', 'attachment; filename="invoice-intake-template.xlsx"']]),
+>>>>>>> 4a4153c (wi-007 af):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
     });
 
     render(<ExcelUpload />);
@@ -559,10 +570,14 @@ describe('Download Template Button', () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
+<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
       blob: async () => new Blob(['template-content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
       headers: new Map([
         ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
       ]),
+=======
+      blob: async () => new Blob(),
+>>>>>>> 4a4153c (wi-007 af):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
     });
 
     render(<ExcelUpload />);
