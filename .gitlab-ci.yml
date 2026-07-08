@@ -19,7 +19,7 @@ backend-build:
   stage: build
   image: maven:3.9-eclipse-temurin-17
   script:
-    - cd 5-backend && mvn clean compile
+    - mvn -f 5-backend/pom.xml clean compile
   artifacts:
     paths:
       - 5-backend/business-service/target/*.jar
@@ -37,6 +37,12 @@ frontend-build:
     paths:
       - 4-frontend/dist
     expire_in: 1 hour
+  cache:
+    key: frontend-npm
+    paths:
+      - 4-frontend/node_modules
+      - 4-frontend/package-lock.json
+    policy: push
 
 # ======================
 # BACKEND JOB - TEST
@@ -45,8 +51,8 @@ backend-test:
   stage: test
   image: maven:3.9-eclipse-temurin-17
   script:
-    - cd 5-backend && mvn test
-    - cd 5-backend && mvn verify -DskipUnitTests=true
+    - mvn -f 5-backend/pom.xml clean test
+    - mvn -f 5-backend/pom.xml verify -DskipUnitTests=true
   artifacts:
     reports:
       junit:
@@ -67,13 +73,12 @@ frontend-test:
   stage: test
   image: node:${NODE_VERSION}-alpine
   script:
-    - cd 4-frontend && npm ci
-    - cd 4-frontend && npm run lint || true
-    - cd 4-frontend && npm test -- --ci --coverage --json --coverageReporters=json-summary --outputFile=.jest-results.json
+    - npm --prefix 4-frontend ci
+    - npm --prefix 4-frontend run lint || true
+    - npm --prefix 4-frontend test -- --ci --coverage --coverageReporters=json-summary --coverageReporters=cobertura --outputFile=.jest-results.json
+  dependencies: []
   artifacts:
     reports:
-      junit:
-        - 4-frontend/junit.xml
       coverage_report:
         coverage_format: cobertura
         path: 4-frontend/coverage/cobertura-coverage.xml
