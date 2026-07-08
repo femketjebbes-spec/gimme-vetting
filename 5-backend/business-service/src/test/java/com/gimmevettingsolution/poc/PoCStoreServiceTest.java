@@ -3,6 +3,7 @@ package com.gimmevettingsolution.poc;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,6 +13,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests for PoCStoreService — PoC existence verification.
@@ -132,6 +135,101 @@ class PoCStoreServiceTest {
         pocStoreService = new FileBackedPoCStoreService(pocDir);
 
         assertFalse(pocStoreService.hasMatchingPoC("INV\\2026\\0042"));
+    }
+
+    // --- store() Unit Tests ---
+
+    @Test
+    void store_savesPdfFileToPocStore() throws IOException {
+        Path pocDir = tempDir.resolve("poc");
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "inv-2026-0100.pdf",
+                "application/pdf",
+                "pdf-content".getBytes());
+
+        pocStoreService = new FileBackedPoCStoreService(pocDir);
+
+        assertDoesNotThrow(() -> pocStoreService.store(file));
+
+        assertTrue(Files.exists(pocDir.resolve("inv-2026-0100.pdf")));
+    }
+
+    @Test
+    void store_overwritesExistingFile() throws IOException {
+        Path pocDir = tempDir.resolve("poc");
+        Files.createFile(pocDir.resolve("inv-2026-0101.pdf"));
+        String originalContent = "original-content";
+        Files.writeString(pocDir.resolve("inv-2026-0101.pdf"), originalContent);
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "inv-2026-0101.pdf",
+                "application/pdf",
+                "new-content".getBytes());
+
+        pocStoreService = new FileBackedPoCStoreService(pocDir);
+
+        assertDoesNotThrow(() -> pocStoreService.store(file));
+
+        assertTrue(Files.exists(pocDir.resolve("inv-2026-0101.pdf")));
+        String storedContent = Files.readString(pocDir.resolve("inv-2026-0101.pdf"));
+        assertTrue(storedContent.contains("new-content"));
+    }
+
+    @Test
+    void store_storesFileCaseInsensitively() throws IOException {
+        Path pocDir = tempDir.resolve("poc");
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "INV-2026-0102.PDF",
+                "application/pdf",
+                "pdf-content".getBytes());
+
+        pocStoreService = new FileBackedPoCStoreService(pocDir);
+
+        assertDoesNotThrow(() -> pocStoreService.store(file));
+
+        // The file should be stored preserving the original filename
+        assertTrue(Files.exists(pocDir.resolve("INV-2026-0102.PDF")));
+    }
+
+    @Test
+    void store_throwsSecurityExceptionForPathTraversal() {
+        Path pocDir = tempDir.resolve("poc");
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "../../etc/passwd.pdf",
+                "application/pdf",
+                "pdf-content".getBytes());
+
+        pocStoreService = new FileBackedPoCStoreService(pocDir);
+
+        assertThrows(SecurityException.class, () -> pocStoreService.store(file));
+    }
+
+    @Test
+    void store_throwsSecurityExceptionForAbsolutePath() {
+        Path pocDir = tempDir.resolve("poc");
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "/etc/shadow.pdf",
+                "application/pdf",
+                "pdf-content".getBytes());
+
+        pocStoreService = new FileBackedPoCStoreService(pocDir);
+
+        assertThrows(SecurityException.class, () -> pocStoreService.store(file));
+    }
+
+    @Test
+    void store_createsPoCStoreDirectoryIfNotExists() throws IOException {
+        Path nonExistentDir = tempDir.resolve("new-poc-store");
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "inv-2026-0103.pdf",
+                "application/pdf",
+                "pdf-content".getBytes());
+
+        pocStoreService = new FileBackedPoCStoreService(nonExistentDir);
+
+        assertDoesNotThrow(() -> pocStoreService.store(file));
+
+        assertTrue(Files.exists(nonExistentDir.resolve("inv-2026-0103.pdf")));
     }
 
 }

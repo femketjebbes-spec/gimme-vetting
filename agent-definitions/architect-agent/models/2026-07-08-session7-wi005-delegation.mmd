@@ -1,0 +1,51 @@
+%%{init: {"theme": "default"}}%%
+flowchart TD
+    subgraph Archibald["Archibald (Architect)"]
+        A1[Produce wi-005-delegation-gerard.md]
+    end
+
+    subgraph Gerard["Gerard (API-Agent)"]
+        G1[Define PoC upload API contract]
+        G2[Produce docs/api-contract-wi-005.md]
+        G3[Submit alignment review]
+    end
+
+    subgraph Alignment["Alignment Agent"]
+        AL1[Review contract for requirements compliance]
+        AL2[Approve or reject]
+    end
+
+    subgraph Naut["Naut (Backend Agent)"]
+        N1[Implement PoCUploadController]
+        N2[Add store() method to PoCStoreService]
+        N3[Add unit and integration tests]
+        N4[Submit alignment review]
+    end
+
+    subgraph Femke["Femke (Frontend Agent)"]
+        F1[Display missing PoC invoice numbers]
+        F2[Add PoC upload UI per invoice]
+        F3[Handle upload success/error feedback]
+        F4[Submit alignment review]
+    end
+
+    A1 --> G1
+    G1 --> G2
+    G2 --> G3
+    G3 --> AL1
+    AL1 --> AL2
+    AL2 -->|APPROVED| G4[Produce wi-005-contract-ready.md]
+    G4 --> Naut
+    G4 --> Femke
+    AL2 -->|REJECTED| G1
+
+    Naut --> N4
+    Femke --> F4
+    N4 --> AL_FINAL["Alignment Agent final review"]
+    F4 --> AL_FINAL
+
+    style Archibald fill:#e1f5fe
+    style Gerard fill:#fff3e0
+    style Alignment fill:#e8f5e9
+    style Naut fill:#fce4ec
+    style Femke fill:#f3e5f5

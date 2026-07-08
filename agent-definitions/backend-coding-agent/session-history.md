@@ -113,3 +113,33 @@ Summary of each session conducted by Naut.
 **Assumptions:** The existing `ExcelInvoiceRow` class uses setters only (no 6-param constructor), confirmed from source inspection. The Alignment Agent has approved Gerard's work for WI-004 before Naut activated.
 
 **Alignment Review:** Submitted cycle 1 to `docs/alignment-review-request.md`.
+
+## Session 2 - 2026-07-08 — WI-005 Backend Implementation
+
+**Explored:** WI-005 delegation plan, API contract v5.0.0, architecture decisions D-001, D-003, D-015, D-016, D-017. Read existing ExcelIntakeController for code patterns. Read existing FileBackedPoCStoreService and PoCStoreService for context.
+
+**Implemented:**
+- Added `void store(MultipartFile file)` to [`PoCStoreService`](5-backend/business-service/src/main/java/com/gimmevettingsolution/poc/PoCStoreService.java) interface
+- Implemented `store()` in [`FileBackedPoCStoreService`](5-backend/business-service/src/main/java/com/gimmevettingsolution/poc/FileBackedPoCStoreService.java) with SAFE_PATTERN validation, directory creation, REPLACE_EXISTING for overwrite behaviour
+- Created [`PoCUploadController`](5-backend/business-service/src/main/java/com/gimmevettingsolution/poc/PoCUploadController.java) with `POST /api/v1/poc-upload` endpoint
+- Created [`PoCUploadSuccessResponse`](5-backend/business-service/src/main/java/com/gimmevettingsolution/poc/PoCUploadSuccessResponse.java) DTO
+- Added 6 unit tests for `store()` to [`PoCStoreServiceTest`](5-backend/business-service/src/test/java/com/gimmevettingsolution/poc/PoCStoreServiceTest.java)
+- Created [`PoCUploadControllerTest`](5-backend/business-service/src/test/java/com/gimmevettingsolution/poc/PoCUploadControllerTest.java) with 12 integration tests
+
+**Decisions:**
+- Invoice number extracted from filename by stripping `.pdf` extension (case-insensitive) and lowercasing, consistent with D-001 case-insensitive matching used by `hasMatchingPoC()`
+- MIME type validation checks exact `application/pdf` string equality, consistent with ExcelIntakeController pattern
+- `SecurityException` thrown from `store()` for path traversal, caught at controller level and mapped to 400 response
+- `RuntimeException` wraps `IOException` from `Files.copy()` in `store()`, caught at controller level and mapped to 500 response
+- One test failure fixed during implementation: `extractInvoiceNumber()` was returning original filename case instead of lowercased. Fixed by changing to return `lower.substring(0, lower.length() - 4)` instead of `filename.substring(...)`.
+
+**Test Results:**
+- Red state confirmed: 8 compilation errors (missing `store()` method, missing `PoCUploadController` class)
+- Green state confirmed: 28 new tests pass (16 PoCStoreService + 12 PoCUploadController)
+- Full backend suite: 114 tests pass, zero regressions
+
+**Remains Open:** None. The parallel phase is complete (Femke frontend + Naut backend submitted alignment review). Waiting for Alignment Agent approval.
+
+**Assumptions:** The Alignment Agent has approved Gerard's API contract work for WI-005 before Naut activated, confirmed via the parallel delegation plan.
+
+**Alignment Review:** Submitted cycle 1 to `docs/alignment-review-request.md`.

@@ -2,10 +2,12 @@ package com.gimmevettingsolution.poc;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 /**
  * File-system backed implementation of PoCStoreService.
@@ -59,6 +61,26 @@ public class FileBackedPoCStoreService implements PoCStoreService {
                     });
         } catch (IOException e) {
             return false;
+        }
+    }
+
+    @Override
+    public void store(MultipartFile file) {
+        String originalFilename = file.getOriginalFilename();
+
+        if (originalFilename == null || !originalFilename.matches(SAFE_PATTERN)) {
+            throw new SecurityException("Path traversal detected in filename");
+        }
+
+        try {
+            if (!Files.exists(pocStorePath)) {
+                Files.createDirectories(pocStorePath);
+            }
+
+            Path targetPath = pocStorePath.resolve(originalFilename);
+            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to store PoC file", e);
         }
     }
 }
