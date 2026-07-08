@@ -71,6 +71,85 @@ public class ExcelParsingService {
     }
 
     /**
+     * Magic byte constant for ZIP local file header (first 4 bytes of .xlsx files).
+     */
+    private static final byte[] ZIP_HEADER = new byte[]{(byte) 0x50, (byte) 0x4B, (byte) 0x03, (byte) 0x04};
+
+    /**
+     * Detect file type by inspecting content (magic bytes).
+     * <p>
+     * Used as a fallback when MIME type is null, empty, or unrecognized.
+     *
+     * @param inputStream the file input stream (will be reset to position 0 after reading)
+     * @return FileType.XLSX if ZIP signature detected, FileType.CSV if valid text, FileType.UNKNOWN otherwise
+     */
+    public FileType detectFileType(InputStream inputStream) throws IOException {
+        if (inputStream == null) {
+            return FileType.UNKNOWN;
+        }
+
+        byte[] header = new byte[4];
+        int bytesRead = inputStream.read(header);
+
+        if (bytesRead < 4) {
+            // Empty or too small to determine type
+            return FileType.UNKNOWN;
+        }
+
+        // Check for ZIP signature (XLSX files start with PK\x03\x04)
+        if (matchesZipHeader(header)) {
+            return FileType.XLSX;
+        }
+
+        // Check if content is valid text (CSV)
+        if (isTextContent(header)) {
+            return FileType.CSV;
+        }
+
+        return FileType.UNKNOWN;
+    }
+
+    /**
+     * Check if the first 4 bytes match the ZIP local file header signature.
+     */
+    private boolean matchesZipHeader(byte[] header) {
+        for (int i = 0; i < ZIP_HEADER.length; i++) {
+            if (header[i] != ZIP_HEADER[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Check if the content appears to be valid text (CSV detection).
+     * Returns true if all non-null bytes are printable ASCII or valid UTF-8 start bytes.
+     */
+    private boolean isTextContent(byte[] header) {
+        for (byte b : header) {
+            // Skip common whitespace (newline, carriage return, tab)
+            if (b == '\n' || b == '\r' || b == '\t') {
+                continue;
+            }
+            // Printable ASCII range (0x20 to 0x7E)
+            if (b >= 0x20 && b <= 0x7E) {
+                continue;
+            }
+            // UTF-8 multi-byte continuation bytes (0x80 to 0xBF)
+            if (b >= 0x80 && b <= 0xBF) {
+                continue;
+            }
+            // UTF-8 leading bytes for multi-byte sequences (0xC0 to 0xFD)
+            if (b >= 0xC0 && b <= 0xFD) {
+                continue;
+            }
+            // Not a recognized text byte
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Validate filename against path traversal patterns.
      *
      * @param filename the original filename

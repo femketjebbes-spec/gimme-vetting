@@ -27,3 +27,17 @@ Derived from: `docs/api-contract-wi-007.md` GET /api/v1/intake/excel/template re
 [2026-07-08] [Session 3] TEST-SPEC: `4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx` Download Template Button describe block includes two regression tests
 Purpose: Test 1 validates that trailing whitespace in Content-Disposition header does not pollute the filename. Test 2 validates that a filename with trailing underscore character in the header is correctly extracted without stripping.
 Derived from: Bug report at `docs/bug-wi-007-download-filename-underscore.md`
+
+[2026-07-08] [Session 4] DECISION: Removed client-side MIME type validation from ExcelUpload.jsx handleFileChange()
+Assumptions: The contract (`docs/api-contract-wi-002.md` v2.1.0, Section 3.2.1) makes MIME type a supplementary hint. Browsers/OSes may report unrecognized MIME types (e.g., `application/octet-stream`, `application/zip`) for valid `.xlsx` files. The backend performs authoritative content-based detection via magic byte inspection.
+Rationale: The original code blocked uploads when the file's MIME type was not in the accepted set, preventing users from uploading valid files whose browsers reported unrecognized MIME types. This created a UX regression that the BR-001 fix aims to resolve. Removing the client-side check allows all files to reach the backend, which handles authoritative validation.
+Derived from: `docs/wi-008-delegation-parallel.md` Subtask 2 exception clause, `docs/api-contract-wi-002.md` v2.1.0 Section 3.2.1
+
+[2026-07-08] [Session 4] DECISION: HTML accept attribute retained on file input
+Assumptions: The `accept=".xlsx,.csv"` attribute on the file input affects only the file picker dialog filter, not actual file rejection.
+Rationale: The accept attribute is UI convenience for the file picker dialog. It does not block uploads programmatically and does not contradict the contract. Removing it would reduce UX clarity without any functional benefit.
+
+[2026-07-08] [Session 4] TEST-SPEC: `4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx` test "validates MIME type before upload for non-matching types" (line 71) is now obsolete
+Purpose: This test validated the client-side MIME type blocking behavior that was removed per BR-001. The test expects the frontend to reject files with non-matching MIME types, which contradicts the contract.
+Derived from: `docs/wi-008-delegation-parallel.md` Subtask 2
+Status: Requires regeneration by Testing Mode with Archibald authorization

@@ -12,6 +12,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.http.MediaType;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -104,10 +105,12 @@ class ExcelIntakeControllerTest {
 
     @Test
     void uploadExcel_invalidMimeType_returns400() throws Exception {
+        // Binary content starting with non-text bytes (0x00, 0x01, 0x02, 0x03)
+        byte[] binaryContent = new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
         MockMultipartFile file = new MockMultipartFile(
                 "file", "test.docx",
                 "application/msword",
-                "some content".getBytes());
+                binaryContent);
 
         mockMvc.perform(multipart("/api/v1/intake/excel").file(file))
                 .andExpect(status().isBadRequest())
@@ -137,8 +140,140 @@ class ExcelIntakeControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("INVALID_FILE_FORMAT"));
     }
-
-    // --- Column Name Mismatch Tests ---
+        
+            // --- BR-001: Content-Based Fallback Tests ---
+        
+            @Test
+            void uploadExcel_nullMimeType_withValidXlsxContent_returns200() throws Exception {
+                byte[] xlsxBytes = createTestXlsx();
+        
+                MockMultipartFile file = new MockMultipartFile(
+                        "file", "test",
+                        null,
+                        xlsxBytes);
+        
+                mockMvc.perform(multipart("/api/v1/intake/excel").file(file))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.processingStatus").value("COMPLETED"));
+            }
+        
+            @Test
+            void uploadExcel_octetStreamMimeType_withValidXlsxContent_returns200() throws Exception {
+                byte[] xlsxBytes = createTestXlsx();
+        
+                MockMultipartFile file = new MockMultipartFile(
+                        "file", "test.xlsx",
+                        "application/octet-stream",
+                        xlsxBytes);
+        
+                mockMvc.perform(multipart("/api/v1/intake/excel").file(file))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.processingStatus").value("COMPLETED"));
+            }
+        
+            @Test
+            void uploadExcel_zipMimeType_withValidXlsxContent_returns200() throws Exception {
+                byte[] xlsxBytes = createTestXlsx();
+        
+                MockMultipartFile file = new MockMultipartFile(
+                        "file", "test.xlsx",
+                        "application/zip",
+                        xlsxBytes);
+        
+                mockMvc.perform(multipart("/api/v1/intake/excel").file(file))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.processingStatus").value("COMPLETED"));
+            }
+        
+            @Test
+            void uploadExcel_nullMimeType_withEmptyContent_returns400() throws Exception {
+                MockMultipartFile file = new MockMultipartFile(
+                        "file", "test",
+                        null,
+                        new byte[0]);
+        
+                mockMvc.perform(multipart("/api/v1/intake/excel").file(file))
+                        .andExpect(status().isBadRequest())
+                        .andExpect(jsonPath("$.status").value("INVALID_FILE_FORMAT"));
+            }
+        
+            @Test
+            void uploadExcel_octetStreamMimeType_withPdfContent_returns400() throws Exception {
+                // Binary content starting with non-text bytes
+                byte[] binaryContent = new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+        
+                MockMultipartFile file = new MockMultipartFile(
+                        "file", "test.pdf",
+                        "application/octet-stream",
+                        binaryContent);
+        
+                mockMvc.perform(multipart("/api/v1/intake/excel").file(file))
+                        .andExpect(status().isBadRequest())
+                        .andExpect(jsonPath("$.status").value("INVALID_FILE_FORMAT"));
+            }
+        
+            @Test
+            void uploadExcel_octetStreamMimeType_withJpgContent_returns400() throws Exception {
+                byte[] jpgContent = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0};
+        
+                MockMultipartFile file = new MockMultipartFile(
+                        "file", "test.jpg",
+                        "application/octet-stream",
+                        jpgContent);
+        
+                mockMvc.perform(multipart("/api/v1/intake/excel").file(file))
+                        .andExpect(status().isBadRequest())
+                        .andExpect(jsonPath("$.status").value("INVALID_FILE_FORMAT"));
+            }
+        
+            @Test
+            void uploadExcel_nullMimeType_withCsvContent_returns200() throws Exception {
+                String csv = "invoice number,debtor name,address,phone number,bank account number\n"
+                        + "INV-001,Test Corp,Main St 1,+31612345678,NL12TEST0123456789\n";
+        
+                MockMultipartFile file = new MockMultipartFile(
+                        "file", "test",
+                        null,
+                        csv.getBytes(StandardCharsets.UTF_8));
+        
+                mockMvc.perform(multipart("/api/v1/intake/excel").file(file))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.processingStatus").value("COMPLETED"))
+                        .andExpect(jsonPath("$.totalRowsProcessed").value(1));
+            }
+        
+            @Test
+            void uploadExcel_octetStreamMimeType_withCsvContent_returns200() throws Exception {
+                String csv = "invoice number,debtor name,address,phone number,bank account number\n"
+                        + "INV-001,Test Corp,Main St 1,+31612345678,NL12TEST0123456789\n";
+        
+                MockMultipartFile file = new MockMultipartFile(
+                        "file", "test.csv",
+                        "application/octet-stream",
+                        csv.getBytes(StandardCharsets.UTF_8));
+        
+                mockMvc.perform(multipart("/api/v1/intake/excel").file(file))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.processingStatus").value("COMPLETED"))
+                        .andExpect(jsonPath("$.totalRowsProcessed").value(1));
+            }
+        
+            @Test
+            void uploadExcel_octetStreamMimeType_withBinaryContent_errorDetailNotGeneric() throws Exception {
+                byte[] binaryContent = new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+        
+                MockMultipartFile file = new MockMultipartFile(
+                        "file", "test.pdf",
+                        "application/octet-stream",
+                        binaryContent);
+        
+                mockMvc.perform(multipart("/api/v1/intake/excel").file(file))
+                        .andExpect(status().isBadRequest())
+                        .andExpect(jsonPath("$.status").value("INVALID_FILE_FORMAT"))
+                        .andExpect(jsonPath("$.errorDetail").value("File content is not a recognized Excel or CSV format"));
+            }
+        
+            // --- Column Name Mismatch Tests ---
 
     @Test
     void uploadExcel_unrecognizedColumns_returns400() throws Exception {

@@ -2,8 +2,8 @@
 
 **Work Item:** WI-002 (Excel File Upload and Parsing)
 **Endpoint:** POST `/api/v1/intake/excel`
-**Version:** 2.0.0
-**Date:** 2026-07-07
+**Version:** 2.1.0
+**Date:** 2026-07-08
 **Owner:** Gerard (API-Agent)
 **Status:** Pending Alignment Agent approval
 
@@ -52,7 +52,28 @@ The request body uses `multipart/form-data` with a single file field named `file
 | Excel (.xlsx) | `.xlsx` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` |
 | CSV | `.csv` | `text/csv` |
 
-The adapter layer MUST validate the MIME type server-side before any processing. Files with unsupported MIME types receive an immediate `400 Bad Request` response.
+#### 3.2.1 File Format Detection Precedence
+
+File format detection uses **content-based magic byte inspection**. MIME type is a supplementary hint only. The adapter layer MUST follow this detection precedence:
+
+| Precedence Step | Condition | Action |
+|-----------------|-----------|--------|
+| 1 | MIME type is `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` or `text/csv` | Accept MIME type as authoritative. Skip content inspection. Proceed to parse. |
+| 2 | MIME type is `null`, empty, `application/octet-stream`, `application/zip`, or any unrecognized value | Inspect file content via magic bytes (Step 3). |
+| 3 | Content inspection | Determine format: (a) `.xlsx` if first 4 bytes are `50 4B 03 04` (ZIP local file header signature). (b) `.csv` if content is valid UTF-8 or ASCII text. (c) If neither, reject with `INVALID_FILE_FORMAT`. |
+| 4 | Content inspection fails | Reject with `400 Bad Request`, status `INVALID_FILE_FORMAT`. |
+
+**Magic Byte Constants:**
+
+| Format | Magic Bytes (Hex) | Magic Bytes (ASCII) | Position |
+|--------|-------------------|---------------------|----------|
+| XLSX (ZIP) | `50 4B 03 04` | `PK\x03\x04` | First 4 bytes |
+| CSV (Text) | N/A (text encoding) | Valid UTF-8 / ASCII | First line |
+
+**Implementation Notes:**
+- File extension is a supplementary hint only. It MUST NOT override content-based detection results.
+- The adapter layer MUST perform magic byte inspection as the authoritative check before any backend service invocation.
+- MIME type validation is retained as a fast path for well-behaved browsers to avoid unnecessary I/O.
 
 ### 3.3 Header Constraints
 
@@ -175,7 +196,7 @@ The file was parsed successfully and all validation gates completed. The respons
 
 ### 5.2 400 Bad Request — Invalid File Format
 
-The uploaded file is malformed, corrupted, or has an unsupported MIME type. No rows are parsed.
+The uploaded file is malformed, corrupted, or has an unrecognized file format. No rows are parsed.
 
 ```json
 {
@@ -190,14 +211,23 @@ The uploaded file is malformed, corrupted, or has an unsupported MIME type. No r
     },
     "errorDetail": {
       "type": "string",
-      "description": "Human-readable description of the file format error."
+      "description": "Human-readable description of the file format error. MUST indicate the actual detection reason (e.g., MIME type mismatch, ZIP signature not found, content not valid text)."
     }
   },
   "additionalProperties": false
 }
 ```
 
-**Example Response:**
+**Example Response (MIME type mismatch, content-based detection succeeded):**
+
+```json
+{
+  "status": "INVALID_FILE_FORMAT",
+  "errorDetail": "MIME type 'application/octet-stream' not in allowlist. Content inspection: ZIP signature (50 4B 03 04) not found. Content not valid text. File rejected as unrecognized format."
+}
+```
+
+**Example Response (MIME type not supported):**
 
 ```json
 {
@@ -284,7 +314,8 @@ The adapter layer maps internal backend errors to clean API responses using the 
 
 | Backend Error | HTTP Status | API Response `status` | Mapping Rationale |
 |--------------|-------------|-----------------------|-------------------|
-| `INVALID_MIME_TYPE` | 400 | `INVALID_FILE_FORMAT` | Uploaded file MIME type not in allowlist. |
+| `INVALID_MIME_TYPE` | 400 | `INVALID_FILE_FORMAT` | Uploaded file MIME type not in allowlist. Content-based detection will be attempted. |
+| `CONTENT_INSPECTION_FAILED` | 400 | `INVALID_FILE_FORMAT` | Content-based magic byte inspection did not match any supported format. Error detail must indicate actual reason. |
 | `FILE_CORRUPTED` | 400 | `INVALID_FILE_FORMAT` | File cannot be opened by the parser. |
 | `UNSUPPORTED_FORMAT` | 400 | `INVALID_FILE_FORMAT` | File extension or MIME type not supported. |
 | `COLUMN_NAME_MISMATCH` | 400 | `COLUMN_NAME_MISMATCH` | Header row contains unrecognized column names. |
@@ -303,6 +334,7 @@ The adapter layer maps internal backend errors to clean API responses using the 
 | D-027 | No file size limit enforced for MVP. | No body size middleware applied. Architect recommends designing a size boundary for MVP+1. |
 | D-028 | Synchronous processing. Client uploads, server processes, server returns result in the same HTTP response cycle. | Endpoint handler executes the full pipeline (parse → validate → PoC check → generate return Excel) before responding. |
 | D-029 | Apache POI is the mandated Excel parsing library. Latest patched version must be used. XML entity expansion must be disabled. | Backend uses Apache POI with XXE protection enabled. |
+| D-030 | Content-based file format detection. File format is determined by magic byte inspection (ZIP signature `50 4B 03 04` for `.xlsx`, text detection for `.csv`). MIME type is a supplementary hint only. Detection precedence: (1) MIME type in allowlist → use directly. (2) MIME type missing/unrecognized → inspect content. (3) Content matches supported format → proceed. (4) Content does not match → reject with `INVALID_FILE_FORMAT` and specific reason. | Adapter layer file upload middleware performs MIME type check first, then magic byte inspection as fallback. |
 
 ---
 
@@ -310,11 +342,12 @@ The adapter layer maps internal backend errors to clean API responses using the 
 
 | # | Requirement | Enforcement Layer |
 |---|-------------|-------------------|
-| S-007 | MIME type validation server-side. The adapter layer validates the uploaded file MIME type against the allowlist (`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `text/csv`) before any processing. Client-side MIME type checks are insufficient. | Adapter layer file upload middleware. |
-| S-008 | Column name allowlist enforcement. Header column names are validated against a fixed allowlist. Unknown column names trigger an immediate 400 rejection with structured error listing unrecognized names. No column name injection vectors exist since column names are validated before parsing. | Adapter layer request transformer. |
-| S-009 | Apache POI security. The version used must be the latest patched version to mitigate XML external entity (XXE) and ZIP slip vulnerabilities. XML entity expansion must be disabled in parser configuration. | Backend Apache POI parser configuration. |
-| S-010 | File upload path traversal prevention. The uploaded filename is sanitized to prevent path traversal attacks (`../`, `..\\`, absolute path patterns). The file is stored in a secure server-side temporary directory. | Adapter layer file upload handler. |
-| S-011 | Return Excel download link security. The download link must not expose the server-side temporary file path. The link must be a controlled URL that the adapter layer resolves to the temporary file with an expiration mechanism. | Adapter layer response transformer. |
+| S-007 | MIME type validation server-side. The adapter layer validates the uploaded file MIME type against the allowlist (`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `text/csv`) before any processing. Client-side MIME type checks are insufficient. MIME type is a fast path; content-based detection is the authoritative check. | Adapter layer file upload middleware. |
+| S-008 | Content-based file format detection. When MIME type is missing, null, or unrecognized, the adapter layer inspects file content via magic bytes. XLSX requires ZIP signature (`50 4B 03 04`) at bytes 0-3. CSV requires valid UTF-8/ASCII text content. Files that fail content inspection are rejected with `INVALID_FILE_FORMAT` and a specific reason. | Adapter layer file upload middleware. |
+| S-009 | Column name allowlist enforcement. Header column names are validated against a fixed allowlist. Unknown column names trigger an immediate 400 rejection with structured error listing unrecognized names. No column name injection vectors exist since column names are validated before parsing. | Adapter layer request transformer. |
+| S-010 | Apache POI security. The version used must be the latest patched version to mitigate XML external entity (XXE) and ZIP slip vulnerabilities. XML entity expansion must be disabled in parser configuration. | Backend Apache POI parser configuration. |
+| S-011 | File upload path traversal prevention. The uploaded filename is sanitized to prevent path traversal attacks (`../`, `..\\`, absolute path patterns). The file is stored in a secure server-side temporary directory. | Adapter layer file upload handler. |
+| S-012 | Return Excel download link security. The download link must not expose the server-side temporary file path. The link must be a controlled URL that the adapter layer resolves to the temporary file with an expiration mechanism. | Adapter layer response transformer. |
 
 ---
 
@@ -331,6 +364,7 @@ The adapter layer maps internal backend errors to clean API responses using the 
 | D-027 | [`agent-definitions/architecture-decisions.md`](agent-definitions/architecture-decisions.md) | No file size limit for MVP. |
 | D-028 | [`agent-definitions/architecture-decisions.md`](agent-definitions/architecture-decisions.md) | Synchronous processing. |
 | D-029 | [`agent-definitions/architecture-decisions.md`](agent-definitions/architecture-decisions.md) | Apache POI library. |
+| D-030 | [`agent-definitions/architecture-decisions.md`](agent-definitions/architecture-decisions.md) | Content-based file format detection (BR-001). |
 | WI-002 | [`re-workspace/work-items/wi-002-excel-file-upload-and-parsing.md`](re-workspace/work-items/wi-002-excel-file-upload-and-parsing.md) | Formal work item definition. |
 | WI-003 | [`re-workspace/work-items/wi-003-per-row-mandatory-field-validation.md`](re-workspace/work-items/wi-003-per-row-mandatory-field-validation.md) | Downstream validation output contract. |
 | WI-004 | [`re-workspace/work-items/wi-004-return-excel-generation.md`](re-workspace/work-items/wi-004-return-excel-generation.md) | Downstream return Excel output contract. |
@@ -342,3 +376,4 @@ The adapter layer maps internal backend errors to clean API responses using the 
 | Version | Date | Change |
 |---------|------|--------|
 | 2.0.0 | 2026-07-07 | Initial contract for WI-002 Excel File Upload and Parsing. New endpoint (`/api/v1/intake/excel`), new request format (`multipart/form-data`), new response structure (batch processing summary). Different from WI-001 (1.0.0) which uses `POST /api/v1/intake` with `application/json`. |
+| 2.1.0 | 2026-07-08 | BR-001: Updated file format detection to content-based magic byte inspection. MIME type is now a supplementary hint only. Detection precedence documented in Section 3.2.1. Error messages for `INVALID_FILE_FORMAT` must indicate actual detection reason. New architectural constraint D-030. New security requirement S-008. New error mapping for `CONTENT_INSPECTION_FAILED`. |

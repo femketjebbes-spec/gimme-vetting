@@ -20,13 +20,10 @@ function ExcelUpload({ onUploadComplete, onUploadError }) {
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const ACCEPTED_MIME_TYPES = new Set([
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'text/csv',
-  ]);
-
   /**
-   * Handle file selection: validate MIME type and store the file for later upload.
+   * Handle file selection: store the file for later upload.
+   * Does NOT perform client-side MIME type validation. The backend performs
+   * authoritative content-based detection per BR-001 (MIME type is supplementary hint only).
    * Does NOT trigger the upload.
    *
    * @param {React.ChangeEvent<HTMLInputElement>} e - File input change event.
@@ -37,14 +34,8 @@ function ExcelUpload({ onUploadComplete, onUploadError }) {
       return;
     }
 
-    // Client-side MIME type validation (S-007: convenience only, backend enforces server-side)
-    if (!ACCEPTED_MIME_TYPES.has(file.type)) {
-      setError('Please select a valid Excel (.xlsx) or CSV (.csv) file.');
-      setSelectedFile(null);
-    } else {
-      setError(null);
-      setSelectedFile(file);
-    }
+    setError(null);
+    setSelectedFile(file);
   };
 
   /**
