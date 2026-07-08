@@ -51,6 +51,9 @@ Femke received delegation from Archibald (WI-007) to add a Download Template but
 - Awaiting Alignment Agent approval before Gerard can proceed with backend verification.
 - No open items for this subtask.
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was)
 
 ## Session 3 - 2026-07-08 WI-007 Download Template Filename Bug Fix
 
@@ -76,5 +79,8 @@ User reported that the downloaded template file had a trailing underscore in its
 
 ### Remaining
 - User must verify the fix in browser: download the template and confirm the filename is `invoice-intake-template.xlsx` without trailing underscore.
+<<<<<<< HEAD
 =======
 >>>>>>> 4a4153c (wi-007 af)
+=======
+>>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was)
