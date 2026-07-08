@@ -122,15 +122,19 @@ function ExcelUpload({ onUploadComplete, onUploadError }) {
 
       if (response.ok) {
         const blob = await response.blob();
+        const contentType = response.headers.get('content-type');
         const disposition = response.headers.get('content-disposition');
         let filename = 'invoice-intake-template.xlsx';
         if (disposition) {
-          const filenameMatch = disposition.match(/filename="?(.+)"?$/i);
+          const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
           if (filenameMatch && filenameMatch[1]) {
-            filename = filenameMatch[1];
+            filename = filenameMatch[1].trim();
           }
         }
-        const downloadUrl = window.URL.createObjectURL(blob);
+        const downloadBlob = contentType
+          ? new Blob([blob], { type: contentType })
+          : blob;
+        const downloadUrl = window.URL.createObjectURL(downloadBlob);
         const a = document.createElement('a');
         a.href = downloadUrl;
         a.download = filename;
