@@ -37,6 +37,12 @@ frontend-build:
     paths:
       - 4-frontend/dist
     expire_in: 1 hour
+  cache:
+    key: frontend-npm
+    paths:
+      - 4-frontend/node_modules
+      - 4-frontend/package-lock.json
+    policy: push
 
 # ======================
 # BACKEND JOB - TEST
@@ -67,9 +73,10 @@ frontend-test:
   stage: test
   image: node:${NODE_VERSION}-alpine
   script:
-    - cd 4-frontend && npm ci
-    - cd 4-frontend && npm run lint || true
-    - cd 4-frontend && npm test -- --ci --coverage --json --coverageReporters=json-summary --outputFile=.jest-results.json
+    - npm --prefix 4-frontend ci
+    - npm --prefix 4-frontend run lint || true
+    - npm --prefix 4-frontend test -- --ci --coverage --json --coverageReporters=json-summary --outputFile=.jest-results.json
+  dependencies: []
   artifacts:
     reports:
       junit:
