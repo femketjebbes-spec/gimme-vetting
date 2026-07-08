@@ -100,9 +100,11 @@ public class ExcelIntakeController {
                         failingRowsForExcel[failIdx++] = originalRow;
                     }
                 }
-                String returnFilename = "return-" + UUID.randomUUID() + ".xlsx";
-                excelParsingService.generateReturnExcel(failingRowsForExcel, uploadDir);
-                downloadLink = "/api/v1/intake/excel/download/" + returnFilename;
+                String returnFilename = "return-" + UUID.randomUUID() + (isCsv ? ".csv" : ".xlsx");
+                Path returnPath = excelParsingService.generateReturnExcel(failingRowsForExcel, uploadDir, returnFilename, isCsv);
+                if (returnPath != null) {
+                    downloadLink = "/api/v1/intake/excel/download/" + returnFilename;
+                }
             }
 
             ExcelUploadResponse response = new ExcelUploadResponse();

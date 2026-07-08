@@ -88,3 +88,28 @@ Summary of each session conducted by Naut.
 - Client-service tests fail due to missing PostgreSQL driver. This is a pre-existing backend test configuration gap outside the Makefile scope.
 
 **Assumptions:** The Makefile correctly delegates to Maven and npm. Pre-existing build issues in the frontend and client-service modules are outside the scope of Wi-006.
+
+## Session 2 - 2026-07-08 — WI-004 Return Excel Generation
+
+**Explored:** WI-004 delegation plan. Five gaps identified in existing return Excel generation code: filename mismatch, return value ignored, no format matching, no PoC failure integration, and issue format inconsistency.
+
+**Implemented:**
+- **Subtask 1** - Fixed filename mismatch in [`ExcelIntakeController.java`](5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/ExcelIntakeController.java:90): controller now passes UUID-named filename and `isCsv` flag to `generateReturnExcel()`, and uses the returned `Path` for the download link.
+- **Subtask 2** - Added format matching in [`ExcelParsingService.java`](5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/service/ExcelParsingService.java:475): new 4-param `generateReturnExcel()` overload delegates to `generateReturnXlsx()` or `generateReturnCsv()` based on `isCsv` flag. `csvEscape()` implements RFC 4180 escaping.
+- **Subtask 3** - Fixed issue format: changed `"MISSING_FIELDS:"` to `"MISSING_FIELDS: "` (space after colon) in `buildIssue()`.
+- **Subtask 4** - Added `buildIssue(ExcelInvoiceRow, String)` overload for future PoC integration.
+- **Subtask 5** - Created new test file [`ExcelParsingServiceReturnExcelTest.java`](5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ExcelParsingServiceReturnExcelTest.java) with 12 unit tests (12 assertions covering row count, column data, issue format, null handling, XLSX/CSV formats, CSV escaping, backward compatibility). Added integration test to [`ExcelIntakeControllerTest.java`](5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ExcelIntakeControllerTest.java:211): upload -> extract link -> download -> verify PK header.
+
+**Tests:** All 96 tests pass. Full Maven compile succeeds.
+
+**Backward Compatibility:** Existing 2-param `generateReturnExcel(ExcelInvoiceRow[], Path)` preserved. It delegates to new 4-param overload with defaults. All 3 existing test callers remain unaffected.
+
+**Decided:**
+- `BufferedWriter.append()` returns `Writer` (not `BufferedWriter`), so `.newLine()` cannot be chained. Fixed by using `writer.write()` + `writer.newLine()` as separate statements.
+- Issue format assertion `assertFalse(issue.contains("MISSING_FIELDS:"))` was logically flawed because the correct format also contains that substring. Changed to `assertFalse(issue.contains("MISSING_FIELDS:invoiceNumber"))`.
+
+**Remains Open:** None. PoC failure integration into the controller pipeline is deferred to a future work item.
+
+**Assumptions:** The existing `ExcelInvoiceRow` class uses setters only (no 6-param constructor), confirmed from source inspection. The Alignment Agent has approved Gerard's work for WI-004 before Naut activated.
+
+**Alignment Review:** Submitted cycle 1 to `docs/alignment-review-request.md`.

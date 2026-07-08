@@ -1,82 +1,42 @@
 {
   "reviewRequest": {
     "agentName": "Naut",
-    "timestamp": "2026-07-08 07:01",
-    "trigger": "Implementation Mode completed — Wi-003 per-row mandatory field validation: created MandatoryFieldValidationService, updated ExcelIntakeController, updated DTOs, wrote unit tests, all 83 Maven tests pass",
+    "timestamp": "2026-07-08 10:00",
+    "trigger": "implementation completion",
     "reviewCycle": 1,
     "artefactsProduced": [
       {
-        "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/service/MandatoryFieldValidationService.java",
-        "artefactType": "Production code",
-        "description": "Service implementing per-row mandatory field validation for 5 canonical fields with whitespace-only and null handling"
-      },
-      {
-        "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/service/ValidationResult.java",
-        "artefactType": "Production DTO",
-        "description": "Validation result aggregate containing passingRows, failingRows, totalRowsProcessed, rowsPassed, rowsFailed"
-      },
-      {
-        "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/dto/RowFailure.java",
-        "artefactType": "Production DTO",
-        "description": "Internal DTO with rowIndex (int) and missingFields (List<String>)"
-      },
-      {
-        "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/dto/FailingRow.java",
-        "artefactType": "Production DTO",
-        "description": "API-level DTO with rowIndex (Integer) and missingFields (List<String>) for v3.0.0 response"
-      },
-      {
-        "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/dto/ExcelUploadResponse.java",
-        "artefactType": "Production DTO (updated)",
-        "description": "Added List<FailingRow> failingRows field for v3.0.0 contract compliance"
-      },
-      {
         "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/ExcelIntakeController.java",
-        "artefactType": "Production code (updated)",
-        "description": "Replaced inline validation loops with MandatoryFieldValidationService call, injected via constructor, produces failingRows in response"
+        "artefactType": "production code",
+        "description": "Controller updated to pass filename and isCsv flag to generateReturnExcel(), use return value for download link, and match upload format (.csv -> .csv, .xlsx -> .xlsx)"
       },
       {
-        "filePath": "5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/MandatoryFieldValidationServiceTest.java",
-        "artefactType": "Test code",
-        "description": "Unit tests for MandatoryFieldValidationService covering all acceptance criteria scenarios"
+        "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/service/ExcelParsingService.java",
+        "artefactType": "production code",
+        "description": "Added 4-param overload of generateReturnExcel(), added generateReturnXlsx() and generateReturnCsv() helpers, added csvEscape() for RFC 4180, fixed issue format to include space after colon, added buildIssue(ExcelInvoiceRow, String) overload for PoC integration"
+      },
+      {
+        "filePath": "5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ExcelParsingServiceReturnExcelTest.java",
+        "artefactType": "test code",
+        "description": "New test file with 12 unit tests covering: correct data row count, column data inclusion, issue format, null handling, XLSX format, CSV format, CSV escaping (commas and double quotes), and backward compatibility"
+      },
+      {
+        "filePath": "5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ExcelIntakeControllerTest.java",
+        "artefactType": "test code",
+        "description": "Added integration test: upload file with failing rows, extract download link, download file, verify content"
       }
     ],
-    "pipelineStage": "parallel backend implementation wi-003",
+    "pipelineStage": "parallel backend implementation",
     "nextAgentInPipeline": null,
-    "changesFromLastReview": "Initial submission for Wi-003 backend implementation. Created MandatoryFieldValidationService with 5 mandatory fields validation, updated ExcelIntakeController to use the service, added DTOs (ValidationResult, RowFailure, FailingRow), updated ExcelUploadResponse with failingRows field, wrote unit tests. All 83 Maven tests pass. Bug fix applied: corrected noneMatch to anyMatch at controller line 98 during this session.",
+    "changesFromLastReview": "WI-004 return Excel generation implementation: fixed filename mismatch, added format matching (csv/xlsx), fixed issue format consistency, added PoC infrastructure preparation, wrote 13 unit tests (12 new + 1 integration)",
     "requirementsAlignment": {
       "compliant": true,
-      "notes": "All 5 mandatory fields (invoiceNumber, debtorName, address, phoneNumber, bankAccountNumber) validated per RQ-007. Whitespace-only values treated as empty (RQ-007 Scenario 5, D-022). Null values treated as empty (RQ-007 Scenario 6, D-023). Per-row failingRows with rowIndex and missingFields array produced per RQ-007 output contract. Endpoint path, method, and existing error schemas unchanged."
+      "notes": "RQ-008 (Return Excel with Missing Data): Return Excel contains only failing rows with all original column data and issue description. D-012 (only failing rows): generateReturnExcel filters to failing rows only. D-013 (download link): controller generates UUID-named download link. D-028 (synchronous processing): generation happens inline in upload endpoint. D-029 (Apache POI): used for XLSX generation."
     },
     "specsAlignment": {
       "compliant": true,
-      "notes": "Implementation follows architecture decisions D-010 (mandatory fields), D-022 (whitespace-only), D-023 (null handling), D-024 (strict column matching), D-028 (synchronous), D-029 (Apache POI). Security requirement S-012 met: missingFields contains only canonical field names. No server-internal identifiers exposed."
+      "notes": "Subtask 1: filename mismatch fixed, return value used. Subtask 2: format matching added with generateReturnXlsx() and generateReturnCsv() helpers. Subtask 3: issue format includes space after colon (MISSING_FIELDS: field1, field2). Subtask 4: buildIssue(ExcelInvoiceRow, String) overload added for PoC integration. Subtask 5: 13 unit tests written, all 96 tests pass. Backward compatibility preserved: existing 2-param method delegates to 4-param. S-010 filename sanitized. S-011 UUID filename for download link. S-012 issue values use canonical field names."
     },
-    "selfCertification": "I certify that all production and test artefacts produced in this review cycle conform to the requirements documented in re-workspace/work-items/wi-003-per-row-mandatory-field-validation.md and the architecture specifications documented in agent-definitions/architecture-decisions.md (D-010, D-022, D-023, D-024, D-028, D-029) and security requirement S-012. All 83 Maven tests pass. No test files were modified by Implementation Mode. The noneMatch-to-anyMatch bug fix was applied to production code only."
-  },
-  "alignmentDecision": {
-    "reviewId": "WI-003-NAUT-20260708-001",
-    "producingAgent": "Naut",
-    "reviewCycle": 1,
-    "status": "PENDING",
-    "timestamp": null,
-    "roleBoundaryCheck": {
-      "compliant": null,
-      "notes": null
-    },
-    "requirementsCheck": {
-      "compliant": null,
-      "notes": null
-    },
-    "specsCheck": {
-      "compliant": null,
-      "notes": null
-    },
-    "violations": [],
-    "greenlightForNextAgent": null,
-    "nextAgentInPipeline": null,
-    "approvedArtefacts": [],
-    "rejectedArtefacts": [],
-    "feedback": null
+    "selfCertification": "I certify that all artefacts produced in this session conform to Robbie's requirements documentation and Archibald's WI-004 delegation plan. All 96 tests pass. No frontend code was modified. No existing test assertions were changed. Existing API signatures are preserved."
   }
 }
