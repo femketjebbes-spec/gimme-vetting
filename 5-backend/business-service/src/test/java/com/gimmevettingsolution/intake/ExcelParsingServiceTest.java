@@ -69,6 +69,82 @@ class ExcelParsingServiceTest {
         assertTrue(service.isSupportedMimeType("text/csv; charset=utf-8"));
     }
 
+    // --- FileType Detection Tests ---
+
+    @Test
+    void detectFileType_xlsxSignature_returnsXLSX() throws IOException {
+        // ZIP local file header signature: PK\x03\x04
+        byte[] xlsxSignature = new byte[]{0x50, 0x4B, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00};
+        assertEquals(com.gimmevettingsolution.intake.service.FileType.XLSX,
+                service.detectFileType(new ByteArrayInputStream(xlsxSignature)));
+    }
+
+    @Test
+    void detectFileType_fullXlsxFile_returnsXLSX() throws IOException {
+        // Create a real XLSX file using Apache POI
+        try (var workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+            org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("Sheet1");
+            org.apache.poi.ss.usermodel.Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("invoice number");
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            workbook.write(baos);
+            byte[] xlsxBytes = baos.toByteArray();
+
+            assertEquals(com.gimmevettingsolution.intake.service.FileType.XLSX,
+                    service.detectFileType(new ByteArrayInputStream(xlsxBytes)));
+        }
+    }
+
+    @Test
+    void detectFileType_csvText_returnsCSV() throws IOException {
+        String csvContent = "invoice number,debtor name,address\nINV-001,Test Corp,Main St\n";
+        assertEquals(com.gimmevettingsolution.intake.service.FileType.CSV,
+                service.detectFileType(new ByteArrayInputStream(csvContent.getBytes(StandardCharsets.UTF_8))));
+    }
+
+    @Test
+    void detectFileType_asciiText_returnsCSV() throws IOException {
+        String asciiContent = "hello world\nfoo bar\n";
+        assertEquals(com.gimmevettingsolution.intake.service.FileType.CSV,
+                service.detectFileType(new ByteArrayInputStream(asciiContent.getBytes(StandardCharsets.US_ASCII))));
+    }
+
+    @Test
+    void detectFileType_binaryContent_returnsUnknown() throws IOException {
+        // First 4 bytes are non-text binary bytes (0x00-0x1F range, control chars)
+        byte[] binaryContent = new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+        assertEquals(com.gimmevettingsolution.intake.service.FileType.UNKNOWN,
+                service.detectFileType(new ByteArrayInputStream(binaryContent)));
+    }
+
+    @Test
+    void detectFileType_jpgContent_returnsUnknown() throws IOException {
+        // JPEG magic bytes: FF D8 FF E0
+        byte[] jpgContent = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0x00, 0x01};
+        assertEquals(com.gimmevettingsolution.intake.service.FileType.UNKNOWN,
+                service.detectFileType(new ByteArrayInputStream(jpgContent)));
+    }
+
+    @Test
+    void detectFileType_emptyStream_returnsUnknown() throws IOException {
+        byte[] empty = new byte[0];
+        assertEquals(com.gimmevettingsolution.intake.service.FileType.UNKNOWN,
+                service.detectFileType(new ByteArrayInputStream(empty)));
+    }
+
+    @Test
+    void detectFileType_nullStream_returnsUnknown() throws IOException {
+        assertEquals(com.gimmevettingsolution.intake.service.FileType.UNKNOWN,
+                service.detectFileType(null));
+    }
+
+    @Test
+    void detectFileType_singleByte_returnsUnknown() throws IOException {
+        byte[] single = new byte[]{0x41};
+        assertEquals(com.gimmevettingsolution.intake.service.FileType.UNKNOWN,
+                service.detectFileType(new ByteArrayInputStream(single)));
+    }
+
     // --- Filename Validation Tests ---
 
     @Test

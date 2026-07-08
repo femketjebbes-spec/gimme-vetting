@@ -54,18 +54,27 @@ public class ExcelIntakeController {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            // Validate MIME type server-side
+            // Validate MIME type and fall back to content-based detection
             String mimeType = file.getContentType();
-            if (!excelParsingService.isSupportedMimeType(mimeType)) {
-                InvalidFileFormatResponse response = new InvalidFileFormatResponse(
-                        "INVALID_FILE_FORMAT",
-                        "Unsupported MIME type: " + mimeType + ". Expected application/vnd.openxmlformats-officedocument.spreadsheetml.sheet or text/csv."
-                );
-                return ResponseEntity.badRequest().body(response);
-            }
+            boolean isCsv;
 
-            // Determine file type
-            boolean isCsv = mimeType != null && mimeType.startsWith("text/csv");
+            if (excelParsingService.isSupportedMimeType(mimeType)) {
+                // Fast path: MIME type is recognized, proceed directly
+                isCsv = mimeType != null && mimeType.startsWith("text/csv");
+            } else {
+                // Fallback path: MIME type is null, empty, or unrecognized.
+                // Inspect file content via magic bytes.
+                byte[] fileBytes = file.getBytes();
+                var detected = excelParsingService.detectFileType(new ByteArrayInputStream(fileBytes));
+                if (detected == com.gimmevettingsolution.intake.service.FileType.UNKNOWN) {
+                    InvalidFileFormatResponse response = new InvalidFileFormatResponse(
+                            "INVALID_FILE_FORMAT",
+                            "File content is not a recognized Excel or CSV format"
+                    );
+                    return ResponseEntity.badRequest().body(response);
+                }
+                isCsv = (detected == com.gimmevettingsolution.intake.service.FileType.CSV);
+            }
 
             // Use bytes for both operations since streams are consumed
             byte[] fileBytes = file.getBytes();

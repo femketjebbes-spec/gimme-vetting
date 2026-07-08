@@ -75,3 +75,27 @@ User reported that the downloaded template file had a trailing underscore in its
 
 ### Remaining
 - User must verify the fix in browser: download the template and confirm the filename is `invoice-intake-template.xlsx` without trailing underscore.
+
+## Session 4 - 2026-07-08 WI-008 BR-001 MIME-Type-Based File Validation Fix
+
+### Summary
+Femke received delegation from Archibald (WI-008) for Subtask 2: Frontend Review. The BR-001 fix addresses a bug where users on browsers/OSes that report unrecognized MIME types (e.g., `application/octet-stream`, `application/zip`) cannot upload valid `.xlsx` files. The fix is primarily backend-side (content-based magic byte detection). Frontend review discovered existing client-side MIME type validation that contradicted the new contract.
+
+### Actions Taken
+1. **Review**: Read `docs/wi-008-delegation-parallel.md`, `docs/api-contract-wi-002.md` (v2.1.0), and `ExcelUpload.jsx`.
+2. **Finding**: `ExcelUpload.jsx` contained client-side MIME type validation in `handleFileChange()` (original lines 23-47) that blocked uploads when the file's MIME type did not match the accepted set. This contradicted the contract (Section 3.2.1) which states MIME type is "supplementary hint only" and the backend must fall back to content-based detection for unrecognized MIME types.
+3. **Implementation Mode**: Removed `ACCEPTED_MIME_TYPES` constant and the MIME type check from `handleFileChange()`. The function now accepts any selected file, clears previous errors, and stores the file for upload. The backend handles authoritative validation.
+4. **Test Impact Analysis**: Identified that one existing test (`validates MIME type before upload for non-matching types` at line 71 of `ExcelUpload.test.jsx`) tests the removed behavior. This test will fail and requires Test Regeneration by Testing Mode with explicit Archibald authorization.
+5. **Confirmation Artefact**: Written `confirmations/no-frontend-changes-needed.md` documenting the finding, the change, and the test impact.
+6. **Alignment Review Request**: Written `docs/alignment-review-request.md` (review cycle 1) with status COMPLETED, `nextAgentInPipeline: null`, and self-certification of compliance with BR-001 requirements and WI-008 specs.
+7. **No Structural Change Signal**: The API surface is unchanged (endpoint, request body, response schema). No update to `docs/api-requirements.md` is required. No `docs/femke-structural-change-signal.md` produced.
+
+### Decisions
+- Removed client-side MIME type blocking entirely rather than softening it, because the contract makes MIME type supplementary. Softening (e.g., warning instead of blocking) would still create a degraded UX for users with unrecognized MIME types.
+- No new tests were written. Per TDD discipline, Implementation Mode must not modify test files. The failing test requires Testing Mode regeneration with Archibald authorization.
+- The `accept=".xlsx,.csv"` attribute on the file input was NOT removed. This is an HTML attribute that only affects the file picker dialog filter (UI convenience). It does not block uploads and does not contradict the contract.
+
+### Remaining
+- Test `validates MIME type before upload for non-matching types` will fail. Requires Testing Mode regeneration with Archibald authorization to update or remove the test.
+- Awaiting Alignment Agent approval for the review request.
+- No open items for this subtask.
