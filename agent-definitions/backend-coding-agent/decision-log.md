@@ -129,3 +129,7 @@ Derived from: WI-007 delegation plan Subtask 2, docs/api-contract-wi-007.md
 [2026-07-08] [Session 3] TEST-SPEC: `ExcelIntakeControllerTest.java` template tests map to WI-007 Subtask 2 (controller endpoint).
 Purpose: Validates 7 tests: 200 status, XLSX content type, Content-Disposition header, non-empty bytes, PK header format, file size under 100KB.
 Derived from: WI-007 delegation plan Subtask 2, docs/api-contract-wi-007.md
+
+[2026-07-08] [Session 4] DECISION: Added @Autowired to FileBackedPoCStoreService Spring constructor to resolve Spring bean instantiation failure.
+Assumptions: The class has two constructors — a public Spring constructor and a package-private testing constructor. Spring cannot unambiguously resolve which constructor to use without explicit annotation.
+Rationale: User-reported bug: "Failed to instantiate FileBackedPoCStoreService: No default constructor found". Standard Spring fix for multi-constructor beans.

@@ -8,10 +8,26 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Kill any previous instances occupying our ports
+cleanup_stale_processes() {
+  local port_pid
+  port_pid=$(lsof -ti :8082 2>/dev/null || true)
+  if [ -n "$port_pid" ]; then
+    echo "WARNING: Killing stale process on port 8082 (PID: $port_pid)"
+    kill -9 $port_pid 2>/dev/null || true
+  fi
+  port_pid=$(lsof -ti :5173 2>/dev/null || true)
+  if [ -n "$port_pid" ]; then
+    echo "WARNING: Killing stale process on port 5173 (PID: $port_pid)"
+    kill -9 $port_pid 2>/dev/null || true
+  fi
+}
+
 # --- Backend ---
 echo "=== Starting backend on http://localhost:8082 ==="
+cleanup_stale_processes
 cd "$SCRIPT_DIR/5-backend"
-mvn spring-boot:run -pl business-service -q &
+mvn spring-boot:run -pl business-service &
 BACKEND_PID=$!
 echo "Backend PID: $BACKEND_PID"
 

@@ -1,5 +1,6 @@
 package com.gimmevettingsolution.poc;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,6 +27,7 @@ public class FileBackedPoCStoreService implements PoCStoreService {
     /**
      * Spring Boot constructor — injects the PoC store path from application.yml.
      */
+    @Autowired
     public FileBackedPoCStoreService(@Value("${gimme.poc-store-path}") String pocStorePathStr) {
         this.pocStorePath = Path.of(pocStorePathStr);
     }
