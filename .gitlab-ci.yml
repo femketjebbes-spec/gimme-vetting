@@ -19,7 +19,7 @@ backend-build:
   stage: build
   image: maven:3.9-eclipse-temurin-17
   script:
-    - cd 5-backend && mvn clean compile
+    - mvn -f 5-backend/pom.xml clean compile
   artifacts:
     paths:
       - 5-backend/business-service/target/*.jar
@@ -45,8 +45,8 @@ backend-test:
   stage: test
   image: maven:3.9-eclipse-temurin-17
   script:
-    - cd 5-backend && mvn test
-    - cd 5-backend && mvn verify -DskipUnitTests=true
+    - mvn -f 5-backend/pom.xml clean test
+    - mvn -f 5-backend/pom.xml verify -DskipUnitTests=true
   artifacts:
     reports:
       junit:
