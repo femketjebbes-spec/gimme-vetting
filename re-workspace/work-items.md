@@ -6,10 +6,34 @@
 
 ---
 
-## First Implementation Work Item: WI-001 (PoC Existence Verification)
+## Folder Structure
+
+Work items are organized into two MVP tracks:
+
+| Folder | Track | Scope |
+|--------|-------|-------|
+| [`MVP-1-Client/`](re-workspace/work-items/MVP-1-Client/) | Client-facing intake | Excel upload, PoC verification, mandatory field validation, return Excel, PoC upload |
+| [`MVP-1-Case-analyst/`](re-workspace/work-items/MVP-1-Case-analyst/) | Case analyst view | Read-only invoice list, detail view, dashboard frontend |
+
+---
+
+## Case Analyst Track: MVP-1-Case-analyst
+
+A fully organised work item definition exists at:
+- **Folder:** [re-workspace/work-items/MVP-1-Case-analyst/](re-workspace/work-items/MVP-1-Case-analyst/)
+- **WI-CA-001:** [Analyst Invoice List & Detail API](re-workspace/work-items/MVP-1-Case-analyst/wi-ca-001-analyst-api.md)
+- **WI-CA-002:** [Analyst Read-Only Dashboard Frontend](re-workspace/work-items/MVP-1-Case-analyst/wi-ca-002-frontend-dashboard.md)
+
+**Scope:** Read-only invoice listing with filtering, search, and detail drawer. No write actions for MVP.
+
+---
+
+## Client Track: MVP-1-Client
+
+### First Implementation Work Item: WI-001 (PoC Existence Verification)
 
 A fully formalised work item definition exists at:
-- **File:** [re-workspace/work-items/wi-001-poc-existence-verification.md](re-workspace/work-items/wi-001-poc-existence-verification.md)
+- **File:** [re-workspace/work-items/MVP-1-Client/wi-001-poc-existence-verification.md](re-workspace/work-items/MVP-1-Client/wi-001-poc-existence-verification.md)
 - **Parent Requirement:** RQ-001 (PoC Existence Verification)
 - **Parent Work Stream:** W-002 (Invoice Intake and PoC Matching Engine)
 - **Status:** Ready for implementation
@@ -23,7 +47,7 @@ This work item is the recommended starting point for implementation. See the for
 ## WI-006: Project Build Orchestration
 
 A fully formalised work item definition exists at:
-- **File:** [re-workspace/work-items/wi-006-project-build-orchestration.md](re-workspace/work-items/wi-006-project-build-orchestration.md)
+- **File:** [re-workspace/work-items/MVP-1-Client/wi-006-project-build-orchestration.md](re-workspace/work-items/MVP-1-Client/wi-006-project-build-orchestration.md)
 - **Parent Requirement:** None (cross-cutting infrastructure requirement)
 - **Type:** Build infrastructure
 - **Priority:** High

@@ -88,7 +88,27 @@ Rationale: Consistent with D-002 (multiple PoC files for same invoice are not an
 Security Implications: No security risk. The existing path traversal protection in FileBackedPoCStoreService (SAFE_PATTERN) applies to uploads as well. The overwrite is atomic via `Files.move()` with `REPLACE_EXISTING`.
 Affected Agents: Naut
 
-[2026-07-08] [Session 7] ARCHITECTURAL DECISION: WI-005 PoC upload endpoint path is POST /api/v1/poc-upload. The request body is multipart/form-data with a single field named `file`. The filename is extracted from the uploaded file and used for PoC matching. No additional parameter for invoice number is required because the invoice number is encoded in the filename.
-Rationale: This is the simplest API design. The filename-to-invoice-number mapping is already established by D-001 (case-insensitive matching). Adding a separate invoice number parameter would create duplication and potential mismatch between filename and stated invoice number.
-Security Implications: The filename must be sanitized against path traversal (same pattern as ExcelIntakeController). The endpoint must not accept a filename that resolves to a path outside the PoC store directory.
+[2026-07-08] [Session 8] ARCHITECTURAL DECISION: WI-CA-001 resubmission strategy uses Option A: when a client submits an invoice with an existing invoiceNumber, the existing row is updated and resubmissionCount is incremented by one. No new row is created per submission.
+Rationale: The work item wi-ca-001-analyst-api explicitly recommends Option A for MVP simplicity. Creating new rows per submission (Option B) would complicate queries and is not required for the analyst dashboard which only needs to display invoice data with a resubmission counter. This decision applies only to the resubmission logic in the intake pipeline, not to the analyst API itself.
+Security Implications: Updating in place means the database always contains a single row per invoiceNumber. The unique constraint on invoice_number column enforces this. Resubmission count provides an audit trail of how many times a client has re-submitted. No sensitive data is exposed by this decision.
+Affected Agents: Naut, Gerard
+
+[2026-07-08] [Session 8] ARCHITECTURAL DECISION: WI-CA-001 analyst API endpoints are unauthenticated for MVP, consistent with D-026 (no authentication on client portal endpoints for MVP). This applies to GET /api/v1/analyst/invoices and GET /api/v1/analyst/invoices/{id}. Authentication must be added in a future iteration.
+Rationale: Consistency with existing unauthenticated endpoints (Excel upload, PoC upload) established in Session 5. The analyst dashboard is for case analysts who use the same client portal. Adding authentication requires infrastructure decisions (auth provider, session management, token storage) that are out of scope for MVP.
+Security Implications: Unauthenticated GET endpoints expose all invoice data including debtor names, addresses, bank account numbers, and phone numbers to anyone with access to the API. This is a documented MVP limitation. The architect recommends implementing simple API key authentication or basic auth in MVP+1. Rate limiting should also be added to prevent bulk data extraction. These are not implemented in MVP but must be flagged.
+Affected Agents: Gerard, Naut, Femke
+
+[2026-07-08] [Session 8] ARCHITECTURAL DECISION: WI-CA-001 introduces a Flyway migration V2__add_resubmission_count.sql to add the resubmissionCount column to the invoices table. The column is INTEGER NOT NULL DEFAULT 0.
+Rationale: The existing Invoice entity (mapped by V1 migration) does not have a resubmissionCount field. The analyst API requires this field in its response DTO. Adding it via Flyway migration ensures the database schema matches the entity definition.
+Security Implications: None. This is a metadata column tracking resubmission count. No sensitive data is introduced.
+Affected Agents: Naut, Gerard, Database Engineer
+
+[2026-07-08] [Session 8] ARCHITECTURAL DECISION: WI-CA-001 endpoints are versioned under /api/v1/analyst/ path. This follows the existing /api/v1/ prefix convention established by intake and PoC upload endpoints.
+Rationale: API versioning via URL path prefix is consistent with existing endpoints. The /analyst/ sub-path clearly separates analyst-facing endpoints from client-facing endpoints, even though both are under /api/v1/.
+Security Implications: Path-based separation does not provide security isolation. Access controls must be implemented at the controller or service layer if authentication is added later.
 Affected Agents: Gerard, Naut
+
+[2026-07-08] [Session 10] ARCHITECTURAL DECISION: The case analyst dashboard is served from the existing 4-frontend/ project using React Router with two routes: the client upload page (existing ExcelUpload component at /) and the analyst dashboard (AnalystDashboard component at /analyst). The main.jsx entry point is refactored to wrap both routes in a BrowserRouter.
+Rationale: The existing frontend at 4-frontend/ is the sole frontend project for MVP. The analyst dashboard is a separate view within the same application, sharing the same build pipeline, dependency management, and testing infrastructure. React Router provides client-side routing without requiring a separate server or entry point. This is simpler than adding a second Vite entry point or creating a new frontend project.
+Security Implications: Both routes serve from the same origin, so CORS is not a concern. The analyst route must not bypass the existing API. No new attack surface is introduced beyond the analyst dashboard UI itself. Future authentication (required per D-CA-002) must protect the /analyst route.
+Affected Agents: Femke

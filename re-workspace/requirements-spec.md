@@ -201,6 +201,25 @@ Gimme shall provide a client portal endpoint for uploading PoC files separately 
 
 ---
 
+### RQ-010: Case Analyst Read-Only Dashboard
+
+Gimme shall provide a read-only dashboard for case analysts to view invoices that have passed automated validation.
+
+- The dashboard shall display a paginated list of invoices with filtering by status (`QUEUED`, `REJECTED_TYPE_A`, `REJECTED_TYPE_B`) and free-text search across `invoiceNumber`, `debtorName`, and `address`.
+- Each invoice row shall show: status badge, invoice number, debtor name, address, PoC status, and a resubmission count indicator.
+- Clicking a row shall open a slide-over drawer displaying the full invoice detail: debtor name, address, bank account number, phone number, status, PoC status, rejection reason (if applicable).
+- The dashboard is **read-only** — no validation, rejection, or return actions are available in MVP.
+- Pagination defaults to 50 items per page with configurable page size (max 200).
+- Sorting is supported by any visible column in ascending or descending order.
+
+**Business Objective:** OPE-002 — Give case analysts visibility into the invoice pipeline
+**Source:** Case Analyst MVP scope
+**Verification Method:** Open the dashboard and verify that invoices can be listed, filtered, searched, and viewed in detail without any write actions available.
+**Priority:** Must have
+**Dependencies:** Excel intake (RQ-006) producing invoices in the database
+
+---
+
 ## Requirements Summary
 
 | ID | Description | Priority | Type | Dependency |
@@ -214,6 +233,7 @@ Gimme shall provide a client portal endpoint for uploading PoC files separately 
 | RQ-007 | Mandatory Field Validation (Per-Row) | Must have (MVP) | N/A (Validation) | Excel parsing library |
 | RQ-008 | Return Excel with Missing Data | Must have (MVP) | N/A (Output) | Excel generation library |
 | RQ-009 | Separate PoC Upload Endpoint | Should have | N/A (Intake mechanism) | File storage system |
+| RQ-010 | Case Analyst Read-Only Dashboard | Must have | Read-Only View | Excel intake (RQ-006) |
 
 ---
 

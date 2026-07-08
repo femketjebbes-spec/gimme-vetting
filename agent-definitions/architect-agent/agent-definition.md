@@ -257,7 +257,7 @@ The parallel delegation plan is written to `docs/wi-<NNNN>-delegation-parallel.m
 ### Subtask 1: Frontend Implementation
 - **Assigned Agent**: Femke (Frontend Agent)
 - **Input Artefact**: `docs/api-contract-wi-<NNNN>.md`
-- **Output Artefact**: Frontend code in `src/frontend/`
+- **Output Artefact**: Frontend code in `src/client-service/`
 - **Constraints**: Frontend must conform to the versioned API contract. All fetch calls must target endpoints declared in the contract.
 
 ### Subtask 2: Backend Implementation
