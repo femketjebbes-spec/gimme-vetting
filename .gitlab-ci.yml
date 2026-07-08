@@ -102,8 +102,8 @@ security-scan:
     - backend-build
     - frontend-build
   script:
-    - /bin/sh -c 'trivy fs --sec-type vuln --severity HIGH,CRITICAL --format sarif --output trivy-backend.sarif 5-backend || true'
-    - /bin/sh -c 'trivy fs --sec-type vuln --severity HIGH,CRITICAL --format sarif --output trivy-frontend.sarif 4-frontend || true'
+    - trivy fs --severity HIGH,CRITICAL --format sarif --output trivy-backend.sarif 5-backend || true
+    - trivy fs --severity HIGH,CRITICAL --format sarif --output trivy-frontend.sarif 4-frontend || true
   artifacts:
     paths:
       - trivy-backend.sarif
