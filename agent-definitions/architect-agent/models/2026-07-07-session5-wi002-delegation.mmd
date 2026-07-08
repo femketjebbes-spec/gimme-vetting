@@ -1,0 +1,40 @@
+%%{init: {'theme':'default', 'themeVariables': {'primaryColor': '#ffdfd3', 'secondaryColor': '#dcd0ff', 'tertiaryColor': '#f0f0f0', 'fontFamily': 'Arial', 'edgeLabelBackground': '#ffffff', 'lineColor': '#7ec699'}}}%%
+flowchart TD
+    subgraph Archibald["Archibald (Architect)"]
+        A1["Read WI-002 work item<br/>re-workspace/work-items/wi-002-<br/>excel-file-upload-and-parsing.md"]
+        A2["Document architectural<br/>decisions D-024 through D-029"]
+        A3["Produce Gerard delegation<br/>plan wi-002-delegation-gerard.md"]
+    end
+
+    subgraph Gerard["Gerard (API-Agent)"]
+        G1["Define API contract for<br/>POST /api/v1/intake/excel"]
+        G2["Produce docs/api-contract-wi-002.md"]
+        G3["Submit to Alignment Agent<br/>docs/alignment-review-request.md"]
+    end
+
+    subgraph Alignment["Alignment Agent"]
+        AL1["Validate contract against<br/>requirements and architecture"]
+        AL2["Decision: APPROVED or REJECTED"]
+    end
+
+    subgraph FemkeNaut["Femke (Frontend) + Naut (Backend)"]
+        F1["Femke: Client portal UI<br/>for Excel upload and download"]
+        N1["Naut: Excel parsing, validation,<br/>return Excel generation"]
+    end
+
+    A1 --> A2
+    A2 --> A3
+    A3 --> G1
+    G1 --> G2
+    G2 --> G3
+    G3 --> AL1
+    AL1 --> AL2
+    AL2 -- "APPROVED: greenlightForNextAgent=true,<br/>nextAgentInPipeline=Femke-Naut-parallel" --> F1
+    AL2 -- "APPROVED" --> N1
+    F1 -.-> G2
+    N1 -.-> G2
+
+    style Archibald fill:#ffdfd3,stroke:#7ec699
+    style Gerard fill:#dcd0ff,stroke:#7ec699
+    style Alignment fill:#f0f0f0,stroke:#957dad
+    style FemkeNaut fill:#d4f1f9,stroke:#7ec699

@@ -1,0 +1,557 @@
+package com.gimmevettingsolution.intake.service;
+
+import com.gimmevettingsolution.intake.dto.ExcelInvoiceRow;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.util.NumberToTextConverter;
+import org.springframework.stereotype.Service;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.regex.Pattern;
+
+/**
+ * Service for parsing Excel files (XLSX and CSV) and mapping columns to domain fields.
+ * <p>
+ * NOTE: Authentication is absent for the PoC phase. This endpoint is unauthenticated
+ * and should be protected in a future work item.
+ * <p>
+ * Supported column names (case-insensitive):
+ * "invoice number", "debtor name", "address", "phone number", "bank account number"
+ */
+@Service
+public class ExcelParsingService {
+
+    private static final Set<String> ALLOWED_COLUMN_NAMES = Set.of(
+            "invoice number",
+            "debtor name",
+            "address",
+            "phone number",
+            "bank account number"
+    );
+
+    private static final Pattern SAFE_FILENAME_PATTERN = Pattern.compile("^[A-Za-z0-9\\-_.]+$");
+    private static final String[] SUPPORTED_MIME_TYPES = {
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/csv"
+    };
+
+    /**
+     * Validate MIME type server-side.
+     *
+     * @param mimeType the MIME type to validate
+     * @return true if the MIME type is supported
+     */
+    public boolean isSupportedMimeType(String mimeType) {
+        if (mimeType == null || mimeType.isEmpty()) {
+            return false;
+        }
+        String cleanType = mimeType.split(";")[0].trim().toLowerCase();
+        for (String supported : SUPPORTED_MIME_TYPES) {
+            if (supported.equals(cleanType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Validate filename against path traversal patterns.
+     *
+     * @param filename the original filename
+     * @return true if the filename is safe
+     */
+    public boolean isSafeFilename(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return false;
+        }
+        // Check raw filename for path traversal patterns first
+        if (filename.contains("..") || filename.contains("/")) {
+            return false;
+        }
+        String cleanName = Paths.get(filename).getFileName().toString();
+        return SAFE_FILENAME_PATTERN.matcher(cleanName).matches();
+    }
+
+    /**
+     * Sanitize filename to prevent path traversal.
+     *
+     * @param filename the original filename
+     * @return the sanitized filename
+     */
+    public String sanitizeFilename(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "upload.xlsx";
+        }
+        String cleanName = Paths.get(filename).getFileName().toString();
+        if (!SAFE_FILENAME_PATTERN.matcher(cleanName).matches()) {
+            cleanName = cleanName.replaceAll("[^A-Za-z0-9\\-_.]", "_");
+        }
+        return cleanName;
+    }
+
+    /**
+     * Parse an Excel file and return parsed invoice rows.
+     * Detects header row and validates column names.
+     *
+     * @param inputStream the file input stream
+     * @param isCsv       true if the file is CSV, false if XLSX
+     * @return array of parsed ExcelInvoiceRow objects
+     * @throws IOException if the file cannot be read
+     */
+    public ExcelInvoiceRow[] parse(InputStream inputStream, boolean isCsv) throws IOException {
+        List<ExcelInvoiceRow> rows = new ArrayList<>();
+
+        if (isCsv) {
+            rows = parseCsv(inputStream);
+        } else {
+            rows = parseXlsx(inputStream);
+        }
+
+        return rows.toArray(new ExcelInvoiceRow[0]);
+    }
+
+    /**
+     * Detect unrecognized column names from file headers.
+     *
+     * @param inputStream the file input stream
+     * @param isCsv       true if the file is CSV
+     * @return list of unrecognized column names
+     * @throws IOException if the file cannot be read
+     */
+    public List<String> detectUnrecognizedColumns(InputStream inputStream, boolean isCsv) throws IOException {
+        if (isCsv) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            String[] headers = readCsvLine(reader);
+            reader.close();
+            if (headers == null) {
+                return Collections.emptyList();
+            }
+            return validateColumnNames(headers);
+        } else {
+            try (Workbook workbook = WorkbookFactory.create(inputStream)) {
+                Sheet sheet = workbook.getSheetAt(0);
+                if (!sheet.iterator().hasNext()) {
+                    return Collections.emptyList();
+                }
+                Row headerRow = sheet.getRow(0);
+                String[] headers = readHeaderRow(headerRow);
+                return validateColumnNames(headers);
+            }
+        }
+    }
+
+    /**
+     * Parse a CSV file.
+     */
+    private List<ExcelInvoiceRow> parseCsv(InputStream inputStream) throws IOException {
+        List<ExcelInvoiceRow> rows = new ArrayList<>();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+        String[] headers = readCsvLine(reader);
+        if (headers == null) {
+            return rows;
+        }
+
+        boolean hasHeader = detectHeader(headers);
+        int startRow = hasHeader ? 0 : 0;
+        int rowIndex = 0;
+        String line;
+
+        // If no header was detected, the first line (headers[]) is actually data
+        if (!hasHeader) {
+            String[] cells = headers;
+            ExcelInvoiceRow row = mapRow(cells, rowIndex, false, null);
+            if (row != null) {
+                rows.add(row);
+            }
+            rowIndex++;
+        }
+
+        while ((line = reader.readLine()) != null) {
+            if (isBlankLine(line)) {
+                continue;
+            }
+            String[] cells = splitCsvLine(line);
+            ExcelInvoiceRow row = mapRow(cells, rowIndex, hasHeader, headers);
+            if (row != null) {
+                rows.add(row);
+            }
+            rowIndex++;
+        }
+        reader.close();
+        return rows;
+    }
+
+    /**
+     * Parse an XLSX file.
+     */
+    private List<ExcelInvoiceRow> parseXlsx(InputStream inputStream) throws IOException {
+        List<ExcelInvoiceRow> rows = new ArrayList<>();
+
+        try (Workbook workbook = WorkbookFactory.create(inputStream)) {
+            Sheet sheet = workbook.getSheetAt(0);
+            if (!sheet.iterator().hasNext()) {
+                return rows;
+            }
+
+            Row headerRow = sheet.getRow(0);
+            String[] headers = readHeaderRow(headerRow);
+            boolean hasHeader = detectHeader(headers);
+
+            int startRow = hasHeader ? 1 : 0;
+            int rowIndex = 0;
+            for (int i = startRow; i <= sheet.getLastRowNum(); i++) {
+                Row dataRow = sheet.getRow(i);
+                if (isBlankRow(dataRow)) {
+                    continue;
+                }
+                String[] cells = readDataRow(dataRow);
+                ExcelInvoiceRow row = mapRow(cells, rowIndex, hasHeader, headers);
+                if (row != null) {
+                    rows.add(row);
+                }
+                rowIndex++;
+            }
+        }
+
+        return rows;
+    }
+
+    /**
+     * Read header values from a workbook row.
+     */
+    private String[] readHeaderRow(Row row) {
+        List<String> headers = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            Cell cell = row != null ? row.getCell(i, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) : null;
+            if (cell != null) {
+                headers.add(getCellStringValue(cell));
+            } else {
+                headers.add("");
+            }
+        }
+        return headers.toArray(new String[0]);
+    }
+
+    /**
+     * Read data cells from a row.
+     */
+    private String[] readDataRow(Row row) {
+        List<String> values = new ArrayList<>();
+        int lastCell = Math.max(row.getLastCellNum(), 5);
+        for (int i = 0; i < lastCell; i++) {
+            Cell cell = row.getCell(i, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+            if (cell != null) {
+                values.add(getCellStringValue(cell));
+            } else {
+                values.add("");
+            }
+        }
+        return values.toArray(new String[0]);
+    }
+
+    /**
+     * Get string value from a cell.
+     */
+    private String getCellStringValue(Cell cell) {
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue().trim();
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    return cell.getDateCellValue().toString();
+                }
+                return NumberToTextConverter.toText(cell.getNumericCellValue());
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                try {
+                    return cell.getStringCellValue();
+                } catch (Exception e) {
+                    return NumberToTextConverter.toText(cell.getNumericCellValue());
+                }
+            case BLANK:
+            default:
+                return "";
+        }
+    }
+
+    /**
+     * Check if a row is blank.
+     */
+    private boolean isBlankRow(Row row) {
+        if (row == null) {
+            return true;
+        }
+        for (int i = 0; i <= row.getLastCellNum(); i++) {
+            Cell cell = row.getCell(i, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+            if (cell != null && getCellStringValue(cell).trim().length() > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Detect if the first row is a header row.
+     */
+    private boolean detectHeader(String[] headers) {
+        Set<String> normalizedHeaders = new HashSet<>();
+        for (String h : headers) {
+            String trimmed = h.trim().toLowerCase();
+            if (!trimmed.isEmpty()) {
+                normalizedHeaders.add(trimmed);
+            }
+        }
+
+        for (String allowed : ALLOWED_COLUMN_NAMES) {
+            if (normalizedHeaders.contains(allowed)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Validate column names against the allowlist.
+     *
+     * @param headers the header names from the file
+     * @return list of unrecognized column names, empty if all are valid
+     */
+    public List<String> validateColumnNames(String[] headers) {
+        List<String> unrecognized = new ArrayList<>();
+        for (String header : headers) {
+            String trimmed = header.trim().toLowerCase();
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            if (!ALLOWED_COLUMN_NAMES.contains(trimmed)) {
+                unrecognized.add(header.trim());
+            }
+        }
+        return unrecognized;
+    }
+
+    /**
+     * Map a row of cell values to an ExcelInvoiceRow.
+     */
+    private ExcelInvoiceRow mapRow(String[] cells, int rowIndex, boolean hasHeader, String[] headers) {
+        ExcelInvoiceRow row = new ExcelInvoiceRow();
+        row.setRowIndex(rowIndex);
+
+        List<String> errors = new ArrayList<>();
+
+        if (hasHeader) {
+            Map<String, Integer> columnMap = buildHeaderColumnMap(headers);
+            String invoiceNumber = getCellValueByColumn(cells, columnMap, "invoice number", errors);
+            String debtorName = getCellValueByColumn(cells, columnMap, "debtor name", errors);
+            String address = getCellValueByColumn(cells, columnMap, "address", errors);
+            String phoneNumber = getCellValueByColumn(cells, columnMap, "phone number", errors);
+            String bankAccountNumber = getCellValueByColumn(cells, columnMap, "bank account number", errors);
+
+            row.setInvoiceNumber(invoiceNumber);
+            row.setDebtorName(debtorName);
+            row.setAddress(address);
+            row.setPhoneNumber(phoneNumber);
+            row.setBankAccountNumber(bankAccountNumber);
+        } else {
+            row.setInvoiceNumber(getCellAtPosition(cells, 0));
+            row.setDebtorName(getCellAtPosition(cells, 1));
+            row.setAddress(getCellAtPosition(cells, 2));
+            row.setPhoneNumber(getCellAtPosition(cells, 3));
+            row.setBankAccountNumber(getCellAtPosition(cells, 4));
+        }
+
+        row.setParseErrors(errors.isEmpty() ? null : errors);
+        return row;
+    }
+
+    /**
+     * Build a mapping from normalized header name to column index.
+     */
+    private Map<String, Integer> buildHeaderColumnMap(String[] headers) {
+        Map<String, Integer> map = new LinkedHashMap<>();
+        for (int i = 0; i < headers.length; i++) {
+            String trimmed = headers[i].trim().toLowerCase();
+            if (!trimmed.isEmpty() && ALLOWED_COLUMN_NAMES.contains(trimmed)) {
+                map.put(trimmed, i);
+            }
+        }
+        return map;
+    }
+
+    /**
+     * Get cell value by column name from headers mapping.
+     */
+    private String getCellValueByColumn(String[] cells, Map<String, Integer> columnMap,
+                                         String columnName, List<String> errors) {
+        Integer colIndex = columnMap.get(columnName);
+        if (colIndex == null) {
+            errors.add("MISSING_FIELD:" + columnName);
+            return "";
+        }
+        if (colIndex >= cells.length || cells[colIndex].trim().isEmpty()) {
+            errors.add("MISSING_FIELD:" + columnName);
+            return "";
+        }
+        return cells[colIndex].trim();
+    }
+
+    /**
+     * Get cell value at a specific position (for position-based mapping).
+     */
+    private String getCellAtPosition(String[] cells, int position) {
+        if (position >= cells.length) {
+            return "";
+        }
+        return cells[position].trim();
+    }
+
+    /**
+     * Parse CSV line handling quoted fields.
+     */
+    private String[] splitCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (inQuotes) {
+                if (c == '"') {
+                    if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                        current.append('"');
+                        i++;
+                    } else {
+                        inQuotes = false;
+                    }
+                } else {
+                    current.append(c);
+                }
+            } else {
+                if (c == '"') {
+                    inQuotes = true;
+                } else if (c == ',') {
+                    fields.add(current.toString().trim());
+                    current = new StringBuilder();
+                } else {
+                    current.append(c);
+                }
+            }
+        }
+        fields.add(current.toString().trim());
+        return fields.toArray(new String[0]);
+    }
+
+    /**
+     * Read a CSV line from BufferedReader (no quoting support, simple split).
+     */
+    private String[] readCsvLine(BufferedReader reader) throws IOException {
+        String line = reader.readLine();
+        if (line == null || line.isEmpty()) {
+            return null;
+        }
+        return splitCsvLine(line);
+    }
+
+    /**
+     * Check if a line is blank.
+     */
+    private boolean isBlankLine(String line) {
+        return line.trim().isEmpty();
+    }
+
+    /**
+     * Generate a return Excel file containing only the rows that failed validation.
+     *
+     * @param failingRows the rows that failed validation
+     * @param outputDir   the directory to write the file to
+     * @return path to the generated file, or null if no failing rows
+     */
+    public Path generateReturnExcel(ExcelInvoiceRow[] failingRows, Path outputDir) throws IOException {
+        if (failingRows == null || failingRows.length == 0) {
+            return null;
+        }
+
+        Path outputFile = outputDir.resolve("return-excel.xlsx");
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Failed Rows");
+
+            // Create header row
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {"invoice number", "debtor name", "address", "phone number", "bank account number", "Issue"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+            }
+
+            // Create data rows
+            int rowNum = 1;
+            for (ExcelInvoiceRow row : failingRows) {
+                Row dataRow = sheet.createRow(rowNum);
+
+                String issue = buildIssue(row);
+
+                dataRow.createCell(0).setCellValue(row.getInvoiceNumber() != null ? row.getInvoiceNumber() : "");
+                dataRow.createCell(1).setCellValue(row.getDebtorName() != null ? row.getDebtorName() : "");
+                dataRow.createCell(2).setCellValue(row.getAddress() != null ? row.getAddress() : "");
+                dataRow.createCell(3).setCellValue(row.getPhoneNumber() != null ? row.getPhoneNumber() : "");
+                dataRow.createCell(4).setCellValue(row.getBankAccountNumber() != null ? row.getBankAccountNumber() : "");
+                dataRow.createCell(5).setCellValue(issue);
+
+                rowNum++;
+            }
+
+            try (FileOutputStream outputStream = new FileOutputStream(outputFile.toFile())) {
+                workbook.write(outputStream);
+            }
+        }
+
+        return outputFile;
+    }
+
+    /**
+     * Build the issue description for a failing row.
+     */
+    private String buildIssue(ExcelInvoiceRow row) {
+        List<String> issues = new ArrayList<>();
+
+        boolean hasMissingFields = false;
+        List<String> missingFields = new ArrayList<>();
+        if ((row.getInvoiceNumber() == null || row.getInvoiceNumber().isEmpty())) {
+            missingFields.add("invoiceNumber");
+            hasMissingFields = true;
+        }
+        if ((row.getDebtorName() == null || row.getDebtorName().isEmpty())) {
+            missingFields.add("debtorName");
+            hasMissingFields = true;
+        }
+        if ((row.getAddress() == null || row.getAddress().isEmpty())) {
+            missingFields.add("address");
+            hasMissingFields = true;
+        }
+        if ((row.getPhoneNumber() == null || row.getPhoneNumber().isEmpty())) {
+            missingFields.add("phoneNumber");
+            hasMissingFields = true;
+        }
+        if ((row.getBankAccountNumber() == null || row.getBankAccountNumber().isEmpty())) {
+            missingFields.add("bankAccountNumber");
+            hasMissingFields = true;
+        }
+
+        if (hasMissingFields) {
+            issues.add("MISSING_FIELDS:" + String.join(", ", missingFields));
+        }
+
+        if (issues.isEmpty()) {
+            issues.add("MISSING_POC");
+        }
+
+        return String.join("; ", issues);
+    }
+}

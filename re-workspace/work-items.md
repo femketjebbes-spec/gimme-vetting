@@ -20,6 +20,22 @@ This work item is the recommended starting point for implementation. See the for
 
 ---
 
+## WI-006: Project Build Orchestration
+
+A fully formalised work item definition exists at:
+- **File:** [re-workspace/work-items/wi-006-project-build-orchestration.md](re-workspace/work-items/wi-006-project-build-orchestration.md)
+- **Parent Requirement:** None (cross-cutting infrastructure requirement)
+- **Type:** Build infrastructure
+- **Priority:** High
+- **Dependencies:** None
+- **Status:** Not started
+
+This work item addresses the absence of a root-level build orchestration mechanism. The project has two independently-built subprojects (frontend via Vite/npm, backend via Maven multi-module) but no single entry point to build, test, or clean the entire solution.
+
+**Recommended approach:** GNU Make Makefile at the project root with targets for `build`, `test`, `clean`, `backend`, `frontend`, and `check-tools`.
+
+---
+
 ## W-001: External Registry Interface Definition
 
 **Type:** Interface specification
