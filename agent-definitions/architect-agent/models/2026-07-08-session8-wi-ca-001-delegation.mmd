@@ -1,0 +1,46 @@
+flowchart TD
+    subgraph Archibald["Archibald (Architect)"]
+        A1["Read WI-CA-001 work item"]
+        A2["Document architectural decisions"]
+        A3["Produce Gerard delegation plan"]
+        A4["Monitor for Alignment Agent approval"]
+        A5["Produce parallel delegation plan"]
+    end
+
+    subgraph Gerard["API-Agent (Gerard)"]
+        G1["Produce API contract docs/api-contract-wi-ca-001.md"]
+        G2["Submit alignment review to Alignment Agent"]
+        G3["Receive alignment decision"]
+    end
+
+    subgraph Alignment["Alignment Agent"]
+        AL1["Validate contract against requirements"]
+        AL2["Approve or reject"]
+    end
+
+    subgraph Parallel["Femke + Naut (Parallel)"]
+        F1["Frontend: Invoice dashboard component"]
+        N1["Backend: AnalystInvoiceController + Service + DTO"]
+        N2["Backend: Invoice entity resubmissionCount field"]
+        N3["Backend: Flyway V2 migration"]
+        N4["Backend: Resubmission logic in intake service"]
+    end
+
+    A1 --> A2
+    A2 --> A3
+    A3 --> G1
+    G1 --> G2
+    G2 --> AL1
+    AL1 --> AL2
+    AL2 -->|"APPROVED"| A4
+    A4 -->|"greenlightForNextAgent=true"| A5
+    A5 --> F1
+    A5 --> N1
+    N1 --> N2
+    N2 --> N3
+    N3 --> N4
+
+    style Archibald fill:#e1f5fe
+    style Gerard fill:#fff3e0
+    style Alignment fill:#f3e5f5
+    style Parallel fill:#e8f5e9
