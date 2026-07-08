@@ -50,3 +50,28 @@ Femke received delegation from Archibald (WI-007) to add a Download Template but
 ### Remaining
 - Awaiting Alignment Agent approval before Gerard can proceed with backend verification.
 - No open items for this subtask.
+
+## Session 3 - 2026-07-08 WI-007 Download Template Filename Bug Fix
+
+### Summary
+User reported that the downloaded template file had a trailing underscore in its filename (`invoice-intake-template.xlsx_`), making it unrecognizable as an Excel file. The root cause was a greedy regex in `handleDownloadTemplate` that captured trailing whitespace/characters from the Content-Disposition header.
+
+### Actions Taken
+1. **Diagnosis**: Identified the bug at line 128 of `ExcelUpload.jsx`. The original regex `/filename="?(.+)"?$/i` used greedy `.+` which captured trailing whitespace/carriage return characters appended by the proxy server.
+2. **Implementation Mode Fix**: Modified [`ExcelUpload.jsx`](4-frontend/src/frontend/components/ExcelUpload.jsx:129):
+   - Changed regex from `/filename="?(.+)"?$/i` to `/filename="?([^";]+)"?/i` (negated character class stops at first `;` or `"`)
+   - Added `.trim()` on the extracted filename to remove any remaining whitespace
+   - Explicitly created a new Blob with the Content-Type MIME type: `new Blob([blob], { type: contentType })`
+3. **Testing Mode**: Added two regression tests in `ExcelUpload.test.jsx`:
+   - Test: extracts correct filename when Content-Disposition has trailing whitespace (verifies `\r` does not pollute filename)
+   - Test: extracts correct filename when Content-Disposition ends with trailing underscore (verifies the original bug scenario)
+4. **Green State Verification**: All 38 tests pass (36 existing + 2 new regression tests).
+
+### Decisions
+- Used negated character class `[^";]+` instead of greedy `.+` to prevent capturing trailing characters.
+- Used `beforeEach`/`afterEach` hooks for `appendChildSpy` and `URL.createObjectURL` mocks to prevent test pollution across the Download Template Button describe block.
+- Used `Map`-based headers mock instead of plain object to ensure `response.headers.get()` works correctly in jsdom.
+- Regression tests use `mockClear()` in `beforeEach` to reset `appendChildSpy.mock.calls` between tests.
+
+### Remaining
+- User must verify the fix in browser: download the template and confirm the filename is `invoice-intake-template.xlsx` without trailing underscore.
