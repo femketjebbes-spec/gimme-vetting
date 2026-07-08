@@ -45,3 +45,23 @@ Assumptions recorded:
 - Naut will implement `PoCStoreService.store(MultipartFile)` method on `FileBackedPoCStoreService` using the same path traversal protection pattern (SAFE_PATTERN).
 - Filename sanitization for the upload endpoint uses the same approach as ExcelIntakeController: reject filenames matching SAFE_PATTERN.
 - The frontend UI for displaying missing PoC invoice numbers will derive the list from the return Excel response (WI-004) or a dedicated endpoint to be defined by Gerard in a subsequent API contract iteration.
+
+[2026-07-08] [Session 6] WI-007 TEMPLATE DOWNLOAD CONTRACT
+Archibald produced `docs/wi-007-delegation-gerard.md` delegating API contract production for WI-007 (Download Template Excel Sheet). Gerard read the delegation plan, architectural decisions (D-020, D-026, D-028, D-029), and the work item specification.
+
+Step 1 (Contract Acquisition): Read delegation plan and work item. Identified endpoint `GET /api/v1/intake/excel/template`, response format XLSX binary, five column headers matching `ExcelParsingService.ALLOWED_COLUMN_NAMES`, no authentication (MVP). Identified response schemas for success (200 OK) and internal error (500).
+
+Step 2 (Frontend Analysis): No existing frontend fetch calls for template download found. The frontend download button is handled in the parallel phase by Femke. The endpoint is entirely new.
+
+Step 3 (Backend Analysis): Scanned `5-backend/` for template download route definitions. Zero results found for `/template` endpoint. Existing template-generation logic exists in `ExcelParsingService.generateReturnXlsx()` which provides a reusable Apache POI pattern. `ExcelParsingService.ALLOWED_COLUMN_NAMES` constants already define the five headers: `invoice number`, `debtor name`, `address`, `phone number`, `bank account number`. `ExcelIntakeController` provides the controller pattern to extend.
+
+Step 4 (Contract Comparison): No existing template download endpoint exists. Frontend expects nothing (no template UI yet). Backend expects nothing (no template endpoint). Contract comparison is N/A because this is a greenfield endpoint. No mismatches exist.
+
+Step 5 (Action Generation): No mismatches found. No delegation required. The API contract produced by Gerard defines the contract; Naut will implement the backend endpoint to conform.
+
+Output produced: `docs/api-contract-wi-007.md` (version 7.0.0). Alignment review request submitted to `docs/alignment-review-request.md` (reviewCycle: 1, nextAgentInPipeline: null). Pending Alignment Agent approval before Gerard can produce the contract-ready signal and Archibald can activate parallel implementation.
+
+Assumptions recorded:
+- Naut will add a `GET /api/v1/intake/excel/template` mapping to `ExcelIntakeController` that delegates to a new `ExcelParsingService.generateTemplateXlsx()` method.
+- The template generation method must reference `ALLOWED_COLUMN_NAMES` constants directly, not duplicate header strings.
+- No authentication middleware is required for MVP (D-020).

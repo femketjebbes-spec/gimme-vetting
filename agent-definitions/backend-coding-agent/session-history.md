@@ -160,3 +160,32 @@ Summary of each session conducted by Naut.
 **Assumptions:** The Alignment Agent has approved Gerard's API contract work for WI-005 before Naut activated, confirmed via the parallel delegation plan.
 
 **Alignment Review:** Submitted cycle 1 to `docs/alignment-review-request.md`.
+
+## Session 3 - 2026-07-08 — WI-007 Template Download Endpoint
+
+**Explored:** WI-007 delegation plan, API contract v7.0.0, architecture decisions D-020, D-026, D-028, D-029. Read existing `ExcelIntakeController` and `ExcelParsingService` for code patterns.
+
+**Implemented:**
+- **Service** — Added `byte[] generateTemplateXlsx()` method to [`ExcelParsingService`](5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/service/ExcelParsingService.java) using `XSSFWorkbook` with Apache POI. Template contains 5 ordered column headers in row 0 and one empty data row at index 1.
+- **Controller** — Added `GET /api/v1/intake/excel/template` endpoint to [`ExcelIntakeController`](5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/ExcelIntakeController.java). Returns 200 with XLSX binary, correct Content-Type and Content-Disposition headers. Returns 500 on IOException.
+- **Constant visibility** — Changed `ALLOWED_COLUMN_NAMES` from `private` to `public static final` to enable cross-package access by test class in `com.gimmevettingsolution.intake`.
+- **Ordered headers** — Added `TEMPLATE_COLUMN_HEADERS` as an ordered `List` because `Set.of()` has no ordering guarantee. Contract requires exact column sequence.
+
+**Tests Written:** 17 new tests (10 in `TemplateDownloadServiceTest.java`, 7 in `ExcelIntakeControllerTest.java`).
+
+**Tests Results:** 130 tests pass, 0 failures, 0 errors, 0 skipped. Full Maven compile succeeds. Zero regressions.
+
+**Red State:** Confirmed — 11 compilation errors for missing `generateTemplateXlsx()` method.
+
+**Decided:**
+- Apache POI `XSSFWorkbook` with try-with-resources for template generation
+- `TEMPLATE_COLUMN_HEADERS` ordered list used instead of `Set.of()` for deterministic column ordering
+- Content-Type: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+- Content-Disposition: `attachment; filename="invoice-intake-template.xlsx"`
+- Error response returns 500 with `InternalErrorResponse` and message "Template generation failed" (no server internals exposed)
+
+**Open Questions:** None.
+
+**Assumptions:** The Alignment Agent has approved Gerard's API contract work for WI-007 before Naut activated, confirmed via the parallel delegation plan.
+
+**Alignment Review:** Submitted cycle 1 to `docs/alignment-review-request.md`.

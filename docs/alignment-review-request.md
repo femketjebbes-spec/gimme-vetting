@@ -1,63 +1,84 @@
 {
   "reviewRequest": {
     "agentName": "Naut",
-    "timestamp": "2026-07-08 12:10",
-    "trigger": "implementation completion",
+    "timestamp": "2026-07-08",
+    "trigger": "parallel backend implementation for wi-007",
     "reviewCycle": 1,
     "artefactsProduced": [
       {
-        "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/service/ExcelParsingService.java",
-        "artefactType": "production code",
-        "description": "Added generateReturnExcel() methods (2-param and 4-param overloads) to generate .xlsx and .csv return files with failing rows and Issue column. Added buildIssue() method for issue description generation."
-      },
-      {
         "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/ExcelIntakeController.java",
         "artefactType": "production code",
-        "description": "Updated uploadExcel() to integrate mandatory field validation and return Excel generation. Lines 86-108 build failing rows array, generate return Excel, and set download link."
+        "description": "Template download endpoint added to ExcelIntakeController at GET /api/v1/intake/excel/template"
       },
       {
-        "filePath": "5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ExcelParsingServiceReturnExcelTest.java",
+        "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/service/ExcelParsingService.java",
+        "artefactType": "production code",
+        "description": "Template generation method generateTemplateXlsx() with TEMPLATE_COLUMN_HEADERS constant"
+      },
+      {
+        "filePath": "5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/TemplateDownloadServiceTest.java",
         "artefactType": "test code",
-        "description": "13 unit tests covering return Excel generation: correct row count, all column data included, Issue format, null rows, empty rows, XLSX/CSV format, CSV escaping, backward compatibility."
+        "description": "10 unit tests validating template generation structure, content, and file size"
+      },
+      {
+        "filePath": "5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ExcelIntakeControllerTest.java",
+        "artefactType": "test code",
+        "description": "5 integration tests validating template download endpoint response headers, content type, and file format"
+      },
+      {
+        "filePath": "4-frontend/src/frontend/components/ExcelUpload.jsx",
+        "artefactType": "production code",
+        "description": "Download Template button and handleDownloadTemplate function in ExcelUpload component"
+      },
+      {
+        "filePath": "4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx",
+        "artefactType": "test code",
+        "description": "3 frontend tests validating Download Template button rendering and GET request to template endpoint"
       }
     ],
-    "pipelineStage": "parallel backend implementation",
+    "pipelineStage": "parallel backend implementation for wi-007",
     "nextAgentInPipeline": null,
     "changesFromLastReview": "initial submission",
     "requirementsAlignment": {
       "compliant": true,
-      "notes": "WI-004 RQ-008 (Return Excel): Scenario 1 (only failing rows) — generateReturnExcel() at lines 498-511 takes failingRows array, only those rows included. Scenario 2 (all original column data) — generateReturnXlsx() at lines 532-536 writes all 5 fields plus Issue. Scenario 3 (Issue column) — buildIssue() at lines 602-637 generates 'MISSING_FIELDS: field1, field2' or 'MISSING_POC'. Scenario 4 (same format, header row) — headers at line 504 match upload columns, header row created at lines 521-525. Scenario 5 (download link) — controller at line 103-106 sets returnExcelDownloadLink. Scenario 6 (no failing rows) — generateReturnExcel() at line 499-501 returns null when array is empty."
+      "notes": "All artefacts align with WI-007 requirements. Backend implements FR-001 (template download endpoint), FR-002 (XLSX with 5 headers), NFR-001 (file size under 100KB). Frontend implements FR-003 (download button near Excel upload component)."
     },
     "specsAlignment": {
       "compliant": true,
-      "notes": "Parallel delegation plan subtask 1 fully implemented: (1) generateReturnExcel(ExcelInvoiceRow[], Path) at lines 483-486 delegates to 4-param overload. (2) generateReturnExcel(ExcelInvoiceRow[], Path, String, boolean) at lines 498-511 supports XLSX and CSV. (3) generateReturnXlsx() at lines 516-548 creates header row and data rows with Issue column. (4) generateReturnCsv() at lines 553-564 generates RFC 4180 CSV. (5) buildIssue() at lines 602-637 checks missing fields and generates 'MISSING_FIELDS: field1, field2' or 'MISSING_POC'. (6) csvEscape() at lines 586-594 handles RFC 4180 escaping. (7) Controller integration at lines 90-108 builds failingRows array, calls generateReturnExcel(), sets download link."
+      "notes": "All artefacts align with architectural decisions. D-020 (no authentication), D-026 (no file size limit), D-028 (GET endpoint path), D-029 (Apache POI with constant-based headers) are all satisfied."
     },
-    "selfCertification": "I certify that all backend artefacts for WI-004 conform to Robbie's requirements documentation (RQ-008), Archibald's architecture decisions (D-012, D-013), and the parallel delegation plan. All 6 Gherkin scenarios are covered by implementation and 13 unit tests."
-  },
+    "selfCertification": "I certify that all artefacts produced in this session conform to Robbie's requirements specification and Archibald's architectural decisions, and that the versioned API contract at docs/api-contract-wi-007.md is faithfully consumed. All 130 tests pass with zero regressions."
+  }
+}
+--- ALIGNMENT AGENCY REVIEW DECISION ---
+{
   "alignmentDecision": {
-    "reviewId": "WI-004-ALIGN-001",
-    "producingAgent": "Naut",
+    "reviewId": "WI-007-RC1-20260708",
+    "producingAgent": "Naut (parallel backend) + Femke (parallel frontend)",
     "reviewCycle": 1,
     "status": "APPROVED",
-    "timestamp": "2026-07-08 12:15",
+    "timestamp": "2026-07-08T12:40",
     "roleBoundaryCheck": {
       "compliant": true,
-      "notes": "Naut produced only backend artefacts: ExcelParsingService.java (return Excel generation methods added at lines 483-649), ExcelIntakeController.java (integration updated at lines 86-108), and unit tests (ExcelParsingServiceReturnExcelTest.java with 13 test methods). No frontend code was modified. The implementation strictly stays within backend scope as defined in the backend-coding-agent agent definition."
+      "notes": "Naut stayed within backend scope: modified only 5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/ (ExcelIntakeController.java, ExcelParsingService.java) and 5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ (TemplateDownloadServiceTest.java, ExcelIntakeControllerTest.java). Femke stayed within frontend scope: modified only 4-frontend/src/frontend/components/ExcelUpload.jsx and 4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx. Neither agent modified files outside their designated directory."
     },
     "requirementsCheck": {
       "compliant": true,
-      "notes": "RQ-008 (Return Excel with Missing Data): All 6 Gherkin scenarios verified. Scenario 1 (only failing rows) — generateReturnExcel() at lines 498-511 takes ExcelInvoiceRow[] of failing rows, generates file with only those rows. Scenario 2 (all original column data) — generateReturnXlsx() at lines 532-536 writes row.getInvoiceNumber(), getDebtorName(), getAddress(), getPhoneNumber(), getBankAccountNumber() — all 5 original fields preserved. Scenario 3 (Issue column) — headers array at line 504 includes 'Issue' as column 6, buildIssue() at lines 602-637 generates 'MISSING_FIELDS: field1, field2' (with space after colon per spec) or 'MISSING_POC'. Scenario 4 (same format for re-upload) — generateReturnXlsx() creates header row at lines 521-525 matching upload columns, CSV version at lines 553-564 includes header row. Scenario 5 (download link in portal) — controller at lines 103-106 sets downloadLink = '/api/v1/intake/excel/download/' + returnFilename. Scenario 6 (no failing rows) — generateReturnExcel() line 499-501 returns null when failingRows is empty/null."
+      "notes": "All functional and non-functional requirements satisfied:\n- FR-001 (Template Download Endpoint): GET /api/v1/intake/excel/template endpoint exists at ExcelIntakeController.java:174. Returns HTTP 200 with XLSX template. Response includes Content-Disposition: attachment; filename=\"invoice-intake-template.xlsx\" and Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet. Returns HTTP 500 on failure (ExcelIntakeController.java:184-190).\n- FR-002 (Template File Content): generateTemplateXlsx() at ExcelParsingService.java:491 produces valid Apache POI XLSX with 5 column headers at row 0, columns A-E. Headers are exactly: invoice number, debtor name, address, phone number, bank account number. One empty data row exists at index 1 as visual guide (ExcelParsingService.java:503). Sheet name is \"Template\" (ExcelParsingService.java:493).\n- FR-003 (Frontend Download Button): ExcelUpload.jsx:156-164 renders a button labeled \"Download Template\" with aria-label=\"Download Template\". Click invokes handleDownloadTemplate() at ExcelUpload.jsx:114 which GETs /api/v1/intake/excel/template and triggers browser download.\n- NFR-001 (Performance): Template generation uses XSSFWorkbook in try-with-resources (ExcelParsingService.java:492), minimal output with 5 cells and 1 empty row. Test generateTemplateXlsx_fileSizeUnder100KB confirms file size under 100KB (TemplateDownloadServiceTest.java:134-140). No network or database calls in template path ensures response time well under 500ms.\n- NFR-002 (Maintainability): Template headers defined as TEMPLATE_COLUMN_HEADERS constant at ExcelParsingService.java:40-46. Generation logic resides in dedicated service method generateTemplateXlsx() at ExcelParsingService.java:491."
     },
     "specsCheck": {
       "compliant": true,
-      "notes": "Delegation plan wi-004-delegation.md fully implemented: Subtask 1 (lines 483-511, 103-106): filename mismatch fixed with 4-param overload, controller passes correct filename and isCsv flag. Subtask 2 (lines 516-564): generateReturnXlsx() creates XSSFWorkbook with Sheet 'Failed Rows', header row with 6 columns, data rows preserve all 5 fields; generateReturnCsv() generates RFC 4180 CSV; csvEscape() handles quoting. Subtask 3 (line 629): Issue format 'MISSING_FIELDS: ' (with space after colon) matches spec 'MISSING_FIELDS: field1, field2'. Subtask 4 (lines 647-649): buildIssue(row, explicitIssue) overload prepared for future PoC integration. Subtask 5 (ExcelParsingServiceReturnExcelTest.java): 13 tests cover all scenarios including backward compatibility."
+      "notes": "All architectural decisions satisfied:\n- D-020 (No authentication for MVP): Template endpoint at ExcelIntakeController.java:174 has no @PreAuthorize or security annotation. No authentication middleware invoked.\n- D-026 (No file size limit for MVP): No file size validation on template download endpoint. The template is server-generated with fixed 5-column structure.\n- D-028 (Template download endpoint path): Endpoint mapped at @GetMapping(\"/intake/excel/template\") at ExcelIntakeController.java:174, under @RequestMapping(\"/api/v1\") controller class, resolving to GET /api/v1/intake/excel/template.\n- D-029 (Apache POI with constant-based column headers): Template generation uses XSSFWorkbook (ExcelParsingService.java:492). Column headers defined as TEMPLATE_COLUMN_HEADERS List constant at ExcelParsingService.java:40-46, which mirrors ALLOWED_COLUMN_NAMES values in the same order. Template generation method iterates TEMPLATE_COLUMN_HEADERS (ExcelParsingService.java:497-499) to write each cell value."
     },
     "violations": [],
     "greenlightForNextAgent": true,
     "approvedArtefacts": [
-      "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/service/ExcelParsingService.java",
       "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/ExcelIntakeController.java",
-      "5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ExcelParsingServiceReturnExcelTest.java"
+      "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/service/ExcelParsingService.java",
+      "5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/TemplateDownloadServiceTest.java",
+      "5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ExcelIntakeControllerTest.java",
+      "4-frontend/src/frontend/components/ExcelUpload.jsx",
+      "4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx"
     ],
     "rejectedArtefacts": []
   }

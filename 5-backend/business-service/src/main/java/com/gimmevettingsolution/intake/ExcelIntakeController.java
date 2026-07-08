@@ -165,4 +165,28 @@ public class ExcelIntakeController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    /**
+     * Download the Excel template file for invoice intake.
+     *
+     * @return the template XLSX file as binary response
+     */
+    @GetMapping("/intake/excel/template")
+    public ResponseEntity<byte[]> getTemplate() {
+        try {
+            byte[] templateBytes = excelParsingService.generateTemplateXlsx();
+
+            return ResponseEntity.ok()
+                    .contentType(org.springframework.http.MediaType.valueOf(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .header("Content-Disposition", "attachment; filename=\"invoice-intake-template.xlsx\"")
+                    .body(templateBytes);
+        } catch (IOException e) {
+            InternalErrorResponse response = new InternalErrorResponse(
+                    "INTERNAL_ERROR",
+                    "Template generation failed"
+            );
+            return ResponseEntity.status(500).body(null);
+        }
+    }
 }

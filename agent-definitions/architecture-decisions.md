@@ -92,3 +92,13 @@ Affected Agents: Naut
 Rationale: This is the simplest API design. The filename-to-invoice-number mapping is already established by D-001 (case-insensitive matching). Adding a separate invoice number parameter would create duplication and potential mismatch between filename and stated invoice number.
 Security Implications: The filename must be sanitized against path traversal (same pattern as ExcelIntakeController). The endpoint must not accept a filename that resolves to a path outside the PoC store directory.
 Affected Agents: Gerard, Naut
+
+[2026-07-08] [Session 8] ARCHITECTURAL DECISION: WI-007 template download endpoint is GET /api/v1/intake/excel/template. The endpoint returns a pre-generated XLSX template file with exactly 5 column headers: `invoice number`, `debtor name`, `address`, `phone number`, `bank account number`. The template contains at least one empty data row as visual guide. The response uses `Content-Disposition: attachment; filename="invoice-intake-template.xlsx"` and `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
+Rationale: Users need a correctly-formatted template to avoid upload failures from column name mismatches. XLSX-only format is sufficient for MVP. The empty template (no example data, no validation rules, no formatting) keeps implementation simple and reduces maintenance burden.
+Security Implications: The template is a static server-generated resource. No authentication required (MVP). No file injection risk since the template is generated server-side. Response headers must not include server-internal path information.
+Affected Agents: Gerard, Naut, Femke
+
+[2026-07-08] [Session 8] ARCHITECTURAL DECISION: WI-007 template generation uses Apache POI (XSSFWorkbook) consistent with existing Excel generation code in `ExcelParsingService`. Column headers are defined as constants (derived from `ALLOWED_COLUMN_NAMES`) to prevent drift from the validation allowlist.
+Rationale: Apache POI is already used throughout the project for Excel generation (D-008). Sharing the library and code patterns reduces dependency complexity. Constants prevent silent drift between the template headers and the validation allowlist used during upload.
+Security Implications: No direct security implications. The constant-based approach ensures template headers always match the validation allowlist, preventing mismatch issues that could cause user confusion or upload failures.
+Affected Agents: Naut
