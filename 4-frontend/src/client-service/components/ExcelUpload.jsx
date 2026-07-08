@@ -15,6 +15,7 @@ import { useState } from 'react';
  */
 function ExcelUpload({ onUploadComplete, onUploadError }) {
   const [uploading, setUploading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -107,10 +108,64 @@ function ExcelUpload({ onUploadComplete, onUploadError }) {
     }
   };
 
+  /**
+   * Handle template download: fetch the template file and trigger browser download.
+   */
+  const handleDownloadTemplate = async () => {
+    setDownloading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/v1/intake/excel/template', {
+        method: 'GET',
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const contentType = response.headers.get('content-type');
+        const disposition = response.headers.get('content-disposition');
+        let filename = 'invoice-intake-template.xlsx';
+        if (disposition) {
+          const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1].trim();
+          }
+        }
+        const downloadBlob = contentType
+          ? new Blob([blob], { type: contentType })
+          : blob;
+        const downloadUrl = window.URL.createObjectURL(downloadBlob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(downloadUrl);
+        document.body.removeChild(a);
+      } else {
+        setError('An unexpected error occurred during processing.');
+      }
+    } catch {
+      setError('An unexpected error occurred during processing.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="excel-upload">
       <h2>Upload Excel File</h2>
       <p className="file-info">Accepted formats: .xlsx or .csv</p>
+
+      <button
+        type="button"
+        onClick={handleDownloadTemplate}
+        disabled={downloading}
+        className="download-template-btn"
+        aria-label="Download Template"
+      >
+        {downloading ? 'Downloading...' : 'Download Template'}
+      </button>
 
       <input
         type="file"

@@ -1,6 +1,6 @@
 # Delegation Plan: WI-001 — PoC Existence Verification
 
-**Work Item:** [`re-workspace/work-items/wi-001-poc-existence-verification.md`](re-workspace/work-items/wi-001-poc-existence-verification.md)
+**Work Item:** [`re-workspace/work-items/MVP-1/wi-001-poc-existence-verification.md`](re-workspace/work-items/MVP-1/wi-001-poc-existence-verification.md)
 **Status:** Approved — D-001, D-002, D-003 confirmed
 **Date:** 2026-07-07
 **Pipeline:** Gerard (API contract) → Alignment Agent gate → Naut (backend implementation)
@@ -13,7 +13,7 @@
 Gerard shall produce `docs/api-contract.md` defining the intake pipeline endpoint. This endpoint receives invoice submissions and performs PoC existence verification.
 
 ### Input
-- WI-001 specification: [`re-workspace/work-items/wi-001-poc-existence-verification.md`](re-workspace/work-items/wi-001-poc-existence-verification.md)
+- WI-001 specification: [`re-workspace/work-items/MVP-1/wi-001-poc-existence-verification.md`](re-workspace/work-items/MVP-1/wi-001-poc-existence-verification.md)
 - Architecture decisions: [`agent-definitions/architecture-decisions.md`](agent-definitions/architecture-decisions.md) (D-001, D-002, D-003)
 - Requirements spec: [`re-workspace/requirements-spec.md`](re-workspace/requirements-spec.md) (RQ-001)
 
@@ -90,7 +90,7 @@ Naut shall implement the PoC existence verification logic within the Business Se
 - `docs/api-contract.md` produced by Gerard
 - Archibald's phase 2 delegation plan (produced after Alignment Agent approval)
 - Architecture decisions: [`agent-definitions/architecture-decisions.md`](agent-definitions/architecture-decisions.md) (D-001, D-002, D-003)
-- WI-001 specification: [`re-workspace/work-items/wi-001-poc-existence-verification.md`](re-workspace/work-items/wi-001-poc-existence-verification.md)
+- WI-001 specification: [`re-workspace/work-items/MVP-1/wi-001-poc-existence-verification.md`](re-workspace/work-items/MVP-1/wi-001-poc-existence-verification.md)
 
 ### Output Artefacts
 1. JUnit 5 test classes in `5-backend/business-service/src/test/java/com/gimmevettingsolution/`

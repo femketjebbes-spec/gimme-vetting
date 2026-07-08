@@ -25,7 +25,19 @@ import java.util.regex.Pattern;
 @Service
 public class ExcelParsingService {
 
-    private static final Set<String> ALLOWED_COLUMN_NAMES = Set.of(
+    public static final Set<String> ALLOWED_COLUMN_NAMES = Set.of(
+            "invoice number",
+            "debtor name",
+            "address",
+            "phone number",
+            "bank account number"
+    );
+
+    /**
+     * Ordered column names for template generation.
+     * Mirrors ALLOWED_COLUMN_NAMES values but preserves insertion order.
+     */
+    private static final List<String> TEMPLATE_COLUMN_HEADERS = List.of(
             "invoice number",
             "debtor name",
             "address",
@@ -463,6 +475,37 @@ public class ExcelParsingService {
      */
     private boolean isBlankLine(String line) {
         return line.trim().isEmpty();
+    }
+
+    /**
+     * Generate an Excel template file for invoice intake.
+     * <p>
+     * The template contains exactly five column headers matching
+     * {@link #ALLOWED_COLUMN_NAMES} in row 0, and one empty data row
+     * at index 1 as a visual guide. No example data, no validation
+     * rules, no formatting beyond standard headers.
+     *
+     * @return the template as a byte array in XLSX format
+     * @throws IOException if the workbook cannot be written
+     */
+    public byte[] generateTemplateXlsx() throws IOException {
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Template");
+
+            // Create header row in fixed order using TEMPLATE_COLUMN_HEADERS
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < TEMPLATE_COLUMN_HEADERS.size(); i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(TEMPLATE_COLUMN_HEADERS.get(i));
+            }
+
+            // Create one empty data row as visual guide
+            sheet.createRow(1);
+
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            workbook.write(baos);
+            return baos.toByteArray();
+        }
     }
 
     /**

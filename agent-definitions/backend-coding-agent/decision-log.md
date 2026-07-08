@@ -113,3 +113,23 @@ Derived from: WI-005 delegation plan Subtask 1, D-001, D-003, D-016
 [2026-07-08] [Session 2] TEST-SPEC: `PoCUploadControllerTest.java` integration tests map to delegation plan Subtask 1 (controller implementation).
 Purpose: Validates POST /api/v1/poc-upload endpoint: successful PDF upload (200), non-PDF rejection (400), path traversal rejection (400), duplicate upload (200), filename without extension (200).
 Derived from: WI-005 delegation plan Subtask 1, docs/api-contract-wi-005.md
+
+[2026-07-08] [Session 3] DECISION: `ALLOWED_COLUMN_NAMES` visibility changed from `private` to `public static final`.
+Assumptions: Test class resides in `com.gimmevettingsolution.intake` while the constant is in `com.gimmevettingsolution.intake.service`. Cross-package access requires public visibility.
+Rationale: API contract mandates template headers reference `ALLOWED_COLUMN_NAMES` constants directly.
+
+[2026-07-08] [Session 3] DECISION: `TEMPLATE_COLUMN_HEADERS` ordered list used for template generation instead of `ALLOWED_COLUMN_NAMES` Set.
+Assumptions: `Set.of()` has no ordering guarantee; template headers must appear in exact contract order.
+Rationale: Contract specifies header at column 0 = "invoice number", column 1 = "debtor name", etc. `Set.toArray()` produces unpredictable order.
+
+[2026-07-08] [Session 3] TEST-SPEC: `TemplateDownloadServiceTest.java` maps to WI-007 Subtask 2 (service template generation).
+Purpose: Validates 10 tests: non-null bytes, PK header, single sheet, 5 columns, header values in ALLOWED_COLUMN_NAMES, empty data row, no example data, file size under 100KB, correct header order, no extra rows.
+Derived from: WI-007 delegation plan Subtask 2, docs/api-contract-wi-007.md
+
+[2026-07-08] [Session 3] TEST-SPEC: `ExcelIntakeControllerTest.java` template tests map to WI-007 Subtask 2 (controller endpoint).
+Purpose: Validates 7 tests: 200 status, XLSX content type, Content-Disposition header, non-empty bytes, PK header format, file size under 100KB.
+Derived from: WI-007 delegation plan Subtask 2, docs/api-contract-wi-007.md
+
+[2026-07-08] [Session 4] DECISION: Added @Autowired to FileBackedPoCStoreService Spring constructor to resolve Spring bean instantiation failure.
+Assumptions: The class has two constructors — a public Spring constructor and a package-private testing constructor. Spring cannot unambiguously resolve which constructor to use without explicit annotation.
+Rationale: User-reported bug: "Failed to instantiate FileBackedPoCStoreService: No default constructor found". Standard Spring fix for multi-constructor beans.

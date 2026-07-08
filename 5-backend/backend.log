@@ -1,0 +1,58 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------< com.gimmevettingsolution:business-service >--------------
+[INFO] Building Gimme Vetting Solution - Business Service 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.2.0:run (default-cli) > test-compile @ business-service >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ business-service ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ business-service ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ business-service ---
+[INFO] skip non existing resourceDirectory /home/luukie/Documents/Gimme vetting solution/5-backend/business-service/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ business-service ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] <<< spring-boot:3.2.0:run (default-cli) < test-compile @ business-service <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.2.0:run (default-cli) @ business-service ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.0)
+
+2026-07-08T14:59:09.421+02:00  INFO 121344 --- [business-service] [           main] c.g.BusinessServiceApplication           : Starting BusinessServiceApplication using Java 21.0.11 with PID 121344 (/home/luukie/Documents/Gimme vetting solution/5-backend/business-service/target/classes started by luukie in /home/luukie/Documents/Gimme vetting solution/5-backend/business-service)
+2026-07-08T14:59:09.423+02:00  INFO 121344 --- [business-service] [           main] c.g.BusinessServiceApplication           : No active profile set, falling back to 1 default profile: "default"
+2026-07-08T14:59:09.850+02:00  INFO 121344 --- [business-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-07-08T14:59:09.893+02:00  INFO 121344 --- [business-service] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 37 ms. Found 1 JPA repository interface.
+2026-07-08T14:59:10.245+02:00  INFO 121344 --- [business-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+2026-07-08T14:59:10.253+02:00  INFO 121344 --- [business-service] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-07-08T14:59:10.253+02:00  INFO 121344 --- [business-service] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-07-08T14:59:10.290+02:00  INFO 121344 --- [business-service] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-07-08T14:59:10.291+02:00  INFO 121344 --- [business-service] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 829 ms
+2026-07-08T14:59:10.320+02:00  INFO 121344 --- [business-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-07-08T14:59:10.459+02:00  INFO 121344 --- [business-service] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:gimmelite user=SA
+2026-07-08T14:59:10.460+02:00  INFO 121344 --- [business-service] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-07-08T14:59:10.468+02:00  INFO 121344 --- [business-service] [           main] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available at '/h2-console'. Database available at 'jdbc:h2:mem:gimmelite'
+2026-07-08T14:59:10.551+02:00  INFO 121344 --- [business-service] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-07-08T14:59:10.588+02:00  INFO 121344 --- [business-service] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-07-08T14:59:10.613+02:00  INFO 121344 --- [business-service] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-07-08T14:59:10.807+02:00  INFO 121344 --- [business-service] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-07-08T14:59:11.354+02:00  INFO 121344 --- [business-service] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-07-08T14:59:11.381+02:00  INFO 121344 --- [business-service] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-07-08T14:59:11.639+02:00  WARN 121344 --- [business-service] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-07-08T14:59:11.865+02:00  INFO 121344 --- [business-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path ''
+2026-07-08T14:59:11.871+02:00  INFO 121344 --- [business-service] [           main] c.g.BusinessServiceApplication           : Started BusinessServiceApplication in 2.754 seconds (process running for 3.015)

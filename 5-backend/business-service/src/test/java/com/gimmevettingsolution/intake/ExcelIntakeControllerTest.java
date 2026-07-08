@@ -248,6 +248,61 @@ class ExcelIntakeControllerTest {
         assertEquals((byte) 0x4B, downloadedBytes[1], "XLSX file should start with PK header");
     }
 
+    // --- Template Download Tests ---
+
+    @Test
+    void getTemplate_returns200() throws Exception {
+        mockMvc.perform(get("/api/v1/intake/excel/template"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getTemplate_returnsXlsxContentType() throws Exception {
+        mockMvc.perform(get("/api/v1/intake/excel/template"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(
+                        org.springframework.http.MediaType.valueOf(
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")));
+    }
+
+    @Test
+    void getTemplate_returnsCorrectContentDisposition() throws Exception {
+        mockMvc.perform(get("/api/v1/intake/excel/template"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        "attachment; filename=\"invoice-intake-template.xlsx\""));
+    }
+
+    @Test
+    void getTemplate_returnsNonEmptyBytes() throws Exception {
+        byte[] bytes = mockMvc.perform(get("/api/v1/intake/excel/template"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+
+        assertNotNull(bytes);
+        assertTrue(bytes.length > 0, "Template bytes must not be empty");
+    }
+
+    @Test
+    void getTemplate_returnsValidXlsxFormat() throws Exception {
+        byte[] bytes = mockMvc.perform(get("/api/v1/intake/excel/template"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+
+        assertEquals(0x50, bytes[0], "XLSX must start with PK header");
+        assertEquals(0x4B, bytes[1], "XLSX must start with PK header");
+    }
+
+    @Test
+    void getTemplate_fileSizeUnder100KB() throws Exception {
+        byte[] bytes = mockMvc.perform(get("/api/v1/intake/excel/template"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+
+        assertTrue(bytes.length < 100 * 1024,
+                "Template file size (" + bytes.length + " bytes) must be under 100KB");
+    }
+
     // --- Helper Methods ---
 
     private byte[] createTestXlsx() throws IOException {

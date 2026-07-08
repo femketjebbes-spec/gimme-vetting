@@ -32,8 +32,14 @@ A fully organised work item definition exists at:
 
 ### First Implementation Work Item: WI-001 (PoC Existence Verification)
 
+**MVP:** [MVP-1](work-items/MVP-1/)
+
 A fully formalised work item definition exists at:
+<<<<<<< HEAD
 - **File:** [re-workspace/work-items/MVP-1-Client/wi-001-poc-existence-verification.md](re-workspace/work-items/MVP-1-Client/wi-001-poc-existence-verification.md)
+=======
+- **File:** [re-workspace/work-items/MVP-1/wi-001-poc-existence-verification.md](work-items/MVP-1/wi-001-poc-existence-verification.md)
+>>>>>>> 52e0cf2 (work items iets aangepast)
 - **Parent Requirement:** RQ-001 (PoC Existence Verification)
 - **Parent Work Stream:** W-002 (Invoice Intake and PoC Matching Engine)
 - **Status:** Ready for implementation
@@ -46,8 +52,14 @@ This work item is the recommended starting point for implementation. See the for
 
 ## WI-006: Project Build Orchestration
 
+**MVP:** [MVP-1](work-items/MVP-1/)
+
 A fully formalised work item definition exists at:
+<<<<<<< HEAD
 - **File:** [re-workspace/work-items/MVP-1-Client/wi-006-project-build-orchestration.md](re-workspace/work-items/MVP-1-Client/wi-006-project-build-orchestration.md)
+=======
+- **File:** [re-workspace/work-items/MVP-1/wi-006-project-build-orchestration.md](work-items/MVP-1/wi-006-project-build-orchestration.md)
+>>>>>>> 52e0cf2 (work items iets aangepast)
 - **Parent Requirement:** None (cross-cutting infrastructure requirement)
 - **Type:** Build infrastructure
 - **Priority:** High
@@ -404,6 +416,32 @@ These work items address the Excel batch intake pipeline required for the MVP cl
 - Client portal UI specification for PoC upload screen
 
 **Note:** The client portal UI is outside Robbie's RE scope. The architect will produce the interface design.
+
+---
+
+### WI-007: Download Template Excel Sheet
+
+**Parent Requirement:** RQ-006 (Excel Batch Intake)
+**Work Stream:** W-007 (Excel Batch Intake Pipeline)
+**Status:** Proposed
+**Dependencies:** None (independent feature)
+**Priority:** Should have (MVP convenience feature)
+
+**Purpose:** Provide a downloadable Excel template file that users can fill in with their invoice data before uploading.
+
+**Scope:**
+- GET endpoint `/api/v1/intake/excel/template` that returns a pre-formatted .xlsx template
+- Template contains exactly 5 columns: `invoice number`, `debtor name`, `address`, `phone number`, `bank account number`
+- Template is generated using Apache POI (same library as existing parsing/generation logic)
+- Frontend download button near the Excel upload component
+- Template file name: `invoice-intake-template.xlsx`
+
+**Output:**
+- Backend endpoint in `ExcelIntakeController`
+- Template generation method in `ExcelParsingService` (or dedicated template service)
+- Frontend download button in the Excel upload component
+
+**Note:** This is a convenience feature to reduce upload errors from column name mismatches.
 
 ---
 
