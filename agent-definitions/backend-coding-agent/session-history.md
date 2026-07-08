@@ -114,6 +114,23 @@ Summary of each session conducted by Naut.
 
 **Alignment Review:** Submitted cycle 1 to `docs/alignment-review-request.md`.
 
+## Session 3 - 2026-07-08 — WI-006 Alignment Review Submission
+
+**Explored:** WI-006 had been implemented in a previous session (Makefile created at project root). The alignment review was never submitted, which is a process gap per D-023. This session corrects that gap.
+
+**Submitted:** Structured JSON alignment review request to [`docs/alignment-review-request-wi-006.md`](docs/alignment-review-request-wi-006.md).
+
+**Review Scope:** Single artefact — [`Makefile`](Makefile) at project root.
+
+**Verification:**
+- `make check-tools` — PASSED (all tools detected)
+- `make backend-test` — invoked Maven correctly; failure was due to pre-existing PostgreSQL driver missing in client-service, not a Makefile defect
+- The Makefile delegates to existing Maven and npm toolchains without modification
+
+**Self-Certification:** All eight targets implemented per delegation plan. No frontend code modified. No production code modified. No API contract changes. Compliance with Archibald's D-023 decision confirmed.
+
+**Alignment Review:** Submitted cycle 1 to `docs/alignment-review-request-wi-006.md`.
+
 ## Session 2 - 2026-07-08 — WI-005 Backend Implementation
 
 **Explored:** WI-005 delegation plan, API contract v5.0.0, architecture decisions D-001, D-003, D-015, D-016, D-017. Read existing ExcelIntakeController for code patterns. Read existing FileBackedPoCStoreService and PoCStoreService for context.
