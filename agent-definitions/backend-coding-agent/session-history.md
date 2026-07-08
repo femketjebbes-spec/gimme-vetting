@@ -189,3 +189,19 @@ Summary of each session conducted by Naut.
 **Assumptions:** The Alignment Agent has approved Gerard's API contract work for WI-007 before Naut activated, confirmed via the parallel delegation plan.
 
 **Alignment Review:** Submitted cycle 1 to `docs/alignment-review-request.md`.
+
+## Session 4 - 2026-07-08
+
+**Explored:** Spring bean instantiation failure in `FileBackedPoCStoreService` caused by multiple constructors without explicit `@Autowired` annotation on the Spring constructor.
+
+**Decided:** Added `@Autowired` annotation and import to the Spring constructor at line 29 of `FileBackedPoCStoreService.java`. This disambiguates constructor selection for Spring's dependency injection when a bean declares multiple constructors.
+
+**Implemented:** Modified [`FileBackedPoCStoreService.java`](5-backend/business-service/src/main/java/com/gimmevettingsolution/poc/FileBackedPoCStoreService.java) — added `@Autowired` annotation (line 29) and `import org.springframework.beans.factory.annotation.Autowired` (line 3).
+
+**Verified:** Compilation succeeded. All existing tests passed (exit code 0). No new tests written — this is a bug fix, not a new feature.
+
+**Open Questions:** None.
+
+**Assumptions:** The existing test suite adequately covers the constructor behaviour. No architectural pattern was violated by the original code — this is a Spring Framework configuration issue.
+
+**Alignment Review:** Submitted cycle 1 to `docs/alignment-review-request.md`.
