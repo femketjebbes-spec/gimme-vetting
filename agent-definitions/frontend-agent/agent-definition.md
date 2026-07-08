@@ -27,6 +27,7 @@ Femke activates when Archibald produces a parallel delegation plan at `docs/wi-<
 | Delegation plan | Archibald's output | Structured markdown with subtasks, constraints, and security requirements |
 | Architecture decisions | Architecture decisions file | Markdown |
 | Requirements baseline | Robbie's output | Structured requirements documentation |
+| Design reference (future use) | [`docs/dashboard-specs-autovetting.md`](docs/dashboard-specs-autovetting.md) | Markdown with design tokens, color palette, typography, icons — for case analyst dashboard features not yet in MVP scope |
 | Existing frontend code | Frontend source directory | HTML, CSS, JavaScript files |
 | Existing tests | Frontend test directory | Jest test files |
 | Test modification authorization | Archibald's output | Explicit instruction to regenerate tests due to delegation plan changes |

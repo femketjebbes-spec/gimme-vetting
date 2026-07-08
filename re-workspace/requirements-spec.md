@@ -217,6 +217,69 @@ Gimme shall provide a client portal endpoint for uploading PoC files separately 
 
 ---
 
+## Non-Functional Design Requirements
+
+**Note:** The design specifications referenced below (`docs/dashboard-specs-autovetting.md`) describe the full case analyst dashboard including features not yet in MVP scope. Design tokens in NFR-001 to NFR-003 apply to all current and future frontends. NFR-004 (table performance) applies only when the case analyst dashboard is implemented.
+
+### NFR-001: Color Palette & Branding Compliance
+
+The frontend shall implement the exact color palette defined in the dashboard specifications to maintain brand consistency.
+
+| Token | Hex | Tailwind Class | Usage |
+|-------|-----|---------------|-------|
+| Gimme Ochre | `#C59B27` | `bg-brand-ochre` / `text-brand-ochre` | Logo, active tabs, primary buttons, success indicators |
+| Ochre Hover | `#A8801D` | `hover:bg-brand-ochreHover` | Button hover states |
+| Light Ochre | `#FDF9ED` | `bg-brand-ochreLight` | Active row backgrounds, badges |
+| Muted Ochre | `#EEDCA8` | `border-brand-ochreMuted` | Badge borders |
+| Premium Dark | `#0F172A` | `text-brand-dark` / `bg-brand-sidebar` | Headings, sidebar, text |
+| Slate Gray | `#64748B` | `text-brand-darkMuted` | Labels, table headers, help text |
+| White | `#FFFFFF` | `bg-white` | Cards, table background |
+| Light Background | `#F8FAFC` | `bg-brand-lightBg` | Table headers, button bars |
+| Border | `#E2E8F0` | `border-brand-border` | Divider lines |
+
+- **Metrics**: Visual regression tests must confirm all primary and secondary color tokens match the hex values above.
+- **Design Reference**: [`docs/dashboard-specs-autovetting.md`](docs/dashboard-specs-autovetting.md) Section 2
+- **Priority:** Must have
+
+### NFR-002: Typography
+
+The frontend shall use the following typeface pairing:
+
+| Element | Font Family | Purpose |
+|---------|-------------|---------|
+| Headings & Headers | Poppins (sans-serif) | Titles, section headers, sidebar labels |
+| Body & Data | Arimo (sans-serif) | Table cells, form fields, descriptive text |
+
+- **Metrics**: All text must render with the specified Google Fonts. Font fallback chain must be `Arimo, Helvetica, Arial, sans-serif` for body and `Poppins, Helvetica, Arial, sans-serif` for headings.
+- **Design Reference**: [`docs/dashboard-specs-autovetting.md`](docs/dashboard-specs-autovetting.md) Section 3
+- **Priority:** Must have
+
+### NFR-003: Iconography
+
+The frontend shall use FontAwesome 6 for standard icons and an inline SVG for the custom re-submission icon.
+
+| Element | Icon Source | Implementation |
+|---------|------------|----------------|
+| Sidebar tabs, badges, actions | FontAwesome 6 (`fa-solid` class) | CDN or npm package (`@fortawesome/fontawesome-free`) |
+| Re-submission indicator | Inline SVG | Embedded directly in component code, colored `#0F172A` |
+
+- **Acceptance Criteria**:
+  - FontAwesome 6 is loaded before any component rendering.
+  - The re-submission SVG matches the viewBox, stroke-width (2.5), and path data specified in [`docs/dashboard-specs-autovetting.md`](docs/dashboard-specs-autovetting.md) Section 4.
+- **Priority:** Must have
+
+### NFR-004: High-Density Table Performance
+
+The invoice table shall maintain smooth scroll and render performance with 1000+ rows visible in the DOM.
+
+- **Metrics**:
+  - Initial table render time: under 200ms for 100 rows.
+  - Scroll frame rate: 55+ fps during scroll with 1000+ rows.
+  - Row height: compact (target 36–44px per row including borders).
+- **Priority:** Must have
+
+---
+
 ## Open Questions (Remaining)
 
 | ID | Question | Status |
