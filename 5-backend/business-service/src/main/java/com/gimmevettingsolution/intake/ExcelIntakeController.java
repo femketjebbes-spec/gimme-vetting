@@ -44,12 +44,19 @@ public class ExcelIntakeController {
     @PostMapping("/intake/excel")
     public ResponseEntity<?> uploadExcel(@RequestParam("file") MultipartFile file) {
         try {
-            // Validate filename for path traversal
+            // Validate filename for path traversal and unsafe characters
             String originalFilename = file.getOriginalFilename();
-            if (!excelParsingService.isSafeFilename(originalFilename)) {
+            if (originalFilename != null && (originalFilename.contains("..") || originalFilename.contains("/"))) {
                 InvalidFileFormatResponse response = new InvalidFileFormatResponse(
                         "INVALID_FILE_FORMAT",
                         "Path traversal detected in filename"
+                );
+                return ResponseEntity.badRequest().body(response);
+            }
+            if (!excelParsingService.isSafeFilename(originalFilename)) {
+                InvalidFileFormatResponse response = new InvalidFileFormatResponse(
+                        "INVALID_FILE_FORMAT",
+                        "Filename contains unsupported characters"
                 );
                 return ResponseEntity.badRequest().body(response);
             }
