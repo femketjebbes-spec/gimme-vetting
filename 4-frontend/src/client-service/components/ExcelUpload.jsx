@@ -113,11 +113,6 @@ function ExcelUpload({ onUploadComplete, onUploadError }) {
 
       if (response.ok) {
         const blob = await response.blob();
-<<<<<<< HEAD:4-frontend/src/client-service/components/ExcelUpload.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/ExcelUpload.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/ExcelUpload.jsx
-=======
->>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661:4-frontend/src/frontend/components/ExcelUpload.jsx
         const contentType = response.headers.get('content-type');
         const disposition = response.headers.get('content-disposition');
         let filename = 'invoice-intake-template.xlsx';
@@ -131,30 +126,6 @@ function ExcelUpload({ onUploadComplete, onUploadError }) {
           ? new Blob([blob], { type: contentType })
           : blob;
         const downloadUrl = window.URL.createObjectURL(downloadBlob);
-<<<<<<< HEAD:4-frontend/src/client-service/components/ExcelUpload.jsx
-=======
-=======
-        const contentType = response.headers.get('content-type');
->>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was):4-frontend/src/frontend/components/ExcelUpload.jsx
-        const disposition = response.headers.get('content-disposition');
-        let filename = 'invoice-intake-template.xlsx';
-        if (disposition) {
-          const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
-          if (filenameMatch && filenameMatch[1]) {
-            filename = filenameMatch[1].trim();
-          }
-        }
-<<<<<<< HEAD:4-frontend/src/client-service/components/ExcelUpload.jsx
-        const downloadUrl = window.URL.createObjectURL(blob);
->>>>>>> 4a4153c (wi-007 af):4-frontend/src/frontend/components/ExcelUpload.jsx
-=======
-        const downloadBlob = contentType
-          ? new Blob([blob], { type: contentType })
-          : blob;
-        const downloadUrl = window.URL.createObjectURL(downloadBlob);
->>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was):4-frontend/src/frontend/components/ExcelUpload.jsx
-=======
->>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661:4-frontend/src/frontend/components/ExcelUpload.jsx
         const a = document.createElement('a');
         a.href = downloadUrl;
         a.download = filename;

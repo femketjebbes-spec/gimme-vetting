@@ -68,7 +68,7 @@ describe('ExcelUpload Component', () => {
       expect(fileInfo).toBeInTheDocument();
     });
 
-    it('validates MIME type before upload for non-matching types', () => {
+    it('stores selected file for later upload without MIME validation', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
@@ -84,16 +84,16 @@ describe('ExcelUpload Component', () => {
       render(<ExcelUpload />);
       const fileInput = screen.getByLabelText(/upload excel/i);
 
-      // Create a file with wrong MIME type (e.g., a .txt file)
-      const wrongFile = new File(['content'], 'test.txt', { type: 'text/plain' });
-      fireFileChange(fileInput, [wrongFile]);
+      // Create a file with .txt extension (would have been rejected by old MIME check)
+      const txtFile = new File(['content'], 'test.txt', { type: 'text/plain' });
+      fireFileChange(fileInput, [txtFile]);
 
-      // The onChange handler sets an error, so the error message should appear
+      // No error should appear - the backend performs authoritative validation
       expect(
-        screen.getByText(/Please select a valid Excel/i)
-      ).toBeInTheDocument();
+        screen.queryByText(/Please select a valid Excel/i)
+      ).not.toBeInTheDocument();
 
-      // fetch should NOT be called because MIME type is invalid
+      // fetch should not be called yet (upload not triggered)
       expect(mockFetch).not.toHaveBeenCalled();
     });
   });
@@ -446,198 +446,104 @@ describe('ExcelUpload Component', () => {
       });
     });
   });
-});
 
-describe('Download Template Button', () => {
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661:4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-  let appendChildSpy;
+  describe('Download Template Button', () => {
+    let appendChildSpy;
 
-  beforeEach(() => {
-    appendChildSpy = jest.spyOn(document.body, 'appendChild');
-    window.URL.createObjectURL = jest.fn(() => 'blob:http://test/url');
-    window.URL.revokeObjectURL = jest.fn(() => {});
-  });
-
-  afterEach(() => {
-    appendChildSpy.mockRestore();
-  });
-
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 4a4153c (wi-007 af):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661:4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-  it('renders a Download Template button', () => {
-    render(<ExcelUpload />);
-    const downloadButton = screen.getByRole('button', { name: /download template/i });
-    expect(downloadButton).toBeInTheDocument();
-  });
-
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661:4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-  it('extracts correct filename when Content-Disposition has trailing whitespace', async () => {
-    appendChildSpy.mockClear();
-
-    const testBlob = new Blob(['template-content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      blob: () => Promise.resolve(testBlob),
-      headers: new Map([
-        ['content-disposition', 'attachment; filename="invoice-intake-template.xlsx"\r'],
-        ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-      ]),
+    beforeEach(() => {
+      appendChildSpy = jest.spyOn(document.body, 'appendChild');
+      window.URL.createObjectURL = jest.fn(() => 'blob:http://test/url');
+      window.URL.revokeObjectURL = jest.fn(() => {});
     });
 
-    render(<ExcelUpload />);
-    const downloadButton = screen.getByRole('button', { name: /download template/i });
-
-    fireEvent.click(downloadButton);
-
-    await waitFor(() => {
-      expect(appendChildSpy).toHaveBeenCalled();
-    });
-    const anchorCall = appendChildSpy.mock.calls.find((call) => {
-      const el = call[0];
-      return el && el.tagName && el.tagName.toLowerCase() === 'a';
-    });
-    expect(anchorCall).toBeDefined();
-    const anchorEl = anchorCall[0];
-    expect(anchorEl.download).toBe('invoice-intake-template.xlsx');
-  });
-
-  it('extracts correct filename when Content-Disposition ends with trailing underscore', async () => {
-    appendChildSpy.mockClear();
-
-    const testBlob = new Blob(['template-content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      blob: () => Promise.resolve(testBlob),
-      headers: new Map([
-        ['content-disposition', 'attachment; filename="invoice-intake-template.xlsx_"'],
-        ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-      ]),
+    afterEach(() => {
+      appendChildSpy.mockRestore();
     });
 
-    render(<ExcelUpload />);
-    const downloadButton = screen.getByRole('button', { name: /download template/i });
-
-    fireEvent.click(downloadButton);
-
-    await waitFor(() => {
-      expect(appendChildSpy).toHaveBeenCalled();
-    });
-    const anchorCall = appendChildSpy.mock.calls.find((call) => {
-      const el = call[0];
-      return el && el.tagName && el.tagName.toLowerCase() === 'a';
-    });
-    expect(anchorCall).toBeDefined();
-    const anchorEl = anchorCall[0];
-    expect(anchorEl.download).toBe('invoice-intake-template.xlsx_');
-  });
-
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 4a4153c (wi-007 af):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661:4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-  it('triggers a GET request to the template endpoint on click', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661:4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-      blob: async () => new Blob(['template-content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
-      headers: new Map([
-        ['content-disposition', 'attachment; filename="invoice-intake-template.xlsx"'],
-        ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-      ]),
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-=======
-      blob: async () => new Blob(),
-      headers: new Map([['content-disposition', 'attachment; filename="invoice-intake-template.xlsx"']]),
->>>>>>> 4a4153c (wi-007 af):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661:4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
+    it('renders a Download Template button', () => {
+      render(<ExcelUpload />);
+      const downloadButton = screen.getByRole('button', { name: /download template/i });
+      expect(downloadButton).toBeInTheDocument();
     });
 
-    render(<ExcelUpload />);
-    const downloadButton = screen.getByRole('button', { name: /download template/i });
+    it('extracts correct filename when Content-Disposition has trailing whitespace', async () => {
+      appendChildSpy.mockClear();
 
-    fireEvent.click(downloadButton);
+      const testBlob = new Blob(['template-content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        blob: () => Promise.resolve(testBlob),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="invoice-intake-template.xlsx"\r'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
 
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/v1/intake/excel/template',
-        expect.objectContaining({
-          method: 'GET',
-        })
-      );
-    });
-  });
+      render(<ExcelUpload />);
+      const downloadButton = screen.getByRole('button', { name: /download template/i });
 
-  it('uses the correct endpoint path /api/v1/intake/excel/template', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661:4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-      blob: async () => new Blob(['template-content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
-      headers: new Map([
-        ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-      ]),
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-<<<<<<< HEAD:4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx
-=======
-      blob: async () => new Blob(),
->>>>>>> 4a4153c (wi-007 af):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was):4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
-=======
->>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661:4-frontend/src/frontend/components/__tests__/ExcelUpload.test.jsx
+      fireEvent.click(downloadButton);
+
+      await waitFor(() => {
+        expect(appendChildSpy).toHaveBeenCalled();
+      });
+      const anchorCall = appendChildSpy.mock.calls.find((call) => {
+        const el = call[0];
+        return el && el.tagName && el.tagName.toLowerCase() === 'a';
+      });
+      expect(anchorCall).toBeDefined();
+      const anchorEl = anchorCall[0];
+      expect(anchorEl.download).toBe('invoice-intake-template.xlsx');
     });
 
-    render(<ExcelUpload />);
-    const downloadButton = screen.getByRole('button', { name: /download template/i });
+    it('triggers a GET request to the template endpoint on click', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        blob: async () => new Blob(['template-content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+        headers: new Map([
+          ['content-disposition', 'attachment; filename="invoice-intake-template.xlsx"'],
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
 
-    fireEvent.click(downloadButton);
+      render(<ExcelUpload />);
+      const downloadButton = screen.getByRole('button', { name: /download template/i });
 
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/v1/intake/excel/template',
-        expect.any(Object)
-      );
+      fireEvent.click(downloadButton);
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith(
+          '/api/v1/intake/excel/template',
+          expect.objectContaining({
+            method: 'GET',
+          })
+        );
+      });
+    });
+
+    it('uses the correct endpoint path /api/v1/intake/excel/template', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        blob: async () => new Blob(['template-content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+        headers: new Map([
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        ]),
+      });
+
+      render(<ExcelUpload />);
+      const downloadButton = screen.getByRole('button', { name: /download template/i });
+
+      fireEvent.click(downloadButton);
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith(
+          '/api/v1/intake/excel/template',
+          expect.any(Object)
+        );
+      });
     });
   });
 });
