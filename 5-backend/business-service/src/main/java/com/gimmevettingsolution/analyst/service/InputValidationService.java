@@ -6,10 +6,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.stereotype.Service;
+
 /**
  * Validates query parameters for the Analyst API endpoints.
  * Enforces constraints from the WI-CA-001 API contract.
  */
+@Service
 public class InputValidationService {
 
     private static final int MAX_SEARCH_LENGTH = 256;

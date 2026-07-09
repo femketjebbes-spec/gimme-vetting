@@ -48,6 +48,7 @@ public class IntakeServiceImpl implements IntakeService {
             invoice.setPoCStatus("VERIFIED");
             invoice.setRejectionType("NONE");
             invoice.setStatus("QUEUED");
+            invoice.setResubmissionCount(0);
 
             Invoice saved = invoiceRepository.save(invoice);
 
