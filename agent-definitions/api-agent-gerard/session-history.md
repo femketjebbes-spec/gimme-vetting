@@ -111,3 +111,36 @@ Assumptions recorded:
 **Open Issues**: None. Pipeline gate blocked awaiting Approval Agent approval.
 
 **Completion**: Review request resubmitted at cycle 2. Pipeline activation of Femke-Naut-parallel is blocked until Alignment Agent sets `greenlightForNextAgent: true`.
+
+## Session WI-CA-003 — 2026-07-09
+
+**Trigger**: Delegation plan `docs/wi-ca-003-delegation-gerard.md` received from Archibald. Source file viewing for analyst dashboard.
+
+**Actions Performed**:
+1. Read delegation plan, work item specification `re-workspace/work-items/MVP-1-Case-analyst/wi-ca-003-view-poc-documents.md`, architectural decisions, and existing contracts (wi-ca-001 v1.0.0).
+2. Produced `docs/api-contract-wi-ca-003.md` (version 1.0.0) defining:
+   - New endpoint: `GET /api/v1/analyst/invoices/{id}/source-file` returning raw Excel file bytes with Content-Type and Content-Disposition headers.
+   - Schema extensions to detail endpoint (GET /api/v1/analyst/invoices/{id}): added `sourceFileId` (string, nullable) and `sourceFilename` (string, nullable).
+   - Schema extensions to list endpoint (GET /api/v1/analyst/invoices): same two fields added to `AnalystInvoiceItem`.
+   - Error mapping registry for 404 (no source file), 500 (file unavailable), 400 (invalid ID).
+   - Security requirements S-006 through S-010 (path traversal, header injection, MIME type, file size).
+   - Flyway migration specification V3 (source_file_id VARCHAR(64), source_filename VARCHAR(256)).
+3. Frontend analysis: No existing source-file fetch calls found in `analystApi.js`. `InvoiceDrawer.jsx` lacks the "Bekijken" link entirely — this is greenfield frontend work for Femke.
+4. Backend analysis: `Invoice` entity, `AnalystInvoiceDTO`, `AnalystController`, and `ExcelIntakeController` all lack WI-CA-003 fields/endpoints. `FileBackedPoCStoreService` provides the pattern for `FileBackedExcelStoreService`. All backend changes require Naut implementation.
+5. Contract comparison: Greenfield contract. No existing endpoints or DTOs to compare against for the new functionality. Schema extensions follow the existing pattern from wi-ca-001.
+6. Submitted alignment review request to Alignment Agent at `docs/alignment-review-request.md` (review cycle 1, pipeline stage: API contract production, nextAgentInPipeline: Femke-Naut-parallel).
+
+**Delegations**: None yet. Awaiting Alignment Agent approval before Archibald can produce the parallel delegation plan for Femke (frontend) and Naut (backend).
+
+**Verification**: Pending Alignment Agent review.
+
+**Open Issues**: None. Pipeline gate blocked awaiting Alignment Agent approval.
+
+**Assumptions**:
+- Naut will implement `FileBackedExcelStoreService` following `FileBackedPoCStoreService` pattern with configurable store path.
+- Naut will add `sourceFileId` and `sourceFilename` fields to `Invoice` entity, `AnalystInvoiceDTO`, and `AnalystController`.
+- Naut will extend `ExcelIntakeController` to persist uploaded files during intake processing.
+- Femke will add `fetchSourceFile` to `analystApi.js` and wire the "Bekijken" link in `InvoiceDrawer.jsx`.
+- Alignment Agent will approve the contract, and Archibald will produce the parallel delegation plan for Femke-Naut.
+
+**Completion**: Contract produced and review request submitted. Pipeline activation of Femke-Naut-parallel is blocked until Alignment Agent sets `greenlightForNextAgent: true`.
