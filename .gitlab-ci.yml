@@ -1,0 +1,184 @@
+# GitLab CI/CD Pipeline
+# Stages: build -> test -> security-scan -> deploy-staging -> deploy-production
+
+stages:
+  - build
+  - test
+  - security-scan
+  - deploy-staging
+  - deploy-production
+
+variables:
+  NODE_VERSION: "20"
+  DOCKER_DRIVER: overlay2
+
+# ======================
+# BACKEND JOB - BUILD
+# ======================
+backend-build:
+  stage: build
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn -f 5-backend/pom.xml clean compile
+  artifacts:
+    paths:
+      - 5-backend/business-service/target/*.jar
+    expire_in: 1 hour
+
+# ======================
+# FRONTEND JOB - BUILD
+# ======================
+frontend-build:
+  stage: build
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - cd 4-frontend && npm ci && npm run build
+  artifacts:
+    paths:
+      - 4-frontend/dist
+    expire_in: 1 hour
+  cache:
+    key: frontend-npm
+    paths:
+      - 4-frontend/node_modules
+      - 4-frontend/package-lock.json
+    policy: push
+
+# ======================
+# BACKEND JOB - TEST
+# ======================
+backend-test:
+  stage: test
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn -f 5-backend/pom.xml clean test
+    - mvn -f 5-backend/pom.xml verify -DskipUnitTests=true
+  artifacts:
+    reports:
+      junit:
+        - 5-backend/business-service/target/surefire-reports/TEST-*.xml
+    paths:
+      - 5-backend/business-service/target/surefire-reports/
+    expire_in: 7 days
+  cache:
+    key: backend-maven
+    paths:
+      - ~/.m2/repository
+    policy: pull
+
+# ======================
+# FRONTEND JOB - TEST
+# ======================
+frontend-test:
+  stage: test
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - npm --prefix 4-frontend ci
+    - npm --prefix 4-frontend run lint || true
+    - npm --prefix 4-frontend test -- --ci --coverage --coverageReporters=json-summary --coverageReporters=cobertura --outputFile=.jest-results.json
+  dependencies: []
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: 4-frontend/coverage/cobertura-coverage.xml
+    paths:
+      - 4-frontend/.jest-results.json
+    expire_in: 7 days
+  cache:
+    key: frontend-npm
+    paths:
+      - 4-frontend/node_modules
+      - 4-frontend/package-lock.json
+    policy: pull
+
+# ======================
+# SECURITY SCAN
+# ======================
+security-scan:
+  stage: security-scan
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  dependencies:
+    - backend-build
+    - frontend-build
+  script:
+    - trivy fs --security vulns --severity HIGH,CRITICAL --format sarif --output trivy-backend.sarif 5-backend || true
+    - trivy fs --security vulns --severity HIGH,CRITICAL --format sarif --output trivy-frontend.sarif 4-frontend || true
+  artifacts:
+    paths:
+      - trivy-backend.sarif
+      - trivy-frontend.sarif
+    expire_in: 30 days
+
+# ======================
+# BACKEND - DEPLOY TO STAGING
+# ======================
+backend-deploy-staging:
+  stage: deploy-staging
+  image: amazon/aws-cli:latest
+  script:
+    - aws s3 cp 5-backend/business-service/target/*.jar s3://${AWS_BACKEND_BUCKET_STAGING}/app.jar
+    - aws s3 cp s3://${AWS_BACKEND_BUCKET_STAGING}/app.jar s3://${AWS_BACKEND_BUCKET_STAGING}/app.jar.old || true
+  environment:
+    name: staging
+    url: https://backend-staging.gimmevettingsolution.com
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  dependencies:
+    - backend-build
+
+# ======================
+# FRONTEND - DEPLOY TO STAGING
+# ======================
+frontend-deploy-staging:
+  stage: deploy-staging
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - apk add --no-cache aws-cli
+    - aws s3 sync 4-frontend/dist/ s3://${AWS_FRONTEND_BUCKET_STAGING}/ --delete
+  environment:
+    name: staging
+    url: https://staging.gimmevettingsolution.com
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  dependencies:
+    - frontend-build
+
+# ======================
+# BACKEND - DEPLOY TO PRODUCTION
+# ======================
+backend-deploy-production:
+  stage: deploy-production
+  image: amazon/aws-cli:latest
+  script:
+    - aws s3 cp 5-backend/business-service/target/*.jar s3://${AWS_BACKEND_BUCKET_PRODUCTION}/app.jar
+  environment:
+    name: production
+    url: https://backend.gimmevettingsolution.com
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+  allow_failure: false
+  dependencies:
+    - backend-build
+
+# ======================
+# FRONTEND - DEPLOY TO PRODUCTION
+# ======================
+frontend-deploy-production:
+  stage: deploy-production
+  image: node:${NODE_VERSION}-alpine
+  script:
+    - apk add --no-cache aws-cli
+    - aws s3 sync 4-frontend/dist/ s3://${AWS_FRONTEND_BUCKET_PRODUCTION}/ --delete
+  environment:
+    name: production
+    url: https://gimmevettingsolution.com
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+  allow_failure: false
+  dependencies:
+    - frontend-build

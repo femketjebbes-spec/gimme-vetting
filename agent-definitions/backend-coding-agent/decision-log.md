@@ -1,0 +1,27 @@
+# Decision Log — Naut (Backend Coding Agent)
+
+## Session 1 (2026-07-08) — WI-008 BR-001 Fix
+
+[2026-07-08] [Session 1] DECISION: FileType enum is a standalone class in `com.gimmevettingsolution.intake.service` package
+Assumptions: The enum will be used by both `ExcelParsingService` and `ExcelIntakeController`
+Rationale: Delegation plan requires the enum in the service package; standalone class follows existing pattern (e.g., `InvalidFileFormatResponse` is in `dto` package, not nested in service)
+
+[2026-07-08] [Session 1] DECISION: `detectFileType()` returns FileType.UNKNOWN for streams shorter than 4 bytes
+Assumptions: Empty or very small files should not be accepted as valid Excel or CSV
+Rationale: API contract Section 3.2.1 Step 3c states "If neither, reject with INVALID_FILE_FORMAT"
+
+[2026-07-08] [Session 1] DECISION: CSV detection is based on the first 4 bytes being printable ASCII, whitespace, or valid UTF-8 multi-byte sequences
+Assumptions: If a file starts with text-like bytes, it is likely CSV; binary files start with non-text bytes
+Rationale: Delegation plan requires "read first line as text. If valid UTF-8/ASCII text, treat as CSV"
+
+[2026-07-08] [Session 1] DECISION: Error detail for UNKNOWN type is "File content is not a recognized Excel or CSV format"
+Assumptions: Per FR-BR001-03, error messages must indicate actual detection reason, not generic "Unsupported MIME type"
+Rationale: Delegation plan Section "Implementation details" specifies this exact message string
+
+[2026-07-08] [Session 1] TEST-SPEC: `ExcelParsingServiceTest.java` maps to BR-001 FR-BR001-01 content-based detection tests
+Purpose: Validate XLSX (ZIP header), CSV (text bytes), UNKNOWN (binary bytes), empty stream, null stream
+Derived from: Delegation plan "Test requirements"
+
+[2026-07-08] [Session 1] TEST-SPEC: `ExcelIntakeControllerTest.java` maps to BR-001 FR-BR001-02 fallback MIME handling tests
+Purpose: Validate fast path (recognized MIME), fallback path (null MIME with XLSX content, octet-stream with XLSX content), rejection (binary content)
+Derived from: Delegation plan "Test requirements"
