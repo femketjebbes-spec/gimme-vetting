@@ -87,3 +87,27 @@ Assumptions recorded:
 - Naut will use JPA Specifications for dynamic search and status filtering to prevent SQL injection.
 - The address field in responses is a single string (concatenated from DB storage: street, postal code, city).
 - No authentication middleware is required for MVP (D-CA-002).
+
+## Session WI-CA-001 Cycle 2 — 2026-07-09
+
+**Trigger**: Alignment Agent rejected review request ALIGN-WI-CA-001-001 (cycle 1) with 5 format violations. Rejection feedback at `docs/alignment-rejection-feedback.md`.
+
+**Actions Performed**:
+1. Read rejection feedback. All 5 violations identified and understood.
+2. Produced corrected review request at `docs/alignment-review-request.md` (reviewCycle: 2).
+3. Corrections applied:
+   - Removed residual Naut content from previous submission.
+   - Wrapped entire JSON under `"reviewRequest"` top-level key.
+   - Changed `artefactsProduced` from string array to object array with `filePath`, `artefactType`, `description`.
+   - Removed redundant markdown-section alignment notes.
+   - Removed `status` and `greenlightForNextAgent` fields (Alignment Agent decision-output fields).
+4. Updated decision log with 2 new entries (rejection record, resubmission record).
+5. Contract artefact `docs/api-contract-wi-ca-001.md` is unchanged — substantively compliant.
+
+**Delegations**: None. Awaiting Alignment Agent approval at cycle 2.
+
+**Verification**: Pending Alignment Agent review of cycle 2 submission.
+
+**Open Issues**: None. Pipeline gate blocked awaiting Approval Agent approval.
+
+**Completion**: Review request resubmitted at cycle 2. Pipeline activation of Femke-Naut-parallel is blocked until Alignment Agent sets `greenlightForNextAgent: true`.

@@ -41,3 +41,48 @@ Rationale: The accept attribute is UI convenience for the file picker dialog. It
 Purpose: This test validated the client-side MIME type blocking behavior that was removed per BR-001. The test expects the frontend to reject files with non-matching MIME types, which contradicts the contract.
 Derived from: `docs/wi-008-delegation-parallel.md` Subtask 2
 Status: Requires regeneration by Testing Mode with Archibald authorization
+
+[2026-07-09] [Session 5] DECISION: Manual URL construction to avoid URLSearchParams comma encoding
+Assumptions: URLSearchParams encodes commas to %2C (e.g., `id,asc` becomes `id%2Casc`). The backend expects unencoded sort parameters.
+Rationale: Replaced URLSearchParams with manual URL construction using array join to produce clean query strings like `sort=id,asc`.
+Derived from: `docs/api-contract-wi-ca-001.md` Section 2.2 sort parameter specification
+
+[2026-07-09] [Session 5] DECISION: TextEncoder/TextDecoder polyfill added to setupTests.js
+Assumptions: react-router-dom v7 requires TextEncoder/TextDecoder which jsdom does not provide natively.
+Rationale: Added `import { TextEncoder, TextDecoder } from 'util'` and `global.TextEncoder`/`global.TextDecoder` to setupTests.js to prevent "TextEncoder not defined" errors during test execution.
+
+[2026-07-09] [Session 5] DECISION: StatusBadge uses separate function declaration and named/default export to avoid duplicate export error
+Assumptions: `export function Name {}` creates an implicit named export. Adding a second `export { Name }` creates a duplicate.
+Rationale: Changed to `function Name {}` (no export keyword on declaration) then `export { Name }` and `export default Name` to allow both named and default imports in tests.
+
+[2026-07-09] [Session 5] DECISION: AnalystDashboard tests use MemoryRouter wrapper for react-router-dom context
+Assumptions: AnalystDashboard uses `<Link>` from react-router-dom which requires router context via BrowserRouter/MemoryRouter.
+Rationale: Created `renderWithRouter` helper that wraps component renders in `<MemoryRouter>` to provide router context for Link components in tests.
+
+[2026-07-09] [Session 5] DECISION: Invoice table rendering test provides at least one invoice in mock response
+Assumptions: InvoiceTable renders either a `<table>` element (with data) or an empty state `<p>` (without data).
+Rationale: The test for table rendering must include at least one invoice in the mock response so InvoiceTable renders the actual table element rather than the empty state message.
+
+[2026-07-09] [Session 5] DECISION: Search/filter re-fetch tests track call count instead of clearing mock
+Assumptions: `mockFetch.mockClear()` loses context of subsequent fetch calls in async React state update cycles.
+Rationale: Track initial call count before user interaction, then assert the last call in `mock.calls` contains the expected query parameter after interaction.
+
+[2026-07-09] [Session 5] TEST-SPEC: `4-frontend/src/business-service/api/__tests__/analystApi.test.js` maps to WI-CA-001 subtask (fetch list, fetch detail)
+Purpose: Validates fetchInvoiceList URL construction, fetchInvoiceDetail path variable, input validation, error handling
+Derived from: `docs/wi-ca-001-delegation-parallel.md` Femke subtask, `docs/api-contract-wi-ca-001.md` v1.0.0
+
+[2026-07-09] [Session 5] TEST-SPEC: `4-frontend/src/business-service/components/__tests__/StatusBadge.test.jsx` maps to WI-CA-001 subtask (status badge rendering)
+Purpose: Validates QUEUED and REJECTED status color classes and default to QUEUED
+Derived from: `docs/wi-ca-001-delegation-parallel.md` status enums: QUEUED/REJECTED_TYPE_A/REJECTED_TYPE_B
+
+[2026-07-09] [Session 5] TEST-SPEC: `4-frontend/src/business-service/components/__tests__/InvoiceTable.test.jsx` maps to WI-CA-001 subtask (invoice table display, pagination)
+Purpose: Validates invoice row rendering, status badge display, pagination controls, empty state
+Derived from: `docs/wi-ca-001-delegation-parallel.md` invoice list pagination and status filter
+
+[2026-07-09] [Session 5] TEST-SPEC: `4-frontend/src/business-service/components/__tests__/InvoiceDrawer.test.jsx` maps to WI-CA-001 subtask (detail drawer)
+Purpose: Validates drawer open/close, overlay dismiss, all 10 invoice fields rendered
+Derived from: `docs/wi-ca-001-delegation-parallel.md` single invoice detail endpoint
+
+[2026-07-09] [Session 5] TEST-SPEC: `4-frontend/src/business-service/components/__tests__/AnalystDashboard.test.jsx` maps to WI-CA-001 subtask (main dashboard integration)
+Purpose: Validates search input, status filter, table rendering, re-fetch on search/filter, header, navigation link
+Derived from: `docs/wi-ca-001-delegation-parallel.md` analyst dashboard with search and status filter

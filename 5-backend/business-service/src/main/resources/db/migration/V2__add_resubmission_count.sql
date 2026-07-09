@@ -1,0 +1,1 @@
+ALTER TABLE invoices ADD COLUMN resubmission_count INTEGER NOT NULL DEFAULT 0;

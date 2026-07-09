@@ -43,6 +43,9 @@ public class Invoice {
     @Column(name = "status", nullable = false, length = 32)
     private String status;
 
+    @Column(name = "resubmission_count", nullable = false)
+    private Integer resubmissionCount;
+
     public Invoice() {
     }
 
@@ -116,5 +119,13 @@ public class Invoice {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Integer getResubmissionCount() {
+        return resubmissionCount;
+    }
+
+    public void setResubmissionCount(Integer resubmissionCount) {
+        this.resubmissionCount = resubmissionCount;
     }
 }
