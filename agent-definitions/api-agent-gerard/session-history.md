@@ -30,9 +30,7 @@
 - Frontend `ExcelUpload.jsx` requires no changes (delegation plan confirms endpoint contract surface unchanged).
 - Backend `ExcelIntakeController` and `ExcelParsingService` will implement content-based detection per the contract.
 
-<<<<<<< HEAD
 **Completion**: All WI-008 subtasks complete. Contract ready for parallel Femke-Naut implementation.
-=======
 Step 2 (Frontend Analysis): Scanned `4-frontend/src/` for PoC upload fetch calls. Zero results found. No existing PoC upload frontend code exists. The endpoint is entirely new — frontend implementation will be handled by Femke in a subsequent WI-005 parallel phase.
 
 Step 3 (Backend Analysis): Scanned `5-backend/` for PoC upload route definitions. Zero results found for `poc-upload`, `pocUpload`, `PoCUpload`. Existing route definitions are: `POST /api/v1/intake/excel` (ExcelIntakeController), `GET /api/v1/intake/excel/download/{filename}` (ExcelIntakeController), `POST /api/v1/intake` (IntakeController). PoC storage is handled by `PoCStoreService` interface and `FileBackedPoCStoreService` implementation. No `store(MultipartFile)` method exists yet — this will be added by Naut.
@@ -89,4 +87,3 @@ Assumptions recorded:
 - Naut will use JPA Specifications for dynamic search and status filtering to prevent SQL injection.
 - The address field in responses is a single string (concatenated from DB storage: street, postal code, city).
 - No authentication middleware is required for MVP (D-CA-002).
->>>>>>> dd0ef34 (Frontend map structuur aangepast en daarbij gerard werk laten doen voor wi 1 MVP business, alignement agent moet nu als eerst aan de slag.)

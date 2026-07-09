@@ -8,11 +8,9 @@ Rationale: BR-001 requires replacing MIME-type-only validation with content-base
 Assumptions: Archibald has already recorded the BR-001 decision as part of the delegation plan preparation.
 Rationale: Subtask 2 requires verification only. The decision is present and accurate. No further action required.
 
-<<<<<<< HEAD
 [2026-07-08] [Session WI-008] DECISION: Contract version incremented from 2.0.0 to 2.1.0. This is a minor version bump reflecting new functionality (content-based detection) without breaking existing API surface. Endpoint path, method, request schema, and response schema are unchanged.
 Assumptions: Semantic versioning applies. Backward compatibility is maintained from the frontend perspective.
 Rationale: The delegation plan specifies version 2.1.0. The changes are additive (new detection logic, new error detail precision) and do not alter the contract surface that frontend and backend agents implement against.
-=======
 [2026-07-08] [Session 4] WI-007 API CONTRACT PRODUCTION
 DECISION: Template download endpoint contract specifies `GET /api/v1/intake/excel/template` returning a static XLSX template file.
 Assumptions: Template generation uses `ExcelParsingService.ALLOWED_COLUMN_NAMES` constants to prevent header drift. No authentication required for MVP.
@@ -32,4 +30,3 @@ Rationale: D-CA-002 mandates unauthenticated endpoints for MVP. The response sch
 DECISION: Alignment review request submitted with `pipelineStage: "API contract production"`, `nextAgentInPipeline: "Femke-Naut-parallel"`.
 Assumptions: Alignment Agent will approve before Archibald activates parallel phase.
 Rationale: Contract satisfies all requirements from WI-CA-001 spec and architectural decisions D-CA-001 through D-CA-004.
->>>>>>> dd0ef34 (Frontend map structuur aangepast en daarbij gerard werk laten doen voor wi 1 MVP business, alignement agent moet nu als eerst aan de slag.)
