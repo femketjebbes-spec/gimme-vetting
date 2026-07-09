@@ -133,6 +133,7 @@ backend-deploy-staging:
     url: http://$DEPLOY_SERVER_HOST:8082
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
   dependencies:
     - backend-build
 
@@ -150,6 +151,7 @@ frontend-deploy-staging:
     url: https://staging.gimmevettingsolution.com
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
   dependencies:
     - frontend-build
 
