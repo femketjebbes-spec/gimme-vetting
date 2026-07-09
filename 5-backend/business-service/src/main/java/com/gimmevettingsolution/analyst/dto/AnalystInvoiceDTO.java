@@ -1,52 +1,23 @@
-package com.gimmevettingsolution.invoice.entity;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+package com.gimmevettingsolution.analyst.dto;
 
 /**
- * JPA entity representing an invoice in the intake pipeline.
- * Maps to the "invoices" table managed by Flyway migration V1.
+ * DTO representing an invoice for the analyst dashboard.
+ * Contains all 10 fields required by the WI-CA-001 API contract.
  */
-@Entity
-@Table(name = "invoices")
-public class Invoice {
+public class AnalystInvoiceDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "invoice_number", nullable = false, unique = true, length = 128)
     private String invoiceNumber;
-
-    @Column(name = "debtor_name", nullable = false, length = 256)
     private String debtorName;
-
-    @Column(name = "address", nullable = false, length = 512)
     private String address;
-
-    @Column(name = "bank_account_number", nullable = false, length = 34)
     private String bankAccountNumber;
-
-    @Column(name = "phone_number", nullable = false, length = 20)
     private String phoneNumber;
-
-    @Column(name = "poc_status", nullable = false, length = 32)
-    private String poCStatus;
-
-    @Column(name = "rejection_type", nullable = false, length = 32)
-    private String rejectionType;
-
-    @Column(name = "status", nullable = false, length = 32)
     private String status;
-
-    @Column(name = "resubmission_count", nullable = false)
+    private String poCStatus;
+    private String rejectionType;
     private Integer resubmissionCount;
 
-    public Invoice() {
+    public AnalystInvoiceDTO() {
     }
 
     public Long getId() {
@@ -97,6 +68,14 @@ public class Invoice {
         this.phoneNumber = phoneNumber;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public String getPoCStatus() {
         return poCStatus;
     }
@@ -111,14 +90,6 @@ public class Invoice {
 
     public void setRejectionType(String rejectionType) {
         this.rejectionType = rejectionType;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     public Integer getResubmissionCount() {

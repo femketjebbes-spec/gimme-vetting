@@ -99,3 +99,44 @@ Femke received delegation from Archibald (WI-008) for Subtask 2: Frontend Review
 - Test `validates MIME type before upload for non-matching types` will fail. Requires Testing Mode regeneration with Archibald authorization to update or remove the test.
 - Awaiting Alignment Agent approval for the review request.
 - No open items for this subtask.
+
+## Session 5 - 2026-07-09 WI-CA-001 Analyst Dashboard Implementation
+
+### Summary
+Femke received delegation from Archibald (WI-CA-001) to implement the case analyst invoice list and detail dashboard. All code placed in `4-frontend/src/business-service/`. Implementation followed strict TDD (red-green) workflow.
+
+### Actions Taken
+1. **Testing Mode**: Wrote 5 new Jest test files in `4-frontend/src/business-service/`:
+   - `api/__tests__/analystApi.test.js` — 9 tests for fetchInvoiceList, fetchInvoiceDetail, URL encoding, input validation, error handling
+   - `components/__tests__/StatusBadge.test.jsx` — 6 tests for status badge rendering with QUEUED/REJECTED color classes
+   - `components/__tests__/InvoiceTable.test.jsx` — 8 tests for invoice table rendering, status badges, pagination, empty state
+   - `components/__tests__/InvoiceDrawer.test.jsx` — 7 tests for drawer open/close, overlay dismiss, invoice field rendering
+   - `components/__tests__/AnalystDashboard.test.jsx` — 9 tests for search, status filter, table rendering, re-fetch behavior, header, navigation link
+2. **Red State Verification**: Ran Jest. 39 new tests failed (modules not found). 37 existing tests passed. Red state confirmed.
+3. **Implementation Mode**: Created production code:
+   - `api/analystApi.js` — Service module with fetchInvoiceList and fetchInvoiceDetail functions using manual URL construction (avoids URLSearchParams comma encoding)
+   - `components/StatusBadge.jsx` — Status badge component with color classes per enum value
+   - `components/InvoiceTable.jsx` — Paginated invoice table with status badges, pagination controls, empty state
+   - `components/InvoiceDrawer.jsx` — 420px slide-over detail drawer with all 10 invoice fields
+   - `components/AnalystDashboard.jsx` — Main dashboard with search input (256 char bound), status filter dropdown, invoice table, and detail drawer
+   - `css/analyst-dashboard.css` — Full stylesheet with design tokens, table styles, status badge colors, drawer overlay
+   - `main.jsx` updated with BrowserRouter and Routes: `/` for ExcelUpload, `/analyst` for AnalystDashboard
+   - `setupTests.js` updated with TextEncoder/TextDecoder polyfill for react-router-dom v7 jsdom compatibility
+4. **Green State Verification**: Ran Jest. All 76 tests pass (39 new + 37 existing). Green state confirmed.
+5. **API Requirements**: Written `docs/api-requirements.md` with both endpoint specifications.
+6. **Signals Produced**: Written `docs/api-ready-signal.md` (2 endpoints defined) and `docs/alignment-review-request.md` (review cycle 1, nextAgentInPipeline: Gerard).
+7. **Decision Log**: Added 8 entries covering URL encoding, polyfill, export pattern, MemoryRouter wrapper, test design decisions.
+
+### Decisions
+- Manual URL construction used instead of URLSearchParams to avoid comma encoding in sort parameter (`id,asc` not `id%2Casc`).
+- TextEncoder/TextDecoder polyfill added to setupTests.js for react-router-dom v7 jsdom compatibility.
+- StatusBadge uses separate function declaration with both named and default exports to satisfy test import patterns.
+- AnalystDashboard tests use MemoryRouter wrapper for react-router-dom Link context.
+- Invoice table rendering test provides at least one invoice to trigger `<table>` rendering instead of empty state.
+- Search/filter re-fetch tests track call count instead of using mockClear() to avoid async state update timing issues.
+- Search input bounded to 256 characters in both the input handler and the API service layer.
+- Status filter dropdown populated from VALID_STATUSES constant matching contract enums: QUEUED, REJECTED_TYPE_A, REJECTED_TYPE_B.
+
+### Remaining
+- Awaiting Alignment Agent approval (review cycle 1) before Gerard can re-evaluate the API contract for frontend structural changes.
+- No open items for this subtask.

@@ -1,228 +1,98 @@
-# API Requirements Document
+# API Requirements: Case Analyst Invoice List & Detail API
 
 **Produced By**: Femke (Frontend Agent)
-**Timestamp**: 2026-07-07 13:08
-**Source Contract**: `docs/api-contract-wi-002.md` (v2.0.0)
-**Frontend Component**: `4-frontend/src/frontend/components/ExcelUpload.jsx`
+**Timestamp**: 2026-07-09 09:40
+**Source Contract**: `docs/api-contract-wi-ca-001.md` (v1.0.0)
+**Work Item**: WI-CA-001
+**Status**: Complete
 
-## Overview
+---
 
-This document specifies the API endpoints required by the ExcelUpload frontend component for the WI-002 Excel File Upload and Batch Processing Pipeline. The frontend consumes a single endpoint to upload Excel or CSV files for batch processing.
+## Endpoint 1: Paginated Invoice List
 
-## Endpoints
-
-### POST /api/v1/intake/excel
-
-| Attribute | Value |
-|-----------|-------|
-| HTTP Method | POST |
-| Path | `/api/v1/intake/excel` |
-| Content-Type | `multipart/form-data` |
-| Authentication | No (PoC phase, per D-026) |
-
-#### Request
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `file` | File | Yes | The Excel file to upload. Must be `.xlsx` or `.csv`. |
-
-**File format constraints (client-side, per S-007):**
-
-| Format | Extension | MIME Type |
-|--------|-----------|-----------|
-| Excel (.xlsx) | `.xlsx` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` |
-| CSV | `.csv` | `text/csv` |
-
-#### Expected Response — 200 OK (Processing Complete)
-
-```json
-{
-  "processingStatus": "COMPLETED",
-  "totalRowsProcessed": 10,
-  "rowsPassed": 7,
-  "rowsFailed": 3,
-  "returnExcelDownloadLink": "/api/v1/intake/excel/download/temp-return-excel-abc123.xlsx"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `processingStatus` | string | Always `"COMPLETED"` on success. |
-| `totalRowsProcessed` | integer | Total number of non-empty rows parsed. |
-| `rowsPassed` | integer | Number of rows that passed all validation gates. |
-| `rowsFailed` | integer | Number of rows that failed at least one validation gate. |
-| `returnExcelDownloadLink` | string | URL or server-relative path to download the return Excel file. `null` when `rowsFailed` is 0. |
-
-**Frontend behaviour:** When `rowsFailed > 0` and `returnExcelDownloadLink` is non-null, render a download link using the `returnExcelDownloadLink` value as the `href` attribute with the `download` attribute.
-
-#### Expected Response — 400 Bad Request (Invalid File Format)
-
-```json
-{
-  "status": "INVALID_FILE_FORMAT",
-  "errorDetail": "Unsupported MIME type: application/msword"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | string | `"INVALID_FILE_FORMAT"` |
-| `errorDetail` | string | Human-readable description of the file format error. |
-
-**Frontend behaviour:** Display the message "The uploaded file is not a valid Excel or CSV file." in an error alert div.
-
-#### Expected Response — 400 Bad Request (Column Name Mismatch)
-
-```json
-{
-  "status": "COLUMN_NAME_MISMATCH",
-  "unrecognizedColumns": ["invoice id", "client name"]
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | string | `"COLUMN_NAME_MISMATCH"` |
-| `unrecognizedColumns` | string[] | List of unrecognized column names found in the header row. |
-
-**Frontend behaviour:** Display the message "Unrecognized column names: {comma-separated list}" in an error alert div.
-
-#### Expected Response — 500 Internal Server Error
-
-```json
-{
-  "status": "INTERNAL_ERROR",
-  "errorDetail": "Unexpected error during Excel processing"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | string | `"INTERNAL_ERROR"` |
-| `errorDetail` | string | Technical description of the failure. |
-
-**Frontend behaviour:** Display the message "An unexpected error occurred during processing." in an error alert div.
-
-## Notes
-
-- Authentication is absent for the PoC phase. This endpoint is unauthenticated and should be protected in a future work item.
-- The frontend performs client-side MIME type validation before upload. The backend performs server-side MIME type validation as mandated by S-007.
-- The upload button is disabled during processing (loading state) to prevent duplicate submissions.
-- The `returnExcelDownloadLink` is only rendered when `rowsFailed > 0`.
-
-### POST /api/v1/poc-upload
-
-| Attribute | Value |
-|-----------|-------|
-| HTTP Method | POST |
-| Path | `/api/v1/poc-upload` |
-| Content-Type | `multipart/form-data` |
-| Authentication | No (PoC phase, per D-026) |
-
-#### Request
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `file` | File | Yes | The PoC file to upload. Must be PDF. |
-
-**File format constraints (client-side):**
-
-| Format | Extension | MIME Type |
-|--------|-----------|-----------|
-| PDF | `.pdf` | `application/pdf` |
-
-#### Expected Response — 200 OK (Upload Successful)
-
-```json
-{
-  "status": "UPLOADED",
-  "invoiceNumber": "inv-2026-0042"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | string | Always `"UPLOADED"` on success. |
-| `invoiceNumber` | string | The invoice number extracted from the filename. |
-
-**Frontend behaviour:** Display a success message with the uploaded invoice number.
-
-#### Expected Response — 400 Bad Request (Non-PDF File or Path Traversal)
-
-```json
-{
-  "status": "INVALID_FILE_FORMAT",
-  "errorDetail": "Only PDF files are accepted. Uploaded file type: application/msword"
-}
-```
-
-or
-
-```json
-{
-  "status": "INVALID_FILE_FORMAT",
-  "errorDetail": "Path traversal detected in filename"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | string | `"INVALID_FILE_FORMAT"` |
-| `errorDetail` | string | Human-readable description of the error. |
-
-**Frontend behaviour:** Display the `errorDetail` message in an error alert div. Path traversal errors show "Path traversal detected in filename." Non-PDF errors show "Only PDF files are accepted."
-
-#### Expected Response — 500 Internal Server Error
-
-```json
-{
-  "status": "INTERNAL_ERROR",
-  "errorDetail": "Unexpected error during PoC upload"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | string | `"INTERNAL_ERROR"` |
-| `errorDetail` | string | Technical description of the failure. |
-
-**Frontend behaviour:** Display the message "An unexpected error occurred during processing." in an error alert div.
-
-### GET /api/v1/intake/excel/template
-
-| Attribute | Value |
-|-----------|-------|
+| Property | Value |
+|----------|-------|
 | HTTP Method | GET |
-| Path | `/api/v1/intake/excel/template` |
-| Authentication | No (MVP, per D-020) |
+| Path | `/api/v1/analyst/invoices` |
+| Request Parameters | `page` (integer, default 0, >= 0), `size` (integer, default 50, 1-200), `sort` (string, default `id,asc`, format `field,direction`), `status` (string, enum: QUEUED, REJECTED_TYPE_A, REJECTED_TYPE_B), `search` (string, max 256 chars) |
+| Expected Response | JSON object with `content` (array of invoice items), `totalElements` (integer), `totalPages` (integer), `currentPage` (integer), `pageSize` (integer) |
+| Authentication Required | No |
+| Frontend Consumer | `4-frontend/src/business-service/api/analystApi.js` (`fetchInvoiceList`) |
 
-#### Request
-
-No parameters, no request body.
-
-#### Expected Response — 200 OK (Template Download)
-
-Binary response: a valid `.xlsx` Excel file.
-
-| Header | Value |
-|--------|-------|
-| `Content-Type` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` |
-| `Content-Disposition` | `attachment; filename="invoice-intake-template.xlsx"` |
-
-**Frontend behaviour:** On successful response, create a blob URL from the response body, create an anchor element with `download` attribute set to the filename from `Content-Disposition` header (default `invoice-intake-template.xlsx`), trigger a click to initiate the browser file download, then clean up the blob URL and anchor element.
-
-#### Expected Response — 500 Internal Server Error
+### Response Schema
 
 ```json
 {
-  "status": "INTERNAL_ERROR",
-  "errorDetail": "Template generation failed"
+  "content": [
+    {
+      "id": 1,
+      "invoiceNumber": "INV-2026-0042",
+      "debtorName": "Jan de Vries",
+      "address": "Voorbeeldstraat 1, 1234AB Amsterdam",
+      "bankAccountNumber": "NL12BUNQ0123456789",
+      "phoneNumber": "+31612345678",
+      "status": "QUEUED",
+      "poCStatus": "VERIFIED",
+      "rejectionType": null,
+      "resubmissionCount": 0
+    }
+  ],
+  "totalElements": 150,
+  "totalPages": 3,
+  "currentPage": 0,
+  "pageSize": 50
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | string | `"INTERNAL_ERROR"` |
-| `errorDetail` | string | Human-readable error description. |
+### Error Responses
 
-**Frontend behaviour:** Display the message "An unexpected error occurred during processing." in an error alert div. No server-internal error messages are exposed to the user.
+| Status Code | Description |
+|-------------|-------------|
+| 400 Bad Request | Invalid query parameters (e.g., page negative, size exceeds 200, search exceeds 256 chars) |
+
+---
+
+## Endpoint 2: Single Invoice Detail
+
+| Property | Value |
+|----------|-------|
+| HTTP Method | GET |
+| Path | `/api/v1/analyst/invoices/{id}` |
+| Request Parameters | `id` (integer, required, > 0) — path variable |
+| Expected Response | JSON object with invoice fields: `id`, `invoiceNumber`, `debtorName`, `address`, `bankAccountNumber`, `phoneNumber`, `status`, `poCStatus`, `rejectionType`, `resubmissionCount` |
+| Authentication Required | No |
+| Frontend Consumer | `4-frontend/src/business-service/api/analystApi.js` (`fetchInvoiceDetail`) |
+
+### Response Schema
+
+```json
+{
+  "id": 1,
+  "invoiceNumber": "INV-2026-0042",
+  "debtorName": "Jan de Vries",
+  "address": "Voorbeeldstraat 1, 1234AB Amsterdam",
+  "bankAccountNumber": "NL12BUNQ0123456789",
+  "phoneNumber": "+31612345678",
+  "status": "QUEUED",
+  "poCStatus": "VERIFIED",
+  "rejectionType": null,
+  "resubmissionCount": 0
+}
+```
+
+### Error Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 404 Not Found | Invoice with requested ID does not exist |
+| 400 Bad Request | Invalid invoice ID parameter (not a positive integer) |
+
+---
+
+## Architecture Decisions Applied
+
+- **D-CA-001**: Resubmission uses Option A (update existing row, increment count)
+- **D-CA-002**: Unauthenticated MVP endpoints
+- **D-CA-003**: `resubmissionCount` field added via Flyway migration
+- **D-CA-004**: API versioning via `/api/v1/analyst/` path prefix
+- **D-CA-005**: React Router routing at `/analyst` path

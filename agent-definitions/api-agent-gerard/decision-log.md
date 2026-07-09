@@ -30,3 +30,13 @@ Rationale: D-CA-002 mandates unauthenticated endpoints for MVP. The response sch
 DECISION: Alignment review request submitted with `pipelineStage: "API contract production"`, `nextAgentInPipeline: "Femke-Naut-parallel"`.
 Assumptions: Alignment Agent will approve before Archibald activates parallel phase.
 Rationale: Contract satisfies all requirements from WI-CA-001 spec and architectural decisions D-CA-001 through D-CA-004.
+
+[2026-07-09] [Session 8] WI-CA-001 ALIGNMENT REVIEW REJECTED — CYCLE 1
+DECISION: Alignment Agent rejected review request ALIGN-WI-CA-001-001 (status: REJECTED) due to 5 format violations in the JSON review request. The API contract itself was substantively compliant. Corrections required: (1) Remove residual Naut content. (2) Add reviewRequest wrapper key. (3) Change artefactsProduced to object array. (4) Remove redundant markdown alignment notes. (5) Remove decision-output fields (status, greenlightForNextAgent).
+Assumptions: The contract docs/api-contract-wi-ca-001.md requires no modification. Only the review request format needs correction.
+Rationale: Alignment Agent definition requires strict JSON format conformance. Pipeline gate enforcement blocks Femke-Naut-parallel activation until approval is granted.
+
+[2026-07-09] [Session 8] WI-CA-001 ALIGNMENT REVIEW RESUBMISSION — CYCLE 2
+DECISION: Resubmitted corrected review request at reviewCycle 2. All 5 format violations corrected. reviewRequest wrapper applied. artefactsProduced converted to object array. Residual content removed. Pipeline gate awaiting Alignment Agent approval.
+Assumptions: Alignment Agent will approve the corrected format and set greenlightForNextAgent to true, enabling Archibald to produce the parallel delegation plan.
+Rationale: All corrections from rejection feedback ALIGN-WI-CA-001-001 have been applied. The contract artefact is unchanged and substantively compliant.

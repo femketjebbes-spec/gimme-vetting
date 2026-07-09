@@ -22,6 +22,26 @@ Rationale: Delegation plan Section "Implementation details" specifies this exact
 Purpose: Validate XLSX (ZIP header), CSV (text bytes), UNKNOWN (binary bytes), empty stream, null stream
 Derived from: Delegation plan "Test requirements"
 
+[2026-07-09] [Session 2] TEST-SPEC: `AnalystControllerTest.java` maps to WI-CA-001 Subtask 2 - Backend Controller tests
+Purpose: 13 unit tests covering both API endpoints with mocked dependencies using MockMvc standalone setup
+Derived from: Delegation plan docs/wi-ca-001-delegation-parallel.md Subtask 2
+
+[2026-07-09] [Session 2] TEST-SPEC: `AnalystServiceTest.java` maps to WI-CA-001 Subtask 2 - Backend Service unit tests
+Purpose: 12 unit tests for listInvoices (pagination, sorting, filtering, search) and getInvoiceDetail
+Derived from: Delegation plan docs/wi-ca-001-delegation-parallel.md Subtask 2
+
+[2026-07-09] [Session 2] TEST-SPEC: `InputValidationServiceTest.java` maps to WI-CA-001 Subtask 2 - Input validation tests
+Purpose: 36 unit tests for page, size, sort, status, search validation edge cases
+Derived from: Delegation plan docs/wi-ca-001-delegation-parallel.md Subtask 2
+
+[2026-07-09] [Session 2] DECISION: AnalystController uses constructor injection for both AnalystService and InputValidationService
+Assumptions: Both dependencies will be provided by Spring context
+Rationale: Constructor injection enables testability with mock instances in standalone MockMvc setup
+
+[2026-07-09] [Session 2] DECISION: Controller tests use MockMvcBuilders.standaloneSetup with explicit mock injection instead of @WebMvcTest or @SpringBootTest
+Assumptions: The controller constructor accepts InputValidationService as a parameter
+Rationale: standaloneSetup avoids Spring context overhead and guarantees mocks are used. @WebMvcTest failed because the controller internally instantiated InputValidationService via new() instead of using the @MockBean.
+
 [2026-07-08] [Session 1] TEST-SPEC: `ExcelIntakeControllerTest.java` maps to BR-001 FR-BR001-02 fallback MIME handling tests
 Purpose: Validate fast path (recognized MIME), fallback path (null MIME with XLSX content, octet-stream with XLSX content), rejection (binary content)
 Derived from: Delegation plan "Test requirements"
