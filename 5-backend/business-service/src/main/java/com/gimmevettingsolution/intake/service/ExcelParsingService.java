@@ -45,7 +45,7 @@ public class ExcelParsingService {
             "bank account number"
     );
 
-    private static final Pattern SAFE_FILENAME_PATTERN = Pattern.compile("^[A-Za-z0-9\\-_.]+$");
+    private static final Pattern SAFE_FILENAME_PATTERN = Pattern.compile("^[A-Za-z0-9\\-_. ]+$");
     private static final String[] SUPPORTED_MIME_TYPES = {
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "text/csv"

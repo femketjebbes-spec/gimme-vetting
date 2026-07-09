@@ -1,9 +1,9 @@
 # Bug Report BR-001: MIME-Type-Based File Validation Rejects Valid Excel Files
 
 - **Document ID**: BR-001
-- **Version**: 2.0
+- **Version**: 3.0
 - **Last Updated**: 2026-07-09
-- **Status**: Closed — Follow-up Work Item WR-001 Created (2026-07-09)
+- **Status**: Resolved — Code-level fix applied and verified (2026-07-09)
 - **Severity**: High (blocks core functionality — Excel upload)
 - **Component**: Excel Intake (`ExcelIntakeController`, `ExcelParsingService`)
 - **Related Work Items**: [WI-002](re-workspace/work-items/MVP-1/wi-002-excel-file-upload-and-parsing.md)
@@ -256,18 +256,26 @@ The frontend tests [`ExcelUpload.test.jsx`](4-frontend/src/client-service/compon
 | Null MIME type | ✅ `isSupportedMimeType()` returns false for null, line 61 | ✅ Implicit in empty MIME test | ⚠️ Old code still running |
 | Non-Excel content | ✅ `FileType.UNKNOWN` rejection, lines 69-74 | ✅ Needs explicit test | ⚠️ Old code still running |
 
-### 9.6 Conclusion
+### 9.6 Root Cause Re-Evaluation v3.0 (2026-07-09)
 
-The BR-001 bug is **not a code defect**. The fix is correctly implemented and tested. The persistence of the bug in production is an **operational/deployment issue** — the backend process must be restarted after code changes to pick up the new compiled classes.
+**The bug persisted because the actual rejection reason was not MIME-type validation — it was filename character validation.**
 
-**Action Required:** Restart the backend process after the fix is compiled. No code changes are needed.
+When the user uploaded a file named "test excel.xlsx" (with a space), the controller rejected it at line 49 of [`ExcelIntakeController.java`](5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/ExcelIntakeController.java:49) with the error "Path traversal detected in filename" because the `SAFE_FILENAME_PATTERN` regex `^[A-Za-z0-9\\-_.]+$` did not allow space characters.
+
+This was a **secondary code defect** that was masked by the initial MIME-type issue. The misleading error message ("Path traversal detected in filename") made the root cause hard to diagnose.
 
 ---
 
-## 10. Closure (2026-07-09)
+## 10. Resolution (2026-07-09 v3.0)
 
-BR-001 is **closed**. The code-level fix is complete and verified. The remaining operational gap — the need to restart the backend after code changes — is addressed by a follow-up work item:
+The following fixes were applied and verified:
 
-- **Follow-up Work Item**: [WR-001](re-workspace/work-items/run-mvp1-clean-slate/wr-001-clean-slate-local-run.md) — `run_MVP1_locally.sh` Starts on a Clean Slate
+1. **[`ExcelParsingService.java:48`](5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/service/ExcelParsingService.java:48)**: Updated `SAFE_FILENAME_PATTERN` from `^[A-Za-z0-9\\-_.]+$` to `^[A-Za-z0-9\\-_. ]+$` to allow space characters in filenames. Spaces are not a path traversal vector.
 
-WR-001 requires updating the local development script to perform a full clean build before each service launch, eliminating the need for manual restarts. Once WR-001 is implemented, this class of operational issue will be resolved permanently for local development.
+2. **[`ExcelIntakeController.java:47-59`](5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/ExcelIntakeController.java:47)**: Separated path traversal detection (`..` or `/`) from character validation, each with distinct error messages:
+   - Path traversal → "Path traversal detected in filename" (400)
+   - Unsupported characters → "Filename contains unsupported characters" (400)
+
+Both fixes have been compiled and verified through a full clean-slate build (`./run_MVP1_locally.sh`). Upload of "test excel.xlsx" succeeds.
+
+BR-001 is **resolved**.
