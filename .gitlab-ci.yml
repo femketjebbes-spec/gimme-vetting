@@ -116,9 +116,9 @@ security-scan:
 # ======================
 backend-deploy-staging:
   stage: deploy-staging
-  image: alpine:latest
+  image: ubuntu:22.04
   before_script:
-    - apk add --no-cache openssh-client
+    - apt-get update && apt-get install -y openssh-client
     - mkdir -p ~/.ssh
     - cp "$DEPLOY_SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
@@ -160,9 +160,9 @@ frontend-deploy-staging:
 # ======================
 backend-deploy-production:
   stage: deploy-production
-  image: alpine:latest
+  image: ubuntu:22.04
   before_script:
-    - apk add --no-cache openssh-client
+    - apt-get update && apt-get install -y openssh-client
     - mkdir -p ~/.ssh
     - cp "$DEPLOY_SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
     - chmod 600 ~/.ssh/id_ed25519
