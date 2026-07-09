@@ -1,5 +1,10 @@
 import '@testing-library/jest-dom';
 
+// Polyfill TextEncoder/TextDecoder for react-router-dom v7 compatibility with jsdom.
+import { TextEncoder, TextDecoder } from 'util';
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
 // Polyfill DataTransfer for jsdom environment.
 // Unifies files[] and items.add into the same internal array.
 
