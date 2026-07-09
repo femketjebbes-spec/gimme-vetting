@@ -1,0 +1,29 @@
+%% BR-001 Fix Flow — Content-Based File Validation
+%% Work Item: WI-008
+
+flowchart TD
+    U["User uploads .xlsx via<br/>frontend ExcelUpload.jsx"] --> EC["ExcelIntakeController<br/>POST /api/v1/intake/excel"]
+
+    EC --> FM{"MIME type<br/>supported?"}
+    FM -- Yes, standard type --> PARSE["Parse via Apache POI"]
+    FM -- No, missing/unrecognized<br/>(application/octet-stream,<br/>application/zip, empty) --> DETECT["Content-based detection<br/>(magic byte inspection)"]
+
+    DETECT --> ZIPCHK{"First 4 bytes =<br/>50 4B 03 04 (PK)?"}
+    ZIPCHK -- Yes --> PARSE
+    ZIPCHK -- No --> CSVCHK{"Valid UTF-8 / ASCII text?"}
+    CSVCHK -- Yes --> PARSE
+    CSVCHK -- No --> REJ["Reject: INVALID_FILE_FORMAT"]
+
+    PARSE --> COLCHECK["Column name validation"]
+    COLCHECK --> MANDCHECK["Mandatory field validation"]
+    MANDCHECK --> POCCHECK["PoC existence verification"]
+    POCCHECK --> RESP["Return response with<br/>processing results + download link"]
+
+    RESP --> U
+    REJ --> U
+
+    style DETECT fill:#f9e64e
+    style ZIPCHK fill:#f9e64e
+    style CSVCHK fill:#f9e64e
+    style EC fill:#4ecdc4
+    style REJ fill:#ff6b6b

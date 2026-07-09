@@ -159,3 +159,28 @@ User asked where the case analyst dashboard frontend components would be written
 
 - The parallel delegation plan must be updated to specify Femke's output paths explicitly (main.jsx refactoring, React Router setup, new component files)
 - The existing unit tests must be reviewed to ensure BrowserRouter wrapping does not break Jest test setup
+## Session 8 — 2026-07-08 — WI-008 BR-001 Content-Based File Validation Fix
+
+### What Was Explored
+
+User reported BR-001: MIME-type-based file validation rejects valid Excel files. The backend validates files exclusively by MIME type, causing rejection of valid .xlsx files when browsers report unrecognized MIME types such as `application/octet-stream`, `application/zip`, or empty strings. The bug affects the Excel upload endpoint (POST /api/v1/intake/excel) — the core MVP feature.
+
+Architectural decision D-BR001 was documented: content-based file format detection via magic byte inspection replaces MIME-type-only validation. ZIP signature (50 4B 03 04) for XLSX, text detection for CSV.
+
+### What Was Decided
+
+1. **D-BR001**: Content-based file format detection via magic byte inspection. MIME type is a supplementary hint only. Detection precedence: fast path for known MIME types, fallback to content inspection for unrecognized types, reject if content inspection fails.
+2. **Contract update**: API contract `docs/api-contract-wi-002.md` updated from version 2.0.0 to 2.1.0. Section 3.2 documents content-based detection. Magic byte constants specified. Error messages require specific detection reason.
+3. **Frontend change**: Femke removed client-side MIME type validation from `ExcelUpload.jsx` that contradicted the new contract. HTML `accept=".xlsx,.csv"` attribute retained for file picker dialog filtering only.
+4. **Backend implementation**: Naut created `FileType` enum, added `detectFileType()` method to `ExcelParsingService`, restructured `ExcelIntakeController.uploadExcel()` with fast path and fallback path. 19 new tests added. All 148 tests pass.
+
+### Pipeline Execution
+
+1. Gerard: Updated API contract to v2.1.0, Alignment Agent approved (WI-008-REV-001), produced `docs/wi-008-contract-ready.md`
+2. Femke: Removed client-side MIME validation from ExcelUpload.jsx, confirmed alignment
+3. Naut: Implemented content-based detection, all tests pass, submitted for Alignment Agent review
+4. Naut is the last agent in the pipeline. Alignment Agent approval of Naut's final submission completes WI-008.
+
+### Architecture Model
+
+Mermaid flowchart saved at `agent-definitions/architect-agent/models/2026-07-08-session8-br001-fix-flow.mmd` showing the detection flow with magic byte inspection.

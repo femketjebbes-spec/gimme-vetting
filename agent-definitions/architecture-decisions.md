@@ -109,11 +109,9 @@ Security Implications: Path-based separation does not provide security isolation
 Affected Agents: Gerard, Naut
 
 <<<<<<< HEAD
-[2026-07-08] [Session 10] ARCHITECTURAL DECISION: The case analyst dashboard is served from the existing 4-frontend/ project using React Router with two routes: the client upload page (existing ExcelUpload component at /) and the analyst dashboard (AnalystDashboard component at /analyst). The main.jsx entry point is refactored to wrap both routes in a BrowserRouter.
-Rationale: The existing frontend at 4-frontend/ is the sole frontend project for MVP. The analyst dashboard is a separate view within the same application, sharing the same build pipeline, dependency management, and testing infrastructure. React Router provides client-side routing without requiring a separate server or entry point. This is simpler than adding a second Vite entry point or creating a new frontend project.
-Security Implications: Both routes serve from the same origin, so CORS is not a concern. The analyst route must not bypass the existing API. No new attack surface is introduced beyond the analyst dashboard UI itself. Future authentication (required per D-CA-002) must protect the /analyst route.
-Affected Agents: Femke
+
 =======
+>>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661
 [2026-07-08] [Session 8] ARCHITECTURAL DECISION: WI-007 template download endpoint is GET /api/v1/intake/excel/template. The endpoint returns a pre-generated XLSX template file with exactly 5 column headers: `invoice number`, `debtor name`, `address`, `phone number`, `bank account number`. The template contains at least one empty data row as visual guide. The response uses `Content-Disposition: attachment; filename="invoice-intake-template.xlsx"` and `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
 Rationale: Users need a correctly-formatted template to avoid upload failures from column name mismatches. XLSX-only format is sufficient for MVP. The empty template (no example data, no validation rules, no formatting) keeps implementation simple and reduces maintenance burden.
 Security Implications: The template is a static server-generated resource. No authentication required (MVP). No file injection risk since the template is generated server-side. Response headers must not include server-internal path information.
@@ -123,4 +121,17 @@ Affected Agents: Gerard, Naut, Femke
 Rationale: Apache POI is already used throughout the project for Excel generation (D-008). Sharing the library and code patterns reduces dependency complexity. Constants prevent silent drift between the template headers and the validation allowlist used during upload.
 Security Implications: No direct security implications. The constant-based approach ensures template headers always match the validation allowlist, preventing mismatch issues that could cause user confusion or upload failures.
 Affected Agents: Naut
->>>>>>> e6d3e77 (wi-007 af)
+
+<<<<<<< HEAD
+
+=======
+>>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661
+[2026-07-08] [Session 8] ARCHITECTURAL DECISION: BR-001 fixes the Excel upload endpoint by replacing MIME-type-only file validation with content-based file format detection. The system SHALL detect file format by inspecting magic bytes (first 4 bytes for ZIP signature `50 4B 03 04` for .xlsx, text detection for .csv) rather than relying solely on the browser-reported MIME type. MIME-type validation is retained as a fast path for well-behaved browsers but falls back to content-based detection when the MIME type is missing, null, or unrecognized (e.g., `application/octet-stream`, `application/zip`). This decision is consistent with the existing architecture decision in Section 7 that mandates magic byte verification for file uploads.
+Rationale: Browser-reported MIME types are unreliable metadata. Chrome and Firefox report the correct MIME type for .xlsx files, but other browsers, operating systems with unusual file associations, or files without extensions may report `application/octet-stream`, `application/zip`, or an empty string. Relying solely on MIME type causes valid Excel files to be rejected. Content-based detection using magic bytes is the industry-standard approach for file type detection and is equally secure.
+Security Implications: Content-based detection is MORE secure than MIME-type-only validation because it inspects actual file content rather than untrusted metadata. Magic byte inspection prevents upload of files disguised with correct MIME types but malicious content. The ZIP signature check for .xlsx files prevents non-ZIP files from being accepted. CSV detection via text encoding validation prevents binary files from being misidentified. This does not replace path traversal protection or file size limits (deferred to MVP+1).
+Affected Agents: Gerard, Naut
+
+[2026-07-08] [Session 10] ARCHITECTURAL DECISION: The case analyst dashboard is served from the existing 4-frontend/ project using React Router with two routes: the client upload page (existing ExcelUpload component at /) and the analyst dashboard (AnalystDashboard component at /analyst). The main.jsx entry point is refactored to wrap both routes in a BrowserRouter.
+Rationale: The existing frontend at 4-frontend/ is the sole frontend project for MVP. The analyst dashboard is a separate view within the same application, sharing the same build pipeline, dependency management, and testing infrastructure. React Router provides client-side routing without requiring a separate server or entry point. This is simpler than adding a second Vite entry point or creating a new frontend project.
+Security Implications: Both routes serve from the same origin, so CORS is not a concern. The analyst route must not bypass the existing API. No new attack surface is introduced beyond the analyst dashboard UI itself. Future authentication (required per D-CA-002) must protect the /analyst route.
+Affected Agents: Femke
