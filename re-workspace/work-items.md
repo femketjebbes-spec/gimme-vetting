@@ -48,11 +48,13 @@ A fully formalised work item definition exists at:
 >>>>>>> 4fc736f (work items iets aangepast)
 - **Parent Requirement:** RQ-001 (PoC Existence Verification)
 - **Parent Work Stream:** W-002 (Invoice Intake and PoC Matching Engine)
-- **Status:** Ready for implementation
+- **Status:** Completed (2026-07-08)
+- **Implemented By:** Naut (Backend), Gerard (API Contract)
 - **Gherkin Scenarios:** 5 (2 pass scenarios, 3 edge-case scenarios)
-- **Quality Validation:** ISO 29148 — PASS (with minor completeness notes resolved by acceptance criteria)
+- **Quality Validation:** ISO 29148 — PASS
 
-This work item is the recommended starting point for implementation. See the formalised definition for full details on acceptance criteria, design decisions, test strategy, and risks.
+Backend: `ExcelIntakeController`, `IntakeServiceImpl`, `PoCStoreService`, `FileBackedPoCStoreService`
+Frontend: `PoCUpload.jsx`
 
 ---
 
@@ -74,11 +76,8 @@ A fully formalised work item definition exists at:
 - **Type:** Build infrastructure
 - **Priority:** High
 - **Dependencies:** None
-- **Status:** Not started
-
-This work item addresses the absence of a root-level build orchestration mechanism. The project has two independently-built subprojects (frontend via Vite/npm, backend via Maven multi-module) but no single entry point to build, test, or clean the entire solution.
-
-**Recommended approach:** GNU Make Makefile at the project root with targets for `build`, `test`, `clean`, `backend`, `frontend`, and `check-tools`.
+- **Status:** Completed (2026-07-08)
+- **Implemented By:** Femke (Frontend build fix), `run_MVP1_locally.sh` created
 
 ---
 
