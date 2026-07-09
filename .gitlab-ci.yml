@@ -153,7 +153,7 @@ frontend-deploy-staging:
     - scp -o StrictHostKeyChecking=no -P ${DEPLOY_SERVER_PORT} -r 4-frontend/dist/* $DEPLOY_SERVER_USER@$DEPLOY_SERVER_HOST:/opt/gimme/frontend/
   environment:
     name: staging
-    url: https://staging.gimmevettingsolution.com
+    url: http://$DEPLOY_SERVER_HOST
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_COMMIT_BRANCH == "dev"'
