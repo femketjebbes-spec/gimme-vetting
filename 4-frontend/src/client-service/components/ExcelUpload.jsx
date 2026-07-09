@@ -115,6 +115,9 @@ function ExcelUpload({ onUploadComplete, onUploadError }) {
         const blob = await response.blob();
 <<<<<<< HEAD:4-frontend/src/client-service/components/ExcelUpload.jsx
 <<<<<<< HEAD:4-frontend/src/client-service/components/ExcelUpload.jsx
+<<<<<<< HEAD:4-frontend/src/client-service/components/ExcelUpload.jsx
+=======
+>>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661:4-frontend/src/frontend/components/ExcelUpload.jsx
         const contentType = response.headers.get('content-type');
         const disposition = response.headers.get('content-disposition');
         let filename = 'invoice-intake-template.xlsx';
@@ -128,6 +131,7 @@ function ExcelUpload({ onUploadComplete, onUploadError }) {
           ? new Blob([blob], { type: contentType })
           : blob;
         const downloadUrl = window.URL.createObjectURL(downloadBlob);
+<<<<<<< HEAD:4-frontend/src/client-service/components/ExcelUpload.jsx
 =======
 =======
         const contentType = response.headers.get('content-type');
@@ -149,6 +153,8 @@ function ExcelUpload({ onUploadComplete, onUploadError }) {
           : blob;
         const downloadUrl = window.URL.createObjectURL(downloadBlob);
 >>>>>>> 3cacf7e (Bugfix waarbij de template excel niet een excel file was):4-frontend/src/frontend/components/ExcelUpload.jsx
+=======
+>>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661:4-frontend/src/frontend/components/ExcelUpload.jsx
         const a = document.createElement('a');
         a.href = downloadUrl;
         a.download = filename;

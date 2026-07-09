@@ -36,16 +36,12 @@ A fully organised work item definition exists at:
 
 **MVP:** [MVP-1](work-items/MVP-1/)
 
+**MVP:** [MVP-1](work-items/MVP-1/)
+
 A fully formalised work item definition exists at:
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 - **File:** [re-workspace/work-items/MVP-1-Client/wi-001-poc-existence-verification.md](re-workspace/work-items/MVP-1-Client/wi-001-poc-existence-verification.md)
-=======
-- **File:** [re-workspace/work-items/MVP-1/wi-001-poc-existence-verification.md](work-items/MVP-1/wi-001-poc-existence-verification.md)
->>>>>>> 52e0cf2 (work items iets aangepast)
-=======
-- **File:** [re-workspace/work-items/MVP-1/wi-001-poc-existence-verification.md](work-items/MVP-1/wi-001-poc-existence-verification.md)
->>>>>>> 4fc736f (work items iets aangepast)
+
 - **Parent Requirement:** RQ-001 (PoC Existence Verification)
 - **Parent Work Stream:** W-002 (Invoice Intake and PoC Matching Engine)
 - **Status:** Completed (2026-07-08)
@@ -63,15 +59,9 @@ Frontend: `PoCUpload.jsx`
 **MVP:** [MVP-1](work-items/MVP-1/)
 
 A fully formalised work item definition exists at:
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 - **File:** [re-workspace/work-items/MVP-1-Client/wi-006-project-build-orchestration.md](re-workspace/work-items/MVP-1-Client/wi-006-project-build-orchestration.md)
-=======
-- **File:** [re-workspace/work-items/MVP-1/wi-006-project-build-orchestration.md](work-items/MVP-1/wi-006-project-build-orchestration.md)
->>>>>>> 52e0cf2 (work items iets aangepast)
-=======
-- **File:** [re-workspace/work-items/MVP-1/wi-006-project-build-orchestration.md](work-items/MVP-1/wi-006-project-build-orchestration.md)
->>>>>>> 4fc736f (work items iets aangepast)
+
 - **Parent Requirement:** None (cross-cutting infrastructure requirement)
 - **Type:** Build infrastructure
 - **Priority:** High
