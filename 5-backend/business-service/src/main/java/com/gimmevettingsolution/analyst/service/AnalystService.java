@@ -96,6 +96,8 @@ public class AnalystService {
         dto.setPoCStatus(invoice.getPoCStatus());
         dto.setRejectionType(invoice.getRejectionType());
         dto.setResubmissionCount(invoice.getResubmissionCount());
+        dto.setSourceFileId(invoice.getSourceFileId());
+        dto.setSourceFilename(invoice.getSourceFilename());
         return dto;
     }
 }

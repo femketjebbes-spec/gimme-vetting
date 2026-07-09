@@ -4,9 +4,13 @@ import com.gimmevettingsolution.analyst.dto.AnalystInvoiceDTO;
 import com.gimmevettingsolution.analyst.exception.InvoiceNotFoundException;
 import com.gimmevettingsolution.analyst.service.AnalystService;
 import com.gimmevettingsolution.analyst.service.InputValidationService;
+import com.gimmevettingsolution.excel.FileBackedExcelStoreService;
+import com.gimmevettingsolution.invoice.entity.Invoice;
+import com.gimmevettingsolution.invoice.repository.InvoiceRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * REST controller for the Case Analyst dashboard.
@@ -33,10 +38,27 @@ public class AnalystController {
 
     private final AnalystService analystService;
     private final InputValidationService validationService;
+    private final InvoiceRepository invoiceRepository;
+    private final FileBackedExcelStoreService excelStoreService;
 
+    /**
+     * Constructor for backward compatibility with existing tests.
+     * New endpoint (getSourceFile) requires invoiceRepository and excelStoreService.
+     */
     public AnalystController(AnalystService analystService, InputValidationService validationService) {
+        this(analystService, validationService, null, null);
+    }
+
+    /**
+     * Full constructor with all dependencies. Used by Spring for dependency injection.
+     */
+    @Autowired
+    public AnalystController(AnalystService analystService, InputValidationService validationService,
+                             InvoiceRepository invoiceRepository, FileBackedExcelStoreService excelStoreService) {
         this.analystService = analystService;
         this.validationService = validationService;
+        this.invoiceRepository = invoiceRepository;
+        this.excelStoreService = excelStoreService;
     }
 
     /**
@@ -92,6 +114,66 @@ public class AnalystController {
             }
             AnalystInvoiceDTO dto = analystService.getInvoiceDetail(idValue);
             return ResponseEntity.ok(dto);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Bad Request",
+                    "message", "Invalid invoice id parameter"
+            ));
+        }
+    }
+
+    /**
+     * Endpoint 3: Source file download.
+     * GET /api/v1/analyst/invoices/{id}/source-file
+     */
+    @GetMapping("/invoices/{id}/source-file")
+    public ResponseEntity<?> getSourceFile(@PathVariable String id) {
+        try {
+            long idValue = Long.parseLong(id);
+            if (!validationService.validateId(idValue)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Bad Request",
+                        "message", "Invalid invoice id parameter"
+                ));
+            }
+
+            // Look up invoice
+            Optional<Invoice> invoiceOpt = invoiceRepository.findById(idValue);
+            if (invoiceOpt.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of(
+                        "error", "Not Found",
+                        "message", "No source file available for this invoice"
+                ));
+            }
+
+            Invoice invoice = invoiceOpt.get();
+            String sourceFileId = invoice.getSourceFileId();
+
+            // No source file — return 404
+            if (sourceFileId == null || sourceFileId.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of(
+                        "error", "Not Found",
+                        "message", "No source file available for this invoice"
+                ));
+            }
+
+            // Resolve file from store
+            try {
+                org.springframework.core.io.Resource resource = excelStoreService.getFile(sourceFileId);
+                String contentType = excelStoreService.getContentType(invoice.getSourceFilename());
+                String disposition = "inline; filename=\"" + invoice.getSourceFilename() + "\"";
+
+                return ResponseEntity.ok()
+                        .contentType(org.springframework.http.MediaType.valueOf(contentType))
+                        .header("Content-Disposition", disposition)
+                        .body(resource);
+            } catch (RuntimeException e) {
+                return ResponseEntity.status(500).body(Map.of(
+                        "error", "Internal Server Error",
+                        "message", "Source file is unavailable"
+                ));
+            }
+
         } catch (NumberFormatException e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Bad Request",
