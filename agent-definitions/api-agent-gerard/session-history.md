@@ -65,3 +65,25 @@ Assumptions recorded:
 - Naut will add a `GET /api/v1/intake/excel/template` mapping to `ExcelIntakeController` that delegates to a new `ExcelParsingService.generateTemplateXlsx()` method.
 - The template generation method must reference `ALLOWED_COLUMN_NAMES` constants directly, not duplicate header strings.
 - No authentication middleware is required for MVP (D-020).
+
+[2026-07-09] [Session 7] WI-CA-001 API CONTRACT PRODUCTION
+Archibald produced `docs/wi-ca-001-delegation-gerard.md` delegating API contract production for WI-CA-001 (Case Analyst Invoice List & Detail API). Gerard read the delegation plan, architectural decisions (D-CA-001 through D-CA-004, D-026, S-006), and the work item specification.
+
+Step 1 (Contract Acquisition): Read delegation plan and work item. Identified two endpoints: `GET /api/v1/analyst/invoices` (paginated list with filtering, sorting, search) and `GET /api/v1/analyst/invoices/{id}` (single invoice detail). Request format: standard GET with query parameters. Response format: paginated content array with metadata for list endpoint; single object for detail endpoint. Authentication: none (MVP limitation per D-CA-002). Version: 1.0.0.
+
+Step 2 (Frontend Analysis): No existing frontend fetch calls for analyst endpoints. The dashboard will be implemented by Femke in the WI-CA-001 parallel phase.
+
+Step 3 (Backend Analysis): Scanned `5-backend/` for analyst route definitions. Zero results found for `analyst`, `AnalystInvoice`. Existing route definitions are: `POST /api/v1/intake` (IntakeController), `POST /api/v1/intake/excel` (ExcelIntakeController), `GET /api/v1/intake/excel/download/{filename}` (ExcelIntakeController), `POST /api/v1/poc-upload` (PoCUploadController). Existing entity: `Invoice` (com.gimmevettingsolution.invoice.entity.Invoice) with fields matching the response schema except `resubmissionCount` (new field per D-CA-003). Existing repository: `InvoiceRepository` extends `JpaRepository<Invoice, Long>` with `findByInvoiceNumber`. No analyst endpoints exist yet.
+
+Step 4 (Contract Comparison): Greenfield contract. No existing analyst endpoints to compare against. No mismatches.
+
+Step 5 (Action Generation): No delegations required. The contract defines the specification; Naut will implement the backend endpoints to conform; Femke will implement the frontend dashboard to consume the endpoints.
+
+Output produced: `docs/api-contract-wi-ca-001.md` (version 1.0.0). Alignment review request submitted to `docs/alignment-review-request.md` (reviewCycle: 1, nextAgentInPipeline: Femke-Naut-parallel). Contract readiness signal produced at `docs/wi-ca-001-contract-ready.md`. Pending Alignment Agent approval before Gerard can delegate to Naut and Archibald can activate parallel implementation.
+
+Assumptions recorded:
+- Naut will create `AnalystInvoiceController` in package `com.gimmevettingsolution.analyst` with two GET mappings.
+- Naut will add `resubmissionCount` field to `Invoice` entity and create Flyway migration `V2__add_resubmission_count.sql` (per D-CA-003).
+- Naut will use JPA Specifications for dynamic search and status filtering to prevent SQL injection.
+- The address field in responses is a single string (concatenated from DB storage: street, postal code, city).
+- No authentication middleware is required for MVP (D-CA-002).
