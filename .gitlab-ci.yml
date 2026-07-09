@@ -129,7 +129,7 @@ backend-deploy-staging:
     - sleep 10
     - ssh -o StrictHostKeyChecking=no -p ${DEPLOY_SERVER_PORT} $DEPLOY_SERVER_USER@$DEPLOY_SERVER_HOST "journalctl -u gimme-backend -n 20 --no-pager"
   environment:
-    name: staging
+    name: staging/backend
     url: http://$DEPLOY_SERVER_HOST:8082
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
@@ -152,7 +152,7 @@ frontend-deploy-staging:
   script:
     - scp -o StrictHostKeyChecking=no -P ${DEPLOY_SERVER_PORT} -r 4-frontend/dist/* $DEPLOY_SERVER_USER@$DEPLOY_SERVER_HOST:/opt/gimme/frontend/
   environment:
-    name: staging
+    name: staging/frontend
     url: http://$DEPLOY_SERVER_HOST
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
@@ -178,7 +178,7 @@ backend-deploy-production:
     - sleep 10
     - ssh -o StrictHostKeyChecking=no -p ${DEPLOY_SERVER_PORT} $DEPLOY_SERVER_USER@$DEPLOY_SERVER_HOST "journalctl -u gimme-backend -n 20 --no-pager"
   environment:
-    name: production
+    name: production/backend
     url: http://$DEPLOY_SERVER_HOST:8082
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
@@ -202,7 +202,7 @@ frontend-deploy-production:
   script:
     - scp -o StrictHostKeyChecking=no -P ${DEPLOY_SERVER_PORT} -r 4-frontend/dist/* $DEPLOY_SERVER_USER@$DEPLOY_SERVER_HOST:/opt/gimme/frontend/
   environment:
-    name: production
+    name: production/frontend
     url: https://gimmevettingsolution.com
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
