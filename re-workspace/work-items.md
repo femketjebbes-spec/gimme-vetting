@@ -71,6 +71,22 @@ A fully formalised work item definition exists at:
 
 ---
 
+## WR-001: Clean-Slate Local Development Script
+
+**Type:** DevOps / Script enhancement
+**Priority:** Medium
+**Dependencies:** None
+**Status:** Not started
+**Related Bug:** [BR-001](re-workspace/bug-reports/BR-001-mime-type-based-file-validation.md) (operational root cause)
+
+A fully formalised work item definition exists at:
+
+- **File:** [re-workspace/work-items/run-mvp1-clean-slate/wr-001-clean-slate-local-run.md](re-workspace/work-items/run-mvp1-clean-slate/wr-001-clean-slate-local-run.md)
+
+**Scope:** Update `run_MVP1_locally.sh` to perform a full clean build (backend + frontend) before each service launch, eliminating the need for manual backend restarts after code changes.
+
+---
+
 ## W-001: External Registry Interface Definition
 
 **Type:** Interface specification
