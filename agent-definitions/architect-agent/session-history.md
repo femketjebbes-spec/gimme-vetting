@@ -214,3 +214,52 @@ The file was rewritten with Naut's BR-001 submission in the correct JSON format 
 - Naut's BR-001 submission must be reviewed by the Alignment Agent first
 - Gerard's WI-CA-001 submission must be submitted only after Naut's is approved
 - Frontend BR-001 regression tests should be submitted to Alignment Agent for review
+
+## Session 9 — 2026-07-09 — BR-001 Closure and WR-001 Delegation
+
+### What Was Explored
+
+User asked to review BR-001. The bug report was fully reviewed. The BR-001 code fix is correctly implemented in the codebase. The root cause of the "persistent" bug is operational: the backend was not restarted after the fix was compiled, so stale bytecode continued to serve requests. This is not a code defect.
+
+The user then requested a follow-up work item to prevent this class of issue. WR-001 ("run_MVP1_locally.sh Starts on a Clean Slate") was created with 6 functional requirements, 3 non-functional requirements, 4 test cases, and a complete proposed script implementation.
+
+### What Was Decided
+
+1. **BR-001 is closed.** Status updated to "Closed — Follow-up Work Item WR-001 Created." Closure section added to BR-001 linking to WR-001.
+2. **WR-001 is registered.** Registered in re-workspace/work-items.md under the new WR-001 entry.
+3. **WR-001 delegation plan produced.** Since WR-001 is a script-only task (no API contract, no new endpoints, no database changes), it bypasses the Gerard→Femke/Naut pipeline and goes directly to Naut. Delegation plan at docs/wi-wr001-delegation-naut.md.
+4. **Naut activated for WR-001.** Naut implemented both subtasks: updated run_MVP1_locally.sh (five clean-slate steps, 60-second readiness timeout) and run_MVP1_locally.bat (equivalent Windows behavior).
+5. **Naut submitted WR-001 for alignment review.** Submission at docs/alignment-review-request.md. Awaiting Alignment Agent decision.
+
+### Architecture Decisions
+
+None. WR-001 is a DevOps script change only. No production architecture decisions affected.
+
+### What Remains Open
+
+- Alignment Agent must approve Naut's WR-001 submission
+- Manual verification required (TR-WR001-01 through TR-WR001-04): end-to-end Excel upload, build failure handling, stale process detection, idempotency
+
+## Session 10 — 2026-07-09 — WR-001 Alignment Approval
+
+### What Was Explored
+
+Alignment Agent reviewed Naut's WR-001 submission. Both artefacts (`run_MVP1_locally.sh` and `run_MVP1_locally.bat`) were verified against all 6 functional requirements (FR-WR001-01 through FR-WR001-06), 3 non-functional requirements (NFR-WR001-01 through NFR-WR001-03), and the delegation plan specs.
+
+### What Was Decided
+
+1. **WR-001 APPROVED.** Alignment Agent decision at `docs/alignment-review-request.md` (WR-001-REV-001). Status: APPROVED. No violations. Both artefacts approved.
+2. **greenlightForNextAgent: true.** No downstream agent activation required — WR-001 is a standalone script task with no pipeline dependencies.
+3. **BR-001 and WR-001 pipeline is complete.** BR-001 (code fix) was implemented and verified. WR-001 (operational fix) was implemented and approved.
+
+### Manual Verification Required
+
+The following acceptance criteria require manual verification by the user:
+1. TR-WR001-01: Full clean run from scratch — `./run_MVP1_locally.sh` prints five step labels and starts both services
+2. TR-WR001-02: Re-run after code changes — script cleans and rebuilds
+3. TR-WR001-03: Build failure handling — script aborts with clear error
+4. TR-WR001-04: Stale process detection — script detects and kills stale backend
+
+### No Further Pipeline Action Required
+
+WR-001 is the last agent-managed task in this pipeline. No further delegation plans are required.

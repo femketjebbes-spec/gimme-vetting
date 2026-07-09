@@ -49,6 +49,42 @@ Implemented content-based file format detection to fix BR-001: MIME-type-only va
 - None. All delegation plan subtasks for backend implementation are complete.
 - Femke (Frontend Agent) must confirm no frontend changes are required (Subtask 2).
 
+## Session 2 (2026-07-09) — WR-001 Clean-Slate Local Development Script
+
+### Summary
+Updated `run_MVP1_locally.sh` and `run_MVP1_locally.bat` to implement clean-slate behavior per WR-001 specification. Every script invocation now kills stale processes, cleans build artifacts, performs full backend and frontend builds, and starts fresh service instances.
+
+### What Was Implemented
+1. **`run_MVP1_locally.sh`** — Full rewrite with five labeled steps:
+   - Step 1: Kill stale processes (preserved existing `cleanup_stale_processes` function).
+   - Step 2: Clean build artifacts (`mvn clean` in `5-backend/`, `rm -rf dist node_modules/.vite` in `4-frontend/`).
+   - Step 3: Full backend build (`mvn clean package -DskipTests` in `5-backend/`). Aborts on failure.
+   - Step 4: Full frontend build (`npm run build` in `4-frontend/`). Prints warning on failure, continues.
+   - Step 5: Start backend via `mvn spring-boot:run -pl business-service` with 60-second readiness check.
+   - Step 6: Start frontend via `npm run dev` in `4-frontend/`.
+   - Preserved `trap cleanup EXIT INT TERM` for graceful Ctrl+C handling.
+   - Preserved `set -e` fail-fast behavior.
+
+2. **`run_MVP1_locally.bat`** — Rewritten with equivalent Windows clean-slate behavior:
+   - Step 1: Kill stale processes using `netstat` + `taskkill`.
+   - Step 2: Clean build artifacts using `rmdir /S /Q`.
+   - Step 3: Full backend build via `mvn clean package -DskipTests`. Aborts on failure.
+   - Step 4: Full frontend build via `npm run build`. Prints warning on failure, continues.
+   - Step 5: Start backend with `timeout /t 1` readiness loop (60 iterations).
+   - Step 6: Start frontend via `npm run dev` in separate window.
+
+### Decisions
+- Backend readiness timeout is 60 seconds per WR-001 NFR-WR001-01.
+- Frontend build failure prints a warning but does not abort (Vite dev server serves from memory).
+- Windows batch script uses `netstat -ano` for port detection instead of `lsof`.
+- Windows batch script uses `curl` for readiness check (curl ships with Windows 10+).
+- Both scripts use `SCRIPT_DIR` variable for portable path resolution.
+
+### What Remains Open
+- End-to-end acceptance test (uploading an Excel file) must be verified manually per TR-WR001-01.
+- Build failure test (TR-WR001-03) must be verified manually by introducing a compilation error.
+- Stale process detection test (TR-WR001-04) must be verified manually.
+
 ### Assumptions Made
 - The `isSupportedMimeType()` method is not needed after this change for rejection; it remains as the fast-path check.
 - Content-based detection only inspects first 4 bytes (as specified). Full file parsing is still delegated to Apache POI after detection succeeds.
