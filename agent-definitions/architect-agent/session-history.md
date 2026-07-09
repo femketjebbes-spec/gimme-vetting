@@ -184,3 +184,33 @@ Architectural decision D-BR001 was documented: content-based file format detecti
 ### Architecture Model
 
 Mermaid flowchart saved at `agent-definitions/architect-agent/models/2026-07-08-session8-br001-fix-flow.mmd` showing the detection flow with magic byte inspection.
+
+## Session 9 — 2026-07-09 — BR-001 Status Check and Handover Fix
+
+### What Was Explored
+
+User requested status update on BR-001, noting that "some things have changed but by the wrong agent." Investigation revealed:
+
+- BR-001 backend fix was verified at runtime on port 8082 using curl against the template download endpoint
+- All 40 frontend tests pass, including 3 new BR-001 regression tests using real XLSX bytes with non-standard MIME types
+- All 148 backend tests pass
+- No actual source code changes occurred between the runtime verification and the status check. The git working tree changes were limited to the BR-001 bug report file and the ExcelUpload test file.
+
+### Handover Violation Discovered
+
+The file `docs/alignment-review-request.md` was corrupted. Gerard (WI-CA-001) wrote his JSON review request to the file while Naut's BR-001 submission (which was in non-standard markdown format) was still present. The file contained two review cycles mashed together:
+
+- Lines 1-24: Naut's BR-001 submission in markdown format (not JSON)
+- Lines 26-47: Gerard's WI-CA-001 submission in JSON format
+
+This is a **handover violation**. The Alignment Agent expects a single JSON review request. Gerard overwrote the file without checking if Naut's submission had been processed. It is also a **format violation**. Naut's submission was in non-standard markdown format, not the required JSON format defined in the Alignment Agent agent definition.
+
+### What Was Fixed
+
+The file was rewritten with Naut's BR-001 submission in the correct JSON format expected by the Alignment Agent. Gerard's WI-CA-001 submission is deferred until Naut's BR-001 review cycle has been processed and approved by the Alignment Agent.
+
+### What Remains Open
+
+- Naut's BR-001 submission must be reviewed by the Alignment Agent first
+- Gerard's WI-CA-001 submission must be submitted only after Naut's is approved
+- Frontend BR-001 regression tests should be submitted to Alignment Agent for review

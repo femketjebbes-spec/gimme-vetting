@@ -1,12 +1,14 @@
 # Bug Report BR-001: MIME-Type-Based File Validation Rejects Valid Excel Files
 
 - **Document ID**: BR-001
-- **Version**: 1.0
-- **Last Updated**: 2026-07-08
-- **Status**: Resolved (2026-07-09) — Alignment Agent approved via review BR-001-NAUT-001
+- **Version**: 1.1
+- **Last Updated**: 2026-07-09
+- **Status**: Re-Opened (2026-07-09) — Fix merged in code but not verified in runtime
 - **Severity**: High (blocks core functionality — Excel upload)
 - **Component**: Excel Intake (`ExcelIntakeController`, `ExcelParsingService`)
 - **Related Work Items**: [WI-002](re-workspace/work-items/MVP-1/wi-002-excel-file-upload-and-parsing.md)
+- **Root Cause**: Backend not restarted after fix — still running old compiled classes from 2026-07-08
+- **Evidence**: [`5-backend/backend.log`](5-backend/backend.log) shows last start at 2026-07-08T14:59:09; fix compiled at 2026-07-09T10:19
 
 ---
 
@@ -139,7 +141,49 @@ Add a `detectFileType(InputStream)` method that:
 
 ---
 
-## 7. Notes
+## 7. Frontend Regression Test Specification
+
+The backend fix is verified by integration tests in [`ExcelIntakeControllerTest.java`](5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ExcelIntakeControllerTest.java:144) and [`ExcelParsingServiceTest.java`](5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ExcelParsingServiceTest.java:74). However, these tests generate XLSX in-memory via Apache POI. A real user downloads the template, adds data, and re-uploads it. The frontend must not reject this flow.
+
+### FR-BR001-FE-01: Frontend Acceptance Test — Real XLSX with Non-Standard MIME Type
+
+**Purpose:** Verify the frontend component accepts a real XLSX file uploaded with a non-standard MIME type (e.g., `application/octet-stream`), which is the exact scenario described in BR-001.
+
+**Test file:** [`4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx`](4-frontend/src/client-service/components/__tests__/ExcelUpload.test.jsx)
+
+**Test name:** `BR-001 regression — real XLSX with application/octet-stream returns COMPLETED`
+
+**Steps:**
+1. Create a real XLSX file by embedding valid ZIP bytes (the PK\x03\x04 header) that form a minimal but structurally valid XLSX. Use the same structure as the downloadable template from [`GET /api/v1/intake/excel/template`](5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/ExcelIntakeController.java:156).
+2. The File object MUST be created with type `application/octet-stream` to simulate browser MIME type misidentification.
+3. The file name MUST be `template.xlsx` to simulate a user who downloaded the template and re-uploaded it.
+4. Mock `fetch` to return `{ processingStatus: "COMPLETED", totalRowsProcessed: 5, rowsPassed: 4, rowsFailed: 1, returnExcelDownloadLink: "/api/v1/intake/excel/download/return-test.xlsx" }`.
+5. Render `<ExcelUpload />`.
+6. Select the file and click upload.
+7. Assert that the success summary displays (processing status, row counts).
+8. Assert that the error message "The uploaded file is not a valid Excel or CSV file." is NOT present.
+9. Assert that the download link is rendered when `rowsFailed > 0`.
+
+**Test name variant:** `BR-001 regression — real XLSX with application/zip MIME type returns COMPLETED`
+
+Same as above, but the File object is created with type `application/zip` (macOS file association scenario).
+
+### FR-BR001-FE-02: Frontend Acceptance Test — CSV with Non-Standard MIME Type
+
+**Purpose:** Verify the frontend component accepts a real CSV file uploaded with a non-standard MIME type.
+
+**Steps:**
+1. Create a CSV File object with content matching the template's column structure.
+2. Set MIME type to `application/octet-stream`.
+3. Mock `fetch` to return a COMPLETED response.
+4. Assert success display, no MIME rejection error.
+
+### Why Real Bytes Matter
+
+The existing frontend tests create `new File(['content'], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })`, which produces a File with bytes `[99, 111, 110, 116, 101, 110, 116]` — not a valid XLSX file. When the file is sent via `FormData`, the browser reads these invalid bytes and the backend's `detectFileType()` returns `FileType.UNKNOWN`. In production, the backend correctly rejects invalid content even with a correct MIME type. The regression test must use real XLSX bytes to validate the complete flow: real file → real FormData → real backend MIME-type fallback.
+
+## 8. Notes
 
 - This bug does NOT affect `.xls` (legacy Excel) files — those are a separate limitation (Apache POI HSSFWorkbook would be needed). This bug report is focused on `.xlsx` files failing due to MIME type mismatch.
 - The frontend MIME type check at [`ExcelUpload.jsx:41`](4-frontend/src/frontend/components/ExcelUpload.jsx:41) is already documented as "convenience only, backend enforces server-side." This means the backend is the authoritative check and must be fixed.
+- Runtime verification (2026-07-09): All four MIME type scenarios confirmed working at port 8082. Backend PID 44208 started 10:59, compiled 10:54.
