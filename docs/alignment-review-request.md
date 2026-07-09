@@ -1,7 +1,6 @@
 {
   "reviewRequest": {
     "agentName": "Naut",
-<<<<<<< HEAD
     "timestamp": "2026-07-09 10:33",
     "trigger": "Implementation Mode completed — WR-001 Clean-Slate Local Development Script",
     "reviewCycle": 1,
@@ -15,7 +14,6 @@
         "filePath": "run_MVP1_locally.bat",
         "artefactType": "other",
         "description": "Updated Windows batch script with equivalent clean-slate behavior: netstat-based process detection, taskkill, rmdir for cleanup, mvn clean package, npm run build, curl-based readiness loop"
-=======
     "timestamp": "2026-07-09 14:07",
     "trigger": "implementation completion — WI-CA-001 backend implementation green state confirmed",
     "reviewCycle": 1,
@@ -69,7 +67,6 @@
         "filePath": "5-backend/business-service/src/test/java/com/gimmevettingsolution/analyst/InputValidationServiceTest.java",
         "artefactType": "test code",
         "description": "36 unit tests for input validation: page, size, sort, status, search edge cases"
->>>>>>> Workitem1-Business
       }
     ],
     "pipelineStage": "parallel backend implementation",
