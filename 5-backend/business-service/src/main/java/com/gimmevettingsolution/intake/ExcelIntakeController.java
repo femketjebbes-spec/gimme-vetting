@@ -6,7 +6,10 @@ import com.gimmevettingsolution.intake.service.ExcelParsingService;
 import com.gimmevettingsolution.intake.service.MandatoryFieldValidationService;
 import com.gimmevettingsolution.intake.service.SourceFileContext;
 import com.gimmevettingsolution.intake.service.ValidationResult;
+import com.gimmevettingsolution.invoice.entity.Invoice;
+import com.gimmevettingsolution.invoice.repository.InvoiceRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,14 +33,17 @@ public class ExcelIntakeController {
     private final MandatoryFieldValidationService mandatoryFieldValidationService;
     private final Path uploadDir;
     private final FileBackedExcelStoreService excelStoreService;
+    private final InvoiceRepository invoiceRepository;
 
     public ExcelIntakeController(ExcelParsingService excelParsingService,
                                  MandatoryFieldValidationService mandatoryFieldValidationService,
-                                 FileBackedExcelStoreService excelStoreService) throws IOException {
+                                 FileBackedExcelStoreService excelStoreService,
+                                 InvoiceRepository invoiceRepository) throws IOException {
         this.excelParsingService = excelParsingService;
         this.mandatoryFieldValidationService = mandatoryFieldValidationService;
         this.uploadDir = Files.createTempDirectory("excel-upload-" + UUID.randomUUID());
         this.excelStoreService = excelStoreService;
+        this.invoiceRepository = invoiceRepository;
     }
 
     /**
@@ -118,6 +124,26 @@ public class ExcelIntakeController {
             } catch (IllegalArgumentException e) {
                 // File save failed — log but continue processing
                 // The file won't be associated with invoices
+            }
+
+            // Persist passing rows as Invoice entities
+            List<ExcelInvoiceRow> passingRows = validationResult.getPassingRows();
+            if (!passingRows.isEmpty() && sourceFileId != null) {
+                for (ExcelInvoiceRow passingRow : passingRows) {
+                    Invoice invoice = new Invoice();
+                    invoice.setInvoiceNumber(passingRow.getInvoiceNumber());
+                    invoice.setDebtorName(passingRow.getDebtorName());
+                    invoice.setAddress(passingRow.getAddress());
+                    invoice.setPhoneNumber(passingRow.getPhoneNumber());
+                    invoice.setBankAccountNumber(passingRow.getBankAccountNumber());
+                    invoice.setPoCStatus("VERIFIED");
+                    invoice.setRejectionType("NONE");
+                    invoice.setStatus("QUEUED");
+                    invoice.setResubmissionCount(0);
+                    invoice.setSourceFileId(sourceFileId);
+                    invoice.setSourceFilename(sourceFilename);
+                    invoiceRepository.save(invoice);
+                }
             }
 
             // Generate return Excel for failing rows

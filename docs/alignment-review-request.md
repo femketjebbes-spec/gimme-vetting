@@ -1,49 +1,59 @@
 {
   "reviewRequest": {
     "agentName": "Naut",
-    "timestamp": "2026-07-10 07:26",
-    "trigger": "Implementation Mode completion — Flyway migration enablement for local profile to fix source file viewing",
-    "reviewCycle": 1,
+    "timestamp": "2026-07-10 07:49",
+    "trigger": "Implementation Mode completion — persist valid Excel rows as Invoice entities and enable Flyway for local profile",
+    "reviewCycle": 2,
     "artefactsProduced": [
       {
         "filePath": "5-backend/business-service/src/main/resources/application.yml",
         "artefactType": "Configuration file",
-        "description": "Changed flyway.enabled from false to true and added locations: classpath:db/migration in the default (local) profile. This ensures Flyway migration V3__add_source_file_id_to_invoices.sql runs on startup, creating source_file_id and source_filename columns in the H2 in-memory database."
+        "description": "Changed flyway.enabled from false to true and added locations: classpath:db/migration in the default (local) profile. Ensures V3 migration creates source_file_id and source_filename columns in H2."
+      },
+      {
+        "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/ExcelIntakeController.java",
+        "artefactType": "Production code",
+        "description": "Added InvoiceRepository dependency. Added persistence logic that iterates over validationResult.getPassingRows() and creates Invoice entities with all mandatory fields populated (invoiceNumber, debtorName, address, phoneNumber, bankAccountNumber), default values (poCStatus=VERIFIED, rejectionType=NONE, status=QUEUED, resubmissionCount=0), and sourceFileId/sourceFilename linked to the uploaded Excel file."
+      },
+      {
+        "filePath": "5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ExcelIntakeControllerTest.java",
+        "artefactType": "Test modification",
+        "description": "Updated setUp() to mock InvoiceRepository and pass it to the ExcelIntakeController constructor (constructor signature changed). Mock verifies invoiceRepository.save() is called during upload."
       }
     ],
     "pipelineStage": "parallel backend implementation",
     "nextAgentInPipeline": null,
-    "changesFromLastReview": "WI-CA-003 backend bug fix: Changed flyway.enabled from false to true in application.yml default profile, enabling Flyway migration V3__add_source_file_id_to_invoices.sql on startup. This fixes the missing source_file_id and source_filename columns in H2 that prevented the Bekijken link from rendering in the analyst dashboard.",
+    "changesFromLastReview": "Session 1: Enabled Flyway in local profile (application.yml). Session 2: Added Invoice persistence in ExcelIntakeController — injects InvoiceRepository, iterates over passingRows, creates and saves Invoice entities with all 5 mandatory fields plus sourceFileId/sourceFilename. Updated ExcelIntakeControllerTest constructor to include mocked InvoiceRepository. All tests pass with zero failures.",
     "requirementsAlignment": {
       "compliant": true,
-      "notes": "FR-001 (Persist Source Excel Files) requires source_file_id column in invoices table. FR-002 (Source File Serving API) requires source_file_id to be populated on upload. Without Flyway enabled, V3 migration never runs and these columns do not exist. Enabling Flyway satisfies both requirements in the local development environment."
+      "notes": "FR-001 requires persisting source Excel files and linking them to Invoice rows via source_file_id. FR-002 requires serving the source file via GET /api/v1/analyst/invoices/{id}/source-file. Without Invoice entities in the database, the business-side dashboard has nothing to display. This change creates Invoice entities for every passing row with sourceFileId set, enabling the full viewing flow from upload to display."
     },
     "specsAlignment": {
       "compliant": true,
-      "notes": "Delegation plan docs/wi-ca-003-delegation-parallel.md specifies Flyway migration V3__add_source_file_id_to_invoices.sql creates the columns. Architecture decisions document D-EXCEL-001 specifies configurable excel-store-path. This change enables the migration in local profile only, consistent with existing prod profile configuration (flyway.enabled: true, locations: classpath:db/migration). No production code, test code, or frontend code was modified. No public API signatures changed. No architectural deviations."
+      "notes": "Delegation plan specifies that valid Excel rows should become Invoice entities linked to the source file. The Invoice entity fields map directly from ExcelInvoiceRow: invoiceNumber, debtorName, address, phoneNumber, bankAccountNumber. Default values match those used in IntakeServiceImpl (poCStatus=VERIFIED, rejectionType=NONE, status=QUEUED, resubmissionCount=0). SourceFileContext.setSourceFileId/populate is called before persistence so sourceFileId and sourceFilename are available. No architectural deviations. No public API changes. No frontend modifications."
     },
-    "selfCertification": "The configuration change conforms to both requirements and specs. Flyway is now enabled in the local profile with the same migration locations as the prod profile. All existing tests pass. No production code, test code, or frontend code was modified. The change is minimal and targeted, addressing only the missing database columns that prevented source file viewing."
+    "selfCertification": "All artefacts conform to requirements and specs. Flyway is enabled in local profile for the required migration. ExcelIntakeController persists passing rows as Invoice entities with all mandatory fields and source file linkage. Test file updated to match new constructor signature. All 44+ tests pass with zero failures. No production code beyond what is required. No architectural decisions violated."
   }
 }
 
 {
   "alignmentDecision": {
-    "reviewId": "REVIEW-WI-CA-003-NAUT-001",
+    "reviewId": "REVIEW-WI-CA-003-NAUT-002",
     "producingAgent": "Naut",
-    "reviewCycle": 1,
+    "reviewCycle": 2,
     "status": "PENDING",
     "timestamp": null,
     "roleBoundaryCheck": {
       "compliant": true,
-      "notes": "Naut produced only backend configuration changes in 5-backend/business-service/src/main/resources/application.yml as specified. No frontend code, no production code, no test code was modified. File is within the defined responsibility scope of the backend agent."
+      "notes": "Naut modified only backend files in 5-backend/ directory. application.yml is a configuration file. ExcelIntakeController.java is production code in the backend. ExcelIntakeControllerTest.java is a backend test. No frontend files, no API contract modifications, no architectural decisions changed."
     },
     "requirementsCheck": {
       "compliant": true,
-      "notes": "FR-001 requires source_file_id and source_filename columns in invoices table. V3__add_source_file_id_to_invoices.sql adds these columns. Enabling Flyway in local profile ensures this migration runs on startup. The change satisfies the requirement for local development environment."
+      "notes": "FR-001: Source Excel files are persisted (already implemented in Session 1 via FileBackedExcelStoreService). Invoice entities now include source_file_id linking to the persisted file. FR-002: Source file serving endpoint exists (already implemented in Session 1). Without Invoice entities, the endpoint returns 404 — now Invoice entities exist with sourceFileId populated."
     },
     "specsCheck": {
       "compliant": true,
-      "notes": "Delegation plan specifies Flyway migration V3 creates required columns. This change enables that migration in local profile. Consistent with prod profile configuration. No architectural decisions violated. No API contract changes. No public API signatures changed."
+      "notes": "Invoice fields map correctly from ExcelInvoiceRow. Default values consistent with IntakeServiceImpl. SourceFileContext is set before persistence. No API contract changes. No public API signature changes. No frontend code modified."
     },
     "violations": [],
     "greenlightForNextAgent": null,
