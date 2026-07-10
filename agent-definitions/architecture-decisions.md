@@ -29,7 +29,7 @@ Security Implications: Deterministic test result parsing prevents agents from in
 Affected Agents: Femke
 
 [2026-07-06] [Session 4] ARCHITECTURAL DECISION: The handover from Gerard (API-Agent) to Naut (Backend Agent) must follow the same Alignment Agent gate pattern as the Femke-to-Gerard handover. Gerard must submit `docs/alignment-review-request.md` to the Alignment Agent after completing API contract work. The Alignment Agent validates Gerard's artefacts against Robbie's requirements and Archibald's specs. Archibald must read the Alignment Agent decision from `docs/alignment-review-request.md` and confirm `greenlightForNextAgent` is `true` with `nextAgentInPipeline` set to `Naut` before producing a delegation plan for Naut. Naut must not activate until this approval is confirmed in Archibald's delegation plan. This applies symmetrically to the Naut completion phase as well.
-Rationale: The existing Femke-to-Gerard handover requires Archibald to read the Alignment Agent decision before activating Gerard. The Gerard-to-Naut handover previously lacked this explicit check — Archibald only read `docs/gerard-ready-signal.md` without verifying Alignment Agent approval. This asymmetry created a gap where Naut could potentially activate before Gerard's compliance was verified. Symmetric handover gates ensure consistent quality enforcement across all pipeline transitions. Archibald's monitoring layer gains a new violation type (Alignment Agent gate violation) that blocks delegation if the compliance decision is missing or shows REJECTED status.
+Rationale: The existing Femke-to-Gerard handover requires Archibald to read the Alignment Agent decision before activating Gerard. The Gerard-to-Naut handover previously lacked this explicit check -- Archibald only read `docs/gerard-ready-signal.md` without verifying Alignment Agent approval. This asymmetry created a gap where Naut could potentially activate before Gerard's compliance was verified. Symmetric handover gates ensure consistent quality enforcement across all pipeline transitions. Archibald's monitoring layer gains a new violation type (Alignment Agent gate violation) that blocks delegation if the compliance decision is missing or shows REJECTED status.
 Security Implications: Prevents backend implementation from proceeding on unverified API contracts. An unverified contract could contain endpoint mismatches, missing authentication requirements, or incorrect error mappings that Naut would then implement incorrectly. The Alignment Agent gate ensures Gerard's contract work is requirements-compliant before Naut begins backend development.
 Affected Agents: Gerard, Naut, Archibald, Alignment Agent
 
@@ -108,10 +108,6 @@ Rationale: API versioning via URL path prefix is consistent with existing endpoi
 Security Implications: Path-based separation does not provide security isolation. Access controls must be implemented at the controller or service layer if authentication is added later.
 Affected Agents: Gerard, Naut
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661
 [2026-07-08] [Session 8] ARCHITECTURAL DECISION: WI-007 template download endpoint is GET /api/v1/intake/excel/template. The endpoint returns a pre-generated XLSX template file with exactly 5 column headers: `invoice number`, `debtor name`, `address`, `phone number`, `bank account number`. The template contains at least one empty data row as visual guide. The response uses `Content-Disposition: attachment; filename="invoice-intake-template.xlsx"` and `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
 Rationale: Users need a correctly-formatted template to avoid upload failures from column name mismatches. XLSX-only format is sufficient for MVP. The empty template (no example data, no validation rules, no formatting) keeps implementation simple and reduces maintenance burden.
 Security Implications: The template is a static server-generated resource. No authentication required (MVP). No file injection risk since the template is generated server-side. Response headers must not include server-internal path information.
@@ -122,10 +118,6 @@ Rationale: Apache POI is already used throughout the project for Excel generatio
 Security Implications: No direct security implications. The constant-based approach ensures template headers always match the validation allowlist, preventing mismatch issues that could cause user confusion or upload failures.
 Affected Agents: Naut
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 83497927bdf2b212763bf177e8af0bcca7746661
 [2026-07-08] [Session 8] ARCHITECTURAL DECISION: BR-001 fixes the Excel upload endpoint by replacing MIME-type-only file validation with content-based file format detection. The system SHALL detect file format by inspecting magic bytes (first 4 bytes for ZIP signature `50 4B 03 04` for .xlsx, text detection for .csv) rather than relying solely on the browser-reported MIME type. MIME-type validation is retained as a fast path for well-behaved browsers but falls back to content-based detection when the MIME type is missing, null, or unrecognized (e.g., `application/octet-stream`, `application/zip`). This decision is consistent with the existing architecture decision in Section 7 that mandates magic byte verification for file uploads.
 Rationale: Browser-reported MIME types are unreliable metadata. Chrome and Firefox report the correct MIME type for .xlsx files, but other browsers, operating systems with unusual file associations, or files without extensions may report `application/octet-stream`, `application/zip`, or an empty string. Relying solely on MIME type causes valid Excel files to be rejected. Content-based detection using magic bytes is the industry-standard approach for file type detection and is equally secure.
 Security Implications: Content-based detection is MORE secure than MIME-type-only validation because it inspects actual file content rather than untrusted metadata. Magic byte inspection prevents upload of files disguised with correct MIME types but malicious content. The ZIP signature check for .xlsx files prevents non-ZIP files from being accepted. CSV detection via text encoding validation prevents binary files from being misidentified. This does not replace path traversal protection or file size limits (deferred to MVP+1).
@@ -135,3 +127,39 @@ Affected Agents: Gerard, Naut
 Rationale: The existing frontend at 4-frontend/ is the sole frontend project for MVP. The analyst dashboard is a separate view within the same application, sharing the same build pipeline, dependency management, and testing infrastructure. React Router provides client-side routing without requiring a separate server or entry point. This is simpler than adding a second Vite entry point or creating a new frontend project.
 Security Implications: Both routes serve from the same origin, so CORS is not a concern. The analyst route must not bypass the existing API. No new attack surface is introduced beyond the analyst dashboard UI itself. Future authentication (required per D-CA-002) must protect the /analyst route.
 Affected Agents: Femke
+
+[2026-07-09] [Session 11] ARCHITECTURAL DECISION: WI-CA-003 introduces a persistent Excel intake store (`FileBackedExcelStoreService`) following the same filesystem-based pattern as `FileBackedPoCStoreService`. The store path is configurable via `application.yml` (`gimme.excel-store-path`). Files are stored with UUID filenames to prevent path traversal. Original filenames are tracked separately for download headers.
+Rationale: The existing `ExcelIntakeController` creates files in a temp directory that is discarded after upload. The work item requires persistent storage so analysts can retrieve the original Excel later. The `FileBackedPoCStoreService` pattern is already proven in the codebase and provides path traversal protection via `SAFE_PATTERN`. UUID filenames eliminate collision and traversal risks.
+Security Implications: UUID filenames prevent path traversal attacks. The store path must not be exposed in error messages or logs. MIME type validation (`.xlsx` and `.csv` only) is enforced at upload time. The store service must reject any file that is not a valid Excel or CSV format on read. No authentication on the serving endpoint is a documented MVP limitation per D-CA-002.
+Affected Agents: Gerard, Naut
+
+[2026-07-09] [Session 11] ARCHITECTURAL DECISION: The `Invoice` entity gains a new nullable field `sourceFileId` (VARCHAR(64)) linking each invoice to its source Excel file UUID. A Flyway migration `V3__add_source_file_id_to_invoices.sql` adds the column. The field is null for invoices imported via the single-invoice API (not Excel).
+Rationale: Every Excel-imported invoice needs a reference to its source file. Using a nullable VARCHAR(64) UUID accommodates both Excel-imported (non-null) and single-invoice API imported (null) invoices. The 64-character length accommodates standard UUID strings.
+Security Implications: The `source_file_id` column stores only UUIDs, not file paths or sensitive data. No security risk from the column itself.
+Affected Agents: Naut, Gerard, Database Engineer
+
+[2026-07-09] [Session 11] ARCHITECTURAL DECISION: The source file serving endpoint is `GET /api/v1/analyst/invoices/{id}/source-file`. The endpoint returns the original Excel file bytes with appropriate `Content-Type` and `Content-Disposition` headers. Returns 404 when `source_file_id` is null or the file is missing.
+Rationale: The endpoint follows the existing RESTful pattern of nesting resource access under the parent entity (`/invoices/{id}/source-file`). Returning raw file bytes allows the browser to handle the download directly. Consistent with the download behaviour decision in the work item.
+Security Implications: UUID-based file lookup prevents path traversal. The endpoint must validate that the `source_file_id` exists before serving. `Content-Type` must match the actual file format. `Content-Disposition` must use the stored original filename, not user input. The endpoint must not return file content types that could be interpreted as executable.
+Affected Agents: Gerard, Naut
+
+[2026-07-09] [Session 11] ARCHITECTURAL DECISION: The original filename uploaded by the client is stored alongside the UUID mapping so that the download response uses the original filename. Since the Invoice entity is the natural holder of this data, `sourceFileId` is the sole persistence point for the UUID. The original filename tracking must be resolved -- either stored in a mapping table or as an additional column on Invoice.
+Rationale: The work item requires `Content-Disposition: inline; filename="<original-filename>.xlsx"` for UX. Options: (a) add `source_filename` column to invoices table, (b) create a separate mapping table. Option (a) is simpler and keeps the mapping co-located with the invoice.
+Decision: Add a second nullable column `source_filename` (VARCHAR(256)) to the invoices table. This avoids a separate table and keeps the UUID-to-filename mapping alongside the invoice entity.
+Security Implications: The `source_filename` column stores user-provided filenames. While it is only used in HTTP response headers (not filesystem operations), it must be sanitised to prevent header injection attacks. Filenames containing newlines or semicolons must be rejected or sanitised.
+Affected Agents: Naut, Gerard, Database Engineer
+
+[2026-07-09] [Session 11] ARCHITECTURAL DECISION: The `ExcelIntakeController` is modified to save the original uploaded file to the Excel store during the existing upload flow. No new endpoint is created for file persistence -- the upload endpoint is extended.
+Rationale: The upload endpoint already receives the file as `MultipartFile`. Adding the persistence step inline avoids a separate API call and keeps the flow atomic. The Excel store service is injected as a dependency.
+Security Implications: The file is saved immediately upon receipt, before parsing. This means even files with validation errors are persisted. This is acceptable since persistence is an audit requirement. The file is saved with a UUID name regardless of validation outcome.
+Affected Agents: Gerard, Naut
+
+[2026-07-09] [Session 11] ARCHITECTURAL DECISION: Frontend "Bekijken" link uses direct `<a>` tag download via the serving API URL. No blob download or JavaScript-mediated download is required for MVP.
+Rationale: The work item decided on download behaviour. Using `<a href={url} download>Bekijken</a>` is the simplest approach. Browsers handle .xlsx downloads natively. The disabled state is determined client-side by checking `sourceFileId` presence.
+Security Implications: The `href` attribute must be constructed from a trusted base URL and the invoice ID. No user input is used in the URL construction. The `download` attribute may be ignored by some browsers for cross-origin requests, but since both frontend and API share the same origin, this is not a concern.
+Affected Agents: Femke
+
+[2026-07-09] [Session 11] ARCHITECTURAL DECISION: The AnalystInvoiceDTO for the detail endpoint gains two new fields: `sourceFileId` (string, nullable) and `sourceFilename` (string, nullable). These fields support both the enabled/disabled state of the "Bekijken" link and the download filename.
+Rationale: The frontend needs `sourceFileId` to determine whether to enable the link, and `sourceFilename` is needed for the download anchor's `download` attribute (some browsers support this). Keeping both fields in the DTO avoids an extra API call for filename lookup.
+Security Implications: No new security surface. Both fields are derived from trusted server-side data.
+Affected Agents: Gerard, Naut, Femke

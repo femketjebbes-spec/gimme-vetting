@@ -50,6 +50,15 @@ public class IntakeServiceImpl implements IntakeService {
             invoice.setStatus("QUEUED");
             invoice.setResubmissionCount(0);
 
+            String sourceFileId = SourceFileContext.getSourceFileId();
+            String sourceFilename = SourceFileContext.getSourceFilename();
+            if (sourceFileId != null && !sourceFileId.isEmpty()) {
+                invoice.setSourceFileId(sourceFileId);
+            }
+            if (sourceFilename != null && !sourceFilename.isEmpty()) {
+                invoice.setSourceFilename(sourceFilename);
+            }
+
             Invoice saved = invoiceRepository.save(invoice);
 
             String invoiceId = saved.getId().toString();

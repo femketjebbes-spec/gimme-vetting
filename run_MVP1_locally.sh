@@ -7,7 +7,7 @@
 # NOTE: This script performs a full clean build before each run.
 #       Expect 1-4 minutes for the first run.
 
-set -e
+set -egit branch
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 

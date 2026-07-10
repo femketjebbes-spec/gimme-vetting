@@ -167,4 +167,114 @@ describe('analystApi service', () => {
       await expect(fetchInvoiceDetail(-1)).rejects.toThrow('Invoice id must be a positive integer');
     });
   });
+
+  describe('fetchSourceFile', () => {
+    it('calls GET /api/v1/analyst/invoices/{id}/source-file with valid id', async () => {
+      const mockBlob = new Blob(['fake xlsx content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        blob: async () => mockBlob,
+        headers: new Map([
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+          ['content-disposition', 'inline; filename="batch-001.xlsx"'],
+        ]),
+      });
+
+      const { fetchSourceFile } = await import('../analystApi.js');
+      await fetchSourceFile(42);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/v1/analyst/invoices/42/source-file',
+        { method: 'GET' }
+      );
+    });
+
+    it('returns blob and response metadata on success', async () => {
+      const mockBlob = new Blob(['fake xlsx content'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        blob: async () => mockBlob,
+        headers: new Map([
+          ['content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+          ['content-disposition', 'inline; filename="batch-001.xlsx"'],
+        ]),
+      });
+
+      const { fetchSourceFile } = await import('../analystApi.js');
+      const result = await fetchSourceFile(42);
+
+      expect(result.blob).toBe(mockBlob);
+      expect(result.contentType).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      expect(result.filename).toBe('batch-001.xlsx');
+    });
+
+    it('throws an error for invalid id parameter (zero)', async () => {
+      const { fetchSourceFile } = await import('../analystApi.js');
+
+      await expect(fetchSourceFile(0)).rejects.toThrow('Invoice id must be a positive integer');
+    });
+
+    it('throws an error for invalid id parameter (negative)', async () => {
+      const { fetchSourceFile } = await import('../analystApi.js');
+
+      await expect(fetchSourceFile(-1)).rejects.toThrow('Invoice id must be a positive integer');
+    });
+
+    it('throws an error when API returns 404 Not Found', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: 'Not Found', message: 'No source file available for this invoice' }),
+      });
+
+      const { fetchSourceFile } = await import('../analystApi.js');
+
+      await expect(fetchSourceFile(99)).rejects.toThrow();
+    });
+
+    it('throws an error when API returns 500 Internal Server Error', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'Internal Server Error', message: 'Source file is unavailable' }),
+      });
+
+      const { fetchSourceFile } = await import('../analystApi.js');
+
+      await expect(fetchSourceFile(42)).rejects.toThrow();
+    });
+
+    it('throws an error when API returns 400 Bad Request', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: 'Bad Request', message: 'Invalid invoice id parameter' }),
+      });
+
+      const { fetchSourceFile } = await import('../analystApi.js');
+
+      await expect(fetchSourceFile(42)).rejects.toThrow();
+    });
+
+    it('handles CSV content type in response headers', async () => {
+      const mockBlob = new Blob(['csv content'], { type: 'text/csv' });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        blob: async () => mockBlob,
+        headers: new Map([
+          ['content-type', 'text/csv'],
+          ['content-disposition', 'inline; filename="data.csv"'],
+        ]),
+      });
+
+      const { fetchSourceFile } = await import('../analystApi.js');
+      const result = await fetchSourceFile(42);
+
+      expect(result.contentType).toBe('text/csv');
+      expect(result.filename).toBe('data.csv');
+    });
+  });
 });

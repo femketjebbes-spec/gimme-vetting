@@ -58,6 +58,40 @@ export async function fetchInvoiceList(params = {}) {
 }
 
 /**
+ * Fetch the source Excel file for a given invoice.
+ *
+ * @param {number} id - Invoice ID (must be a positive integer).
+ * @returns {Promise<object>} Resolves with { blob, contentType, filename }.
+ */
+export async function fetchSourceFile(id) {
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error('Invoice id must be a positive integer');
+  }
+
+  const url = `${API_BASE}/invoices/${id}/source-file`;
+
+  const response = await fetch(url, { method: 'GET' });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    const error = new Error(
+      errorBody?.message || `API error: ${response.status} ${response.statusText}`
+    );
+    error.status = response.status;
+    error.details = errorBody;
+    throw error;
+  }
+
+  const blob = await response.blob();
+  const contentType = response.headers.get('content-type') || '';
+  const disposition = response.headers.get('content-disposition') || '';
+  const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+  const filename = filenameMatch ? filenameMatch[1] : null;
+
+  return { blob, contentType, filename };
+}
+
+/**
  * Fetch a single invoice by ID.
  *
  * @param {number} id - Invoice ID (must be a positive integer).

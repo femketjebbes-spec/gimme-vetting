@@ -140,3 +140,73 @@ Implemented and verified all backend code for WI-CA-001 (Case Analyst Invoice Li
 - **AnalystServiceTest**: 12 tests, 12 passed, 0 failures.
 - **InputValidationServiceTest**: 36 tests, 36 passed, 0 failures.
 - **Total**: 61 tests, 61 passed, 0 failures. BUILD SUCCESS.
+
+## Session 3 (2026-07-09) — WI-CA-003 Source File Viewing
+
+### Summary
+Implemented WI-CA-003 backend: filesystem-based Excel store, source file endpoint, and invoice intake association.
+
+### What Was Tested (Testing Mode)
+1. **FileBackedExcelStoreServiceTest** (17 tests):
+   - `save()` with valid xlsx/csv content → UUID returned
+   - `save()` rejects PNG, JPEG, empty files → IllegalArgumentException
+   - `save()` rejects files exceeding 50MB → IllegalArgumentException
+   - `save()` accepts exactly 50MB file → UUID returned
+   - `save()` rejects filenames with `;`, `\n`, `\r`, control chars → IllegalArgumentException
+   - `save()` generates unique UUIDs per file → files stored separately
+   - `getFile(UUID)` returns Resource for saved UUID → file content matches
+   - `getFile(UUID)` returns null for unknown UUID
+   - `sanitizeFilename()` preserves clean names
+   - `sanitizeFilename()` throws for newlines, semicolons, control chars
+   - `getContentType()` returns correct MIME types
+
+2. **SourceFileEndpointTest** (10 tests):
+   - `GET /invoices/1/source-file` with xlsx → 200 OK with correct Content-Type
+   - `GET /invoices/2/source-file` with csv → 200 OK with text/csv
+   - `GET /invoices/3/source-file` without sourceFileId → 404
+   - `GET /invoices/0/source-file` (zero id) → 400
+   - `GET /invoices/abc/source-file` (non-numeric id) → 400
+   - `GET /invoices/4/source-file` with missing store file → 500
+   - `GET /invoices/999/source-file` (not found) → 404
+   - `GET /invoices/5/source-file` error response contains no UUID or store path
+   - `GET /invoices/-1/source-file` (negative id) → 400
+   - `GET /invoices/6/source-file` with non-numeric id → 400
+
+### What Was Implemented (Implementation Mode)
+1. **Flyway migration V3** (`V3__add_source_file_id_to_invoices.sql`): Adds `source_file_id VARCHAR(64)` and `source_filename VARCHAR(256)` columns to invoices table.
+2. **FileBackedExcelStoreService** (new): Stores uploaded Excel files with UUID filenames. Validates MIME type (xlsx/csv only), file size (max 50MB), and sanitizes filenames against header injection.
+3. **Invoice entity**: Added `sourceFileId` and `sourceFilename` fields with JPA column mappings and getters/setters.
+4. **AnalystInvoiceDTO**: Added `sourceFileId` and `sourceFilename` fields with getters/setters.
+5. **AnalystController**: Added `GET /invoices/{id}/source-file` endpoint. Looks up invoice by id, checks sourceFileId, serves file from store with proper Content-Type and Content-Disposition headers.
+6. **AnalystService.toDTO()**: Maps `sourceFileId` and `sourceFilename` from Invoice entity.
+7. **ExcelIntakeController**: Added `FileBackedExcelStoreService` dependency. Saves uploaded files during intake and sets `SourceFileContext` ThreadLocal before calling service layer.
+8. **SourceFileContext** (new): ThreadLocal holder for cross-layer sourceFileId/sourceFilename passing.
+9. **IntakeServiceImpl**: Reads SourceFileContext and sets sourceFileId/sourceFilename on Invoice before persistence.
+10. **application.yml**: Added `gimme.excel-store-path` configuration property.
+
+### Bug Fixes Applied During Implementation
+- `AnalystController` missing `@Autowired` on 4-parameter constructor caused Spring DI failure. Added `@Autowired` and import.
+- `FileBackedExcelStoreServiceTest.save_sanitizesFilenameAgainstHeaderInjection` expected save to succeed with malicious filename, but `sanitizeFilename` correctly throws. Renamed test to `save_rejectsFilenameWithNewlinesAndSemicolons`.
+- `SourceFileEndpointTest` mock for `validateId` returned null for all inputs. Fixed to return `true` for positive ids and `false` for zero/negative.
+- `ExcelIntakeControllerTest` constructor required 3 params after adding `FileBackedExcelStoreService`. Added mock injection with doNothing stubs.
+
+### Decisions
+- `SourceFileContext` uses ThreadLocal for cross-layer data passing. Safe because each HTTP request is handled by a single thread in Spring MVC.
+- `AnalystController` has both 2-param and 4-param constructors. 4-param is annotated with `@Autowired` for Spring DI. 2-param chains to null defaults for backward compatibility.
+- Filename sanitization rejects (does not sanitize) filenames containing newlines, semicolons, or control characters. This is a security-first approach.
+
+### What Remains Open
+- Frontend implementation (Femke's responsibility) for the source file download link in the Analyst Dashboard.
+- Integration test covering the full intake flow (ExcelIntakeController → IntakeServiceImpl → Invoice persistence with sourceFileId).
+- Configuration of actual filesystem path for `gimme.excel-store-path` in deployment environments.
+
+### Assumptions Made
+- The H2 in-memory database supports ALTER TABLE ADD COLUMN for Flyway migration V3.
+- The `gimme.excel-store-path` directory will exist at runtime; FileBackedExcelStoreService creates it on startup.
+- Source file download URL uses the invoice's numeric `id` (Long), not the UUID-based `sourceFileId`.
+
+### Test Results
+- **FileBackedExcelStoreServiceTest**: 17 tests, 17 passed, 0 failures.
+- **SourceFileEndpointTest**: 10 tests, 10 passed, 0 failures.
+- **All other tests**: 209 tests, 209 passed, 0 failures.
+- **Total**: 236 tests, 236 passed, 0 failures. BUILD SUCCESS.

@@ -86,3 +86,23 @@ Derived from: `docs/wi-ca-001-delegation-parallel.md` single invoice detail endp
 [2026-07-09] [Session 5] TEST-SPEC: `4-frontend/src/business-service/components/__tests__/AnalystDashboard.test.jsx` maps to WI-CA-001 subtask (main dashboard integration)
 Purpose: Validates search input, status filter, table rendering, re-fetch on search/filter, header, navigation link
 Derived from: `docs/wi-ca-001-delegation-parallel.md` analyst dashboard with search and status filter
+
+[2026-07-09] [Session 6] DECISION: fetchSourceFile returns {blob, contentType, filename} object instead of raw blob
+Rationale: The InvoiceDrawer needs both the blob for download and the filename for the browser download attribute. Returning structured metadata avoids header parsing duplication in the component. The filename is extracted via regex on Content-Disposition header: `/filename="?([^";]+)"?/i` consistent with Session 3 regex decision.
+Derived from: `docs/api-contract-wi-ca-003.md` Section 2.3 response header specification
+
+[2026-07-09] [Session 6] DECISION: "Bekijken" link uses conditional rendering based on sourceFileId presence
+Rationale: Per delegation plan, the link must be enabled when sourceFileId is non-null and disabled when null. Using conditional rendering `{invoice.sourceFileId && ...}` is simpler than a disabled attribute on a always-present link. When sourceFileId is null, the row is not rendered at all.
+Derived from: `docs/wi-ca-003-delegation-parallel.md` Subtask 1 constraints
+
+[2026-07-09] [Session 6] DECISION: Bekijken link uses direct <a> tag with download attribute, not blob URL download
+Rationale: Delegation plan explicitly states: "Use a direct <a> tag download: <a href={url} download onClick={handleDownload}>Bekijken</a>. Do not implement blob downloads or JavaScript-mediated downloads unless the contract endpoint returns JSON error responses that require parsing." The endpoint returns raw file bytes, so direct href is sufficient. onClick prevents default navigation and calls the callback.
+Derived from: `docs/wi-ca-003-delegation-parallel.md` Subtask 1 constraint and architecture decision D-FE-001 (Session 11)
+
+[2026-07-09] [Session 6] TEST-SPEC: `4-frontend/src/business-service/api/__tests__/analystApi.test.js` fetchSourceFile describe block maps to WI-CA-003 delegation subtask 1 (Frontend Implementation)
+Purpose: 8 tests validate URL construction, blob return, metadata extraction, id validation (zero/negative), 404/500/400 error handling, CSV content type handling
+Derived from: `docs/wi-ca-003-delegation-parallel.md` Subtask 1
+
+[2026-07-09] [Session 6] DECISION: No changes needed to fetchInvoiceList or fetchInvoiceDetail for sourceFileId/sourceFilename fields
+Rationale: Both functions return `response.json()` which passes through all JSON fields automatically. The new fields from the extended contract schema appear in the parsed response without any code changes. No serialization or field exclusion is needed.
+Derived from: `docs/api-contract-wi-ca-003.md` Sections 3.2 and 4.3 schema extensions

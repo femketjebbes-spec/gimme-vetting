@@ -61,3 +61,25 @@ Rationale: WR-001 spec FR-WR001-03 states "start the backend (if not already run
 [2026-07-09] [Session 2] DECISION: `run_MVP1_locally.bat` implements equivalent clean-slate behavior for Windows
 Assumptions: Windows developers use `run_MVP1_locally.bat` as the equivalent entry point to the Unix shell script
 Rationale: Delegation plan Subtask 2 requires equivalent Windows behavior. The batch file already existed in the repository.
+
+## Session 3 (2026-07-09) — WI-CA-003 Source File Viewing
+
+[2026-07-09] [Session 3] DECISION: `FileBackedExcelStoreService` follows the same pattern as `FileBackedPoCStoreService` with UUID filenames
+Assumptions: File store path is configurable via `gimme.excel-store-path` application property
+Rationale: Delegation plan requires UUID filenames, header injection prevention, 50MB size limit, and MIME type validation
+
+[2026-07-09] [Session 3] DECISION: `SourceFileContext` ThreadLocal holder passes sourceFileId from `ExcelIntakeController` to `IntakeServiceImpl`
+Assumptions: ThreadLocal is safe because each HTTP request is handled by a single thread
+Rationale: File save happens in `ExcelIntakeController` but invoice persistence happens in `IntakeServiceImpl`; no shared object exists between these layers
+
+[2026-07-09] [Session 3] DECISION: `AnalystController` uses `@Autowired` on the 4-parameter constructor; 2-parameter constructor for backward compatibility with existing tests
+Assumptions: Spring Boot auto-detects the annotated constructor for DI; the 2-param constructor chains to null defaults
+Rationale: Existing tests use 2-param constructor; Spring needs @Autowired to choose the correct constructor when multiple exist
+
+[2026-07-09] [Session 3] TEST-SPEC: `FileBackedExcelStoreServiceTest.java` maps to delegation plan Subtask 2 constraints (UUID filenames, MIME validation, 50MB limit, header injection)
+Purpose: Validates save, getFile, sanitizeFilename behavior per security constraints
+Derived from: Delegation plan Subtask 2 "Security and constraints"
+
+[2026-07-09] [Session 3] TEST-SPEC: `SourceFileEndpointTest.java` maps to delegation plan Subtask 2 endpoint specification
+Purpose: Validates GET /invoices/{id}/source-file endpoint behavior (200, 404, 400, 500)
+Derived from: Delegation plan Subtask 2 endpoint specification

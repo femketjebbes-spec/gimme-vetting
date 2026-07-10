@@ -1,9 +1,9 @@
-# API Requirements: Case Analyst Invoice List & Detail API
+# API Requirements: Case Analyst Invoice List, Detail & Source File API
 
 **Produced By**: Femke (Frontend Agent)
-**Timestamp**: 2026-07-09 09:40
-**Source Contract**: `docs/api-contract-wi-ca-001.md` (v1.0.0)
-**Work Item**: WI-CA-001
+**Timestamp**: 2026-07-09 14:20
+**Source Contract**: `docs/api-contract-wi-ca-003.md` (v1.0.0), `docs/api-contract-wi-ca-001.md` (v1.0.0)
+**Work Item**: WI-CA-003 (View Source Excel Files in Analyst Dashboard)
 **Status**: Complete
 
 ---
@@ -34,7 +34,9 @@
       "status": "QUEUED",
       "poCStatus": "VERIFIED",
       "rejectionType": null,
-      "resubmissionCount": 0
+      "resubmissionCount": 0,
+      "sourceFileId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "sourceFilename": "batch-001.xlsx"
     }
   ],
   "totalElements": 150,
@@ -43,6 +45,13 @@
   "pageSize": 50
 }
 ```
+
+### New Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sourceFileId` | string (nullable) | UUID of the source Excel file. Null for non-Excel invoices. |
+| `sourceFilename` | string (nullable) | Original filename the client uploaded. Null when sourceFileId is null. |
 
 ### Error Responses
 
@@ -58,8 +67,8 @@
 |----------|-------|
 | HTTP Method | GET |
 | Path | `/api/v1/analyst/invoices/{id}` |
-| Request Parameters | `id` (integer, required, > 0) — path variable |
-| Expected Response | JSON object with invoice fields: `id`, `invoiceNumber`, `debtorName`, `address`, `bankAccountNumber`, `phoneNumber`, `status`, `poCStatus`, `rejectionType`, `resubmissionCount` |
+| Request Parameters | `id` (integer, required, > 0) -- path variable |
+| Expected Response | JSON object with invoice fields including `sourceFileId` and `sourceFilename` |
 | Authentication Required | No |
 | Frontend Consumer | `4-frontend/src/business-service/api/analystApi.js` (`fetchInvoiceDetail`) |
 
@@ -76,9 +85,18 @@
   "status": "QUEUED",
   "poCStatus": "VERIFIED",
   "rejectionType": null,
-  "resubmissionCount": 0
+  "resubmissionCount": 0,
+  "sourceFileId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "sourceFilename": "batch-001.xlsx"
 }
 ```
+
+### New Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sourceFileId` | string (nullable) | UUID of the source Excel file. Null for non-Excel invoices. |
+| `sourceFilename` | string (nullable) | Original filename the client uploaded. Null when sourceFileId is null. |
 
 ### Error Responses
 
@@ -89,10 +107,45 @@
 
 ---
 
+## Endpoint 3: Source File Download (NEW)
+
+| Property | Value |
+|----------|-------|
+| HTTP Method | GET |
+| Path | `/api/v1/analyst/invoices/{id}/source-file` |
+| Request Parameters | `id` (integer, required, > 0) -- path variable |
+| Expected Response | Raw file bytes with `Content-Type` and `Content-Disposition` headers |
+| Authentication Required | No |
+| Frontend Consumer | `4-frontend/src/business-service/api/analystApi.js` (`fetchSourceFile`) |
+
+### Response Headers (200 OK)
+
+| Header | Value |
+|--------|-------|
+| `Content-Type` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` for .xlsx, `text/csv` for .csv |
+| `Content-Disposition` | `inline; filename="<original-filename>"` |
+| Body | Raw file bytes |
+
+### Error Responses
+
+| Status Code | Description | Response Body |
+|-------------|-------------|---------------|
+| 404 Not Found | Invoice has no sourceFileId or file not found in store | `{"error": "Not Found", "message": "No source file available for this invoice"}` |
+| 500 Internal Server Error | File exists in DB but missing/corrupted in store | `{"error": "Internal Server Error", "message": "Source file is unavailable"}` |
+| 400 Bad Request | Invalid invoice ID | `{"error": "Bad Request", "message": "Invalid invoice id parameter"}` |
+
+---
+
 ## Architecture Decisions Applied
 
-- **D-CA-001**: Resubmission uses Option A (update existing row, increment count)
-- **D-CA-002**: Unauthenticated MVP endpoints
-- **D-CA-003**: `resubmissionCount` field added via Flyway migration
-- **D-CA-004**: API versioning via `/api/v1/analyst/` path prefix
-- **D-CA-005**: React Router routing at `/analyst` path
+- **D-EXCEL-001**: Excel intake store is filesystem-based with configurable path (`gimme.excel-store-path`). Files are stored with UUID filenames. Same pattern as `FileBackedPoCStoreService`.
+- **D-EXCEL-002**: Invoice entity gains nullable `sourceFileId` (VARCHAR(64)) and `sourceFilename` (VARCHAR(256)) fields.
+- **D-EXCEL-003**: Source file serving endpoint is `GET /api/v1/analyst/invoices/{id}/source-file`. Returns raw file bytes with `Content-Type` and `Content-Disposition` headers.
+- **D-EXCEL-004**: Upload flow is extended to persist the original file during existing intake processing. No new upload endpoint is created.
+- **D-EXCEL-005**: `AnalystInvoiceDTO` gains `sourceFileId` and `sourceFilename` fields (both nullable strings).
+- **D-CA-002**: Analyst API endpoints are unauthenticated for MVP.
+- **D-026**: Unauthenticated MVP endpoints.
+- **S-006**: Error responses must not expose stack traces, SQL, or server internals.
+- **S-007**: UUID filenames prevent path traversal attacks on the file store.
+- **S-008**: `source_filename` must be sanitised to prevent HTTP header injection.
+- **S-009**: `Content-Type` must match the actual stored file format.

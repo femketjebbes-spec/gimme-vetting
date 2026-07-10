@@ -46,6 +46,12 @@ public class Invoice {
     @Column(name = "resubmission_count", nullable = false)
     private Integer resubmissionCount;
 
+    @Column(name = "source_file_id", length = 64)
+    private String sourceFileId;
+
+    @Column(name = "source_filename", length = 256)
+    private String sourceFilename;
+
     public Invoice() {
     }
 
@@ -127,5 +133,21 @@ public class Invoice {
 
     public void setResubmissionCount(Integer resubmissionCount) {
         this.resubmissionCount = resubmissionCount;
+    }
+
+    public String getSourceFileId() {
+        return sourceFileId;
+    }
+
+    public void setSourceFileId(String sourceFileId) {
+        this.sourceFileId = sourceFileId;
+    }
+
+    public String getSourceFilename() {
+        return sourceFilename;
+    }
+
+    public void setSourceFilename(String sourceFilename) {
+        this.sourceFilename = sourceFilename;
     }
 }

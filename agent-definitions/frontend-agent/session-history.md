@@ -140,3 +140,40 @@ Femke received delegation from Archibald (WI-CA-001) to implement the case analy
 ### Remaining
 - Awaiting Alignment Agent approval (review cycle 1) before Gerard can re-evaluate the API contract for frontend structural changes.
 - No open items for this subtask.
+
+## Session 6 - 2026-07-09 WI-CA-003 Source File Viewing in Analyst Dashboard
+
+### Summary
+Femke received delegation from Archibald (WI-CA-003) to implement source file viewing in the Analyst Dashboard. Subtask 1: Add `fetchSourceFile` API function, update response parsing for `sourceFileId`/`sourceFilename` fields, wire "Bekijken" download link in InvoiceDrawer.
+
+### Actions Taken
+1. **Testing Mode**: Wrote 8 new Jest tests in `4-frontend/src/business-service/api/__tests__/analystApi.test.js` (fetchSourceFile describe block):
+   - Test: calls correct endpoint URL with valid id
+   - Test: returns blob and response metadata (contentType, filename)
+   - Test: throws for invalid id (zero)
+   - Test: throws for invalid id (negative)
+   - Test: throws on 404 Not Found
+   - Test: throws on 500 Internal Server Error
+   - Test: throws on 400 Bad Request
+   - Test: handles CSV content type in response headers
+2. **Red State Verification**: Ran `npx jest --config jest.config.js --json --outputFile .jest-results.json`. 8 new tests failed (`fetchSourceFile is not a function`). 79 existing tests passed. Red state confirmed.
+3. **Implementation Mode**: Added production code:
+   - `analystApi.js` — Added `fetchSourceFile(id)` function: validates positive integer id, fetches `GET /api/v1/analyst/invoices/{id}/source-file`, returns `{blob, contentType, filename}` with filename extracted from Content-Disposition header via `/filename="?([^";]+)"?/i` regex.
+   - `InvoiceDrawer.jsx` — Added `onDownloadSourceFile` optional callback prop. Added "Bekijken" `<a>` tag link rendered conditionally when `invoice.sourceFileId` is non-null and callback is provided. href constructed as `/api/v1/analyst/invoices/${id}/source-file`. onClick prevents default and calls callback.
+   - `fetchInvoiceList` and `fetchInvoiceDetail` — No code changes needed. `response.json()` passes through new `sourceFileId` and `sourceFilename` fields automatically.
+4. **Green State Verification**: Ran Jest. All 87 tests pass (79 existing + 8 new). Green state confirmed.
+5. **API Requirements**: Updated `docs/api-requirements.md` with new Endpoint 3 (source file download) specification including 200/404/500/400 responses.
+6. **Signals Produced**: Written `docs/api-ready-signal.md` (3 endpoints defined) and `docs/alignment-review-request.md` (review cycle 1, nextAgentInPipeline: Gerard).
+7. **Decision Log**: Added 6 entries covering return structure, conditional rendering, direct <a> tag pattern, auto-field-pass-through, and test-to-spec mapping.
+
+### Decisions
+- `fetchSourceFile` returns structured `{blob, contentType, filename}` object to avoid duplicate header parsing in components.
+- "Bekijken" link uses conditional rendering (not disabled attribute) — the row is omitted when `sourceFileId` is null.
+- Direct `<a>` tag download used per delegation plan constraint. Blob URL download pattern not needed because the endpoint returns raw file bytes.
+- No changes to `fetchInvoiceList` or `fetchInvoiceDetail` — `response.json()` automatically includes all fields from the extended JSON schema.
+- Filename regex `/filename="?([^";]+)"?/i` consistent with Session 3 regex decision for Content-Disposition parsing.
+
+### Remaining
+- Awaiting Alignment Agent approval (review cycle 1) before Gerard can proceed with backend implementation.
+- The `onDownloadSourceFile` callback is not wired in `AnalystDashboard.jsx` or `InvoiceTable.jsx`. This requires separate implementation to pass the handler from the dashboard down through the table to the drawer. The component is ready for this wiring.
+- No open items for this subtask.
