@@ -1,5 +1,7 @@
 package com.gimmevettingsolution.excel;
 
+import com.gimmevettingsolution.intake.service.ExcelParsingService;
+import com.gimmevettingsolution.intake.service.FileType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -20,6 +23,11 @@ import java.util.UUID;
  * Tracks original filenames for Content-Disposition headers.
  *
  * Per D-EXCEL-001, the store path is configurable via gimme.excel-store-path.
+ * 
+ * MIME type validation follows the same two-tier strategy as ExcelIntakeController:
+ * 1. Check the declared MIME type against the allowed set.
+ * 2. If the MIME type is null or unrecognized, fall back to content-based
+ *    magic-byte detection via ExcelParsingService.detectFileType().
  */
 @Service
 public class FileBackedExcelStoreService {
@@ -39,13 +47,16 @@ public class FileBackedExcelStoreService {
     );
 
     private final Path excelStorePath;
+    private final ExcelParsingService excelParsingService;
 
     /**
-     * Spring Boot constructor — injects the Excel store path from application.yml.
+     * Spring Boot constructor — injects the Excel store path and parsing service.
      */
     @Autowired
-    public FileBackedExcelStoreService(@Value("${gimme.excel-store-path}") String excelStorePathStr) {
+    public FileBackedExcelStoreService(@Value("${gimme.excel-store-path}") String excelStorePathStr,
+                                       ExcelParsingService excelParsingService) {
         this.excelStorePath = Path.of(excelStorePathStr);
+        this.excelParsingService = excelParsingService;
     }
 
     /**
@@ -53,23 +64,31 @@ public class FileBackedExcelStoreService {
      */
     public FileBackedExcelStoreService(Path excelStorePath) {
         this.excelStorePath = excelStorePath;
+        this.excelParsingService = null;
     }
 
     /**
      * Saves an uploaded Excel file with a UUID filename.
-     * Validates MIME type and file size before saving.
+     * Validates MIME type with content-based fallback and file size before saving.
      * Sanitizes the original filename against header injection.
      *
      * @param file the uploaded MultipartFile
      * @return UUID string used as the filename in the store
-     * @throws IllegalArgumentException if MIME type is not allowed or file exceeds 50MB
+     * @throws IllegalArgumentException if MIME type is not allowed (after fallback) or file exceeds 50MB
      */
     public String save(MultipartFile file) {
         String originalFilename = file.getOriginalFilename();
 
-        // Validate MIME type
+        // Validate MIME type — fast path with declared MIME type
         String mimeType = file.getContentType();
-        if (mimeType == null || !ALLOWED_MIME_TYPES.contains(mimeType)) {
+        boolean mimeAccepted = isMimeAccepted(mimeType);
+
+        // Fallback: content-based detection when MIME type is null or unrecognized
+        if (!mimeAccepted) {
+            mimeAccepted = isContentBasedDetectionValid(file);
+        }
+
+        if (!mimeAccepted) {
             throw new IllegalArgumentException("File type not supported. Only Excel (.xlsx) and CSV (.csv) files are allowed.");
         }
 
@@ -94,6 +113,39 @@ public class FileBackedExcelStoreService {
         }
 
         return uuid;
+    }
+
+    /**
+     * Checks if the MIME type is directly accepted.
+     *
+     * @param mimeType the declared MIME type from the upload
+     * @return true if the MIME type is in the allowed set
+     */
+    private boolean isMimeAccepted(String mimeType) {
+        if (mimeType == null || mimeType.isEmpty()) {
+            return false;
+        }
+        String cleanType = mimeType.split(";")[0].trim().toLowerCase();
+        return ALLOWED_MIME_TYPES.contains(cleanType);
+    }
+
+    /**
+     * Performs content-based file type detection as a MIME type fallback.
+     * Uses magic bytes to distinguish XLSX (ZIP signature) from CSV (text).
+     *
+     * @param file the uploaded MultipartFile
+     * @return true if the content is a valid XLSX or CSV file
+     */
+    private boolean isContentBasedDetectionValid(MultipartFile file) {
+        if (excelParsingService == null) {
+            return false;
+        }
+        try (InputStream inputStream = file.getInputStream()) {
+            FileType detected = excelParsingService.detectFileType(inputStream);
+            return detected == FileType.XLSX || detected == FileType.CSV;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     /**

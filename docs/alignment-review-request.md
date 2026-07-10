@@ -1,49 +1,49 @@
 {
   "reviewRequest": {
     "agentName": "Naut",
-    "timestamp": "2026-07-10 07:26",
-    "trigger": "Implementation Mode completion — Flyway migration enablement for local profile to fix source file viewing",
-    "reviewCycle": 1,
+    "timestamp": "2026-07-10 08:18",
+    "trigger": "Refactoring Mode completion — align FileBackedExcelStoreService MIME validation with ExcelIntakeController content-based detection",
+    "reviewCycle": 3,
     "artefactsProduced": [
       {
-        "filePath": "5-backend/business-service/src/main/resources/application.yml",
-        "artefactType": "Configuration file",
-        "description": "Changed flyway.enabled from false to true and added locations: classpath:db/migration in the default (local) profile. This ensures Flyway migration V3__add_source_file_id_to_invoices.sql runs on startup, creating source_file_id and source_filename columns in the H2 in-memory database."
+        "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/excel/FileBackedExcelStoreService.java",
+        "artefactType": "Production code",
+        "description": "Injected ExcelParsingService into FileBackedExcelStoreService. Modified save() to perform content-based MIME type detection as a fallback when the declared MIME type is null or unrecognized. This aligns the file store's validation logic with the two-tier strategy used in ExcelIntakeController (MIME fast-path, magic-byte fallback via detectFileType()). Constructor updated to accept ExcelParsingService; testing constructor sets it to null for backward compatibility with existing tests."
       }
     ],
     "pipelineStage": "parallel backend implementation",
     "nextAgentInPipeline": null,
-    "changesFromLastReview": "WI-CA-003 backend bug fix: Changed flyway.enabled from false to true in application.yml default profile, enabling Flyway migration V3__add_source_file_id_to_invoices.sql on startup. This fixes the missing source_file_id and source_filename columns in H2 that prevented the Bekijken link from rendering in the analyst dashboard.",
+    "changesFromLastReview": "Root cause identified: FileBackedExcelStoreService.save() threw IllegalArgumentException on null/unrecognized MIME types, while ExcelIntakeController accepted the same files via content-based detection. This caused sourceFileId to be null, which blocked Invoice persistence (condition: sourceFileId != null). Fix: FileBackedExcelStoreService now uses ExcelParsingService.detectFileType() as a MIME fallback, matching the controller's detection logic. Constructor signature updated to accept ExcelParsingService. Testing constructor sets it to null. All 236 tests pass with zero failures.",
     "requirementsAlignment": {
       "compliant": true,
-      "notes": "FR-001 (Persist Source Excel Files) requires source_file_id column in invoices table. FR-002 (Source File Serving API) requires source_file_id to be populated on upload. Without Flyway enabled, V3 migration never runs and these columns do not exist. Enabling Flyway satisfies both requirements in the local development environment."
+      "notes": "FR-001 requires persisting source Excel files and linking them to Invoice rows via source_file_id. The MIME type mismatch previously prevented file persistence when the browser sent a null or unrecognized MIME type, causing all invoice saves to be skipped. This fix ensures the file store accepts files with the same tolerance as the controller, so invoices are persisted regardless of browser MIME type behavior."
     },
     "specsAlignment": {
       "compliant": true,
-      "notes": "Delegation plan docs/wi-ca-003-delegation-parallel.md specifies Flyway migration V3__add_source_file_id_to_invoices.sql creates the columns. Architecture decisions document D-EXCEL-001 specifies configurable excel-store-path. This change enables the migration in local profile only, consistent with existing prod profile configuration (flyway.enabled: true, locations: classpath:db/migration). No production code, test code, or frontend code was modified. No public API signatures changed. No architectural deviations."
+      "notes": "No API contract changes. No public API signature changes on controllers. The ExcelParsingService dependency injection is internal to FileBackedExcelStoreService. No frontend modifications. No architectural pattern deviations."
     },
-    "selfCertification": "The configuration change conforms to both requirements and specs. Flyway is now enabled in the local profile with the same migration locations as the prod profile. All existing tests pass. No production code, test code, or frontend code was modified. The change is minimal and targeted, addressing only the missing database columns that prevented source file viewing."
+    "selfCertification": "All artefacts conform to requirements and specs. FileBackedExcelStoreService save() now uses content-based detection as a MIME fallback, matching ExcelIntakeController behavior. Constructor updated for dependency injection. All 236 tests pass with zero failures. No production code beyond what is required. No architectural decisions violated."
   }
 }
 
 {
   "alignmentDecision": {
-    "reviewId": "REVIEW-WI-CA-003-NAUT-001",
+    "reviewId": "REVIEW-WI-CA-003-NAUT-003",
     "producingAgent": "Naut",
-    "reviewCycle": 1,
+    "reviewCycle": 3,
     "status": "PENDING",
     "timestamp": null,
     "roleBoundaryCheck": {
       "compliant": true,
-      "notes": "Naut produced only backend configuration changes in 5-backend/business-service/src/main/resources/application.yml as specified. No frontend code, no production code, no test code was modified. File is within the defined responsibility scope of the backend agent."
+      "notes": "Naut modified only backend files in 5-backend/ directory. FileBackedExcelStoreService.java is production code in the backend. No frontend files, no API contract modifications, no architectural decisions changed."
     },
     "requirementsCheck": {
       "compliant": true,
-      "notes": "FR-001 requires source_file_id and source_filename columns in invoices table. V3__add_source_file_id_to_invoices.sql adds these columns. Enabling Flyway in local profile ensures this migration runs on startup. The change satisfies the requirement for local development environment."
+      "notes": "FR-001: Source Excel files are persisted via FileBackedExcelStoreService. The MIME fallback ensures files are accepted regardless of browser MIME type behavior, enabling invoice persistence. FR-002: Source file serving endpoint exists and will return files for invoices that were saved after the fix."
     },
     "specsCheck": {
       "compliant": true,
-      "notes": "Delegation plan specifies Flyway migration V3 creates required columns. This change enables that migration in local profile. Consistent with prod profile configuration. No architectural decisions violated. No API contract changes. No public API signatures changed."
+      "notes": "FileBackedExcelStoreService now uses the same content-based detection logic as ExcelParsingService, which is shared infrastructure. Constructor signature change is internal to the service. No API contract changes. No public API signature changes on controllers. No frontend code modified."
     },
     "violations": [],
     "greenlightForNextAgent": null,

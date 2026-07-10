@@ -6,6 +6,7 @@ import com.gimmevettingsolution.intake.dto.InvalidFileFormatResponse;
 import com.gimmevettingsolution.intake.dto.ColumnNameMismatchResponse;
 import com.gimmevettingsolution.intake.service.ExcelParsingService;
 import com.gimmevettingsolution.intake.service.MandatoryFieldValidationService;
+import com.gimmevettingsolution.invoice.repository.InvoiceRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -49,7 +50,13 @@ class ExcelIntakeControllerTest {
         FileBackedExcelStoreService storeService = mock(FileBackedExcelStoreService.class);
         when(storeService.save(any())).thenAnswer(invocation -> "test-uuid-" + System.nanoTime());
         when(storeService.sanitizeFilename(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
-        ExcelIntakeController controller = new ExcelIntakeController(parsingService, validationService, storeService);
+        InvoiceRepository invoiceRepository = mock(InvoiceRepository.class);
+        when(invoiceRepository.save(any())).thenAnswer(invocation -> {
+            com.gimmevettingsolution.invoice.entity.Invoice saved = invocation.getArgument(0);
+            saved.setId((long) Math.random() * 10000);
+            return saved;
+        });
+        ExcelIntakeController controller = new ExcelIntakeController(parsingService, validationService, storeService, invoiceRepository);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
