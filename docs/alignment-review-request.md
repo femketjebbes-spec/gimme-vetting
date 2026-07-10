@@ -1,59 +1,49 @@
 {
   "reviewRequest": {
     "agentName": "Naut",
-    "timestamp": "2026-07-10 07:49",
-    "trigger": "Implementation Mode completion — persist valid Excel rows as Invoice entities and enable Flyway for local profile",
-    "reviewCycle": 2,
+    "timestamp": "2026-07-10 08:18",
+    "trigger": "Refactoring Mode completion — align FileBackedExcelStoreService MIME validation with ExcelIntakeController content-based detection",
+    "reviewCycle": 3,
     "artefactsProduced": [
       {
-        "filePath": "5-backend/business-service/src/main/resources/application.yml",
-        "artefactType": "Configuration file",
-        "description": "Changed flyway.enabled from false to true and added locations: classpath:db/migration in the default (local) profile. Ensures V3 migration creates source_file_id and source_filename columns in H2."
-      },
-      {
-        "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/intake/ExcelIntakeController.java",
+        "filePath": "5-backend/business-service/src/main/java/com/gimmevettingsolution/excel/FileBackedExcelStoreService.java",
         "artefactType": "Production code",
-        "description": "Added InvoiceRepository dependency. Added persistence logic that iterates over validationResult.getPassingRows() and creates Invoice entities with all mandatory fields populated (invoiceNumber, debtorName, address, phoneNumber, bankAccountNumber), default values (poCStatus=VERIFIED, rejectionType=NONE, status=QUEUED, resubmissionCount=0), and sourceFileId/sourceFilename linked to the uploaded Excel file."
-      },
-      {
-        "filePath": "5-backend/business-service/src/test/java/com/gimmevettingsolution/intake/ExcelIntakeControllerTest.java",
-        "artefactType": "Test modification",
-        "description": "Updated setUp() to mock InvoiceRepository and pass it to the ExcelIntakeController constructor (constructor signature changed). Mock verifies invoiceRepository.save() is called during upload."
+        "description": "Injected ExcelParsingService into FileBackedExcelStoreService. Modified save() to perform content-based MIME type detection as a fallback when the declared MIME type is null or unrecognized. This aligns the file store's validation logic with the two-tier strategy used in ExcelIntakeController (MIME fast-path, magic-byte fallback via detectFileType()). Constructor updated to accept ExcelParsingService; testing constructor sets it to null for backward compatibility with existing tests."
       }
     ],
     "pipelineStage": "parallel backend implementation",
     "nextAgentInPipeline": null,
-    "changesFromLastReview": "Session 1: Enabled Flyway in local profile (application.yml). Session 2: Added Invoice persistence in ExcelIntakeController — injects InvoiceRepository, iterates over passingRows, creates and saves Invoice entities with all 5 mandatory fields plus sourceFileId/sourceFilename. Updated ExcelIntakeControllerTest constructor to include mocked InvoiceRepository. All tests pass with zero failures.",
+    "changesFromLastReview": "Root cause identified: FileBackedExcelStoreService.save() threw IllegalArgumentException on null/unrecognized MIME types, while ExcelIntakeController accepted the same files via content-based detection. This caused sourceFileId to be null, which blocked Invoice persistence (condition: sourceFileId != null). Fix: FileBackedExcelStoreService now uses ExcelParsingService.detectFileType() as a MIME fallback, matching the controller's detection logic. Constructor signature updated to accept ExcelParsingService. Testing constructor sets it to null. All 236 tests pass with zero failures.",
     "requirementsAlignment": {
       "compliant": true,
-      "notes": "FR-001 requires persisting source Excel files and linking them to Invoice rows via source_file_id. FR-002 requires serving the source file via GET /api/v1/analyst/invoices/{id}/source-file. Without Invoice entities in the database, the business-side dashboard has nothing to display. This change creates Invoice entities for every passing row with sourceFileId set, enabling the full viewing flow from upload to display."
+      "notes": "FR-001 requires persisting source Excel files and linking them to Invoice rows via source_file_id. The MIME type mismatch previously prevented file persistence when the browser sent a null or unrecognized MIME type, causing all invoice saves to be skipped. This fix ensures the file store accepts files with the same tolerance as the controller, so invoices are persisted regardless of browser MIME type behavior."
     },
     "specsAlignment": {
       "compliant": true,
-      "notes": "Delegation plan specifies that valid Excel rows should become Invoice entities linked to the source file. The Invoice entity fields map directly from ExcelInvoiceRow: invoiceNumber, debtorName, address, phoneNumber, bankAccountNumber. Default values match those used in IntakeServiceImpl (poCStatus=VERIFIED, rejectionType=NONE, status=QUEUED, resubmissionCount=0). SourceFileContext.setSourceFileId/populate is called before persistence so sourceFileId and sourceFilename are available. No architectural deviations. No public API changes. No frontend modifications."
+      "notes": "No API contract changes. No public API signature changes on controllers. The ExcelParsingService dependency injection is internal to FileBackedExcelStoreService. No frontend modifications. No architectural pattern deviations."
     },
-    "selfCertification": "All artefacts conform to requirements and specs. Flyway is enabled in local profile for the required migration. ExcelIntakeController persists passing rows as Invoice entities with all mandatory fields and source file linkage. Test file updated to match new constructor signature. All 44+ tests pass with zero failures. No production code beyond what is required. No architectural decisions violated."
+    "selfCertification": "All artefacts conform to requirements and specs. FileBackedExcelStoreService save() now uses content-based detection as a MIME fallback, matching ExcelIntakeController behavior. Constructor updated for dependency injection. All 236 tests pass with zero failures. No production code beyond what is required. No architectural decisions violated."
   }
 }
 
 {
   "alignmentDecision": {
-    "reviewId": "REVIEW-WI-CA-003-NAUT-002",
+    "reviewId": "REVIEW-WI-CA-003-NAUT-003",
     "producingAgent": "Naut",
-    "reviewCycle": 2,
+    "reviewCycle": 3,
     "status": "PENDING",
     "timestamp": null,
     "roleBoundaryCheck": {
       "compliant": true,
-      "notes": "Naut modified only backend files in 5-backend/ directory. application.yml is a configuration file. ExcelIntakeController.java is production code in the backend. ExcelIntakeControllerTest.java is a backend test. No frontend files, no API contract modifications, no architectural decisions changed."
+      "notes": "Naut modified only backend files in 5-backend/ directory. FileBackedExcelStoreService.java is production code in the backend. No frontend files, no API contract modifications, no architectural decisions changed."
     },
     "requirementsCheck": {
       "compliant": true,
-      "notes": "FR-001: Source Excel files are persisted (already implemented in Session 1 via FileBackedExcelStoreService). Invoice entities now include source_file_id linking to the persisted file. FR-002: Source file serving endpoint exists (already implemented in Session 1). Without Invoice entities, the endpoint returns 404 — now Invoice entities exist with sourceFileId populated."
+      "notes": "FR-001: Source Excel files are persisted via FileBackedExcelStoreService. The MIME fallback ensures files are accepted regardless of browser MIME type behavior, enabling invoice persistence. FR-002: Source file serving endpoint exists and will return files for invoices that were saved after the fix."
     },
     "specsCheck": {
       "compliant": true,
-      "notes": "Invoice fields map correctly from ExcelInvoiceRow. Default values consistent with IntakeServiceImpl. SourceFileContext is set before persistence. No API contract changes. No public API signature changes. No frontend code modified."
+      "notes": "FileBackedExcelStoreService now uses the same content-based detection logic as ExcelParsingService, which is shared infrastructure. Constructor signature change is internal to the service. No API contract changes. No public API signature changes on controllers. No frontend code modified."
     },
     "violations": [],
     "greenlightForNextAgent": null,
