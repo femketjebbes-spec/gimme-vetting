@@ -2,7 +2,8 @@ package com.gimmevettingsolution.analyst.dto;
 
 /**
  * DTO representing an invoice for the analyst dashboard.
- * Contains all 10 fields required by the WI-CA-001 API contract.
+ * Contains all 10 fields required by the WI-CA-001 API contract,
+ * extended with sourceFileId and sourceFilename from WI-CA-003.
  */
 public class AnalystInvoiceDTO {
 
@@ -16,6 +17,8 @@ public class AnalystInvoiceDTO {
     private String poCStatus;
     private String rejectionType;
     private Integer resubmissionCount;
+    private String sourceFileId;
+    private String sourceFilename;
 
     public AnalystInvoiceDTO() {
     }
@@ -98,5 +101,21 @@ public class AnalystInvoiceDTO {
 
     public void setResubmissionCount(Integer resubmissionCount) {
         this.resubmissionCount = resubmissionCount;
+    }
+
+    public String getSourceFileId() {
+        return sourceFileId;
+    }
+
+    public void setSourceFileId(String sourceFileId) {
+        this.sourceFileId = sourceFileId;
+    }
+
+    public String getSourceFilename() {
+        return sourceFilename;
+    }
+
+    public void setSourceFilename(String sourceFilename) {
+        this.sourceFilename = sourceFilename;
     }
 }

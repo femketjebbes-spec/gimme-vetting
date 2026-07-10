@@ -1,5 +1,6 @@
 package com.gimmevettingsolution.intake;
 
+import com.gimmevettingsolution.excel.FileBackedExcelStoreService;
 import com.gimmevettingsolution.intake.dto.ExcelUploadResponse;
 import com.gimmevettingsolution.intake.dto.InvalidFileFormatResponse;
 import com.gimmevettingsolution.intake.dto.ColumnNameMismatchResponse;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -44,7 +46,10 @@ class ExcelIntakeControllerTest {
     void setUp() throws IOException {
         ExcelParsingService parsingService = new ExcelParsingService();
         MandatoryFieldValidationService validationService = new MandatoryFieldValidationService();
-        ExcelIntakeController controller = new ExcelIntakeController(parsingService, validationService);
+        FileBackedExcelStoreService storeService = mock(FileBackedExcelStoreService.class);
+        when(storeService.save(any())).thenAnswer(invocation -> "test-uuid-" + System.nanoTime());
+        when(storeService.sanitizeFilename(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        ExcelIntakeController controller = new ExcelIntakeController(parsingService, validationService, storeService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 

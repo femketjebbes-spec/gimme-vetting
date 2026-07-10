@@ -209,6 +209,7 @@ Then page 2 shows invoices 51-100
 - Authentication / login
 - Export functionality
 - Document preview ("Bekijken") — placeholder only
+- Column sorting (ascending/descending) — deferred per RQ-010 clarification
 
 ---
 

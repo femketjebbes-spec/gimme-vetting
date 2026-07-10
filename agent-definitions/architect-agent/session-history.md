@@ -263,3 +263,62 @@ The following acceptance criteria require manual verification by the user:
 ### No Further Pipeline Action Required
 
 WR-001 is the last agent-managed task in this pipeline. No further delegation plans are required.
+
+## Session 11 — 2026-07-09 — WI-CA-003 View Source Excel Files in Analyst Dashboard
+
+### What Was Explored
+
+User requested implementation of WI-CA-003. The work item requires persisting original Excel files uploaded by clients and making them viewable by case analysts in the analyst dashboard. The existing `ExcelIntakeController` creates files in a temp directory that is discarded after upload. This work item changes that behaviour to persist files with UUID filenames.
+
+Key architectural decisions resolved:
+1. Excel store follows the same filesystem pattern as `FileBackedPoCStoreService`.
+2. `source_file_id` and `source_filename` are stored as columns on the Invoice entity (not a separate mapping table).
+3. Source file serving endpoint is `GET /api/v1/analyst/invoices/{id}/source-file`.
+4. Upload flow is extended (not a new endpoint).
+5. Frontend "Bekijken" link uses simple `<a>` tag download.
+6. The architecture decisions file had merge conflict markers that were cleaned up.
+
+### What Was Decided
+
+Seven architectural decisions documented in `agent-definitions/architecture-decisions.md`:
+1. **D-EXCEL-001**: Persistent Excel intake store using UUID filenames, configurable path.
+2. **D-EXCEL-002**: Invoice entity gains `sourceFileId` and `sourceFilename` fields.
+3. **D-EXCEL-003**: Source file serving endpoint with proper content headers.
+4. **D-EXCEL-004**: Upload flow extended to persist files during intake.
+5. **D-EXCEL-005**: AnalystInvoiceDTO gains two new fields.
+6. **D-EXCEL-006**: Frontend uses simple `<a>` tag download.
+7. **D-EXCEL-007**: Filename stored in Invoice entity column (not separate table).
+
+Gerard delegation plan produced at `docs/wi-ca-003-delegation-gerard.md` with four subtasks:
+1. API contract definition (Gerard)
+2. Database migration (Gerard -> Database Engineer)
+3. Backend implementation (Gerard -> Naut)
+4. Contract verification and automated tests (Gerard)
+
+### What Remains Open
+
+- WI-CA-003 is now in the Gerard phase. Gerard must produce `docs/api-contract-wi-ca-003.md` and submit to the Alignment Agent.
+- After Alignment Agent approval, a parallel delegation plan will be produced for Femke and Naut.
+- The existing AnalystInvoiceDTO for the list endpoint currently returns 10 fields. wi-ca-003 extends this to 12 fields. The frontend may need to handle the additional fields or ignore them.
+
+## Session 12 — 2026-07-09 — WI-CA-003 Parallel Phase (Autonomous Handoff)
+
+### What Was Explored
+
+The Alignment Agent decision in `docs/alignment-review-request.md` was read and confirmed `status: APPROVED` with `greenlightForNextAgent: true` and `approvedArtefacts: ["docs/api-contract-wi-ca-003.md"]`. This satisfies the autonomous handoff condition: Alignment Agent has approved Gerard's API contract work and signaled `Femke-Naut-parallel` as the next pipeline stage. Archibald autonomously produced the parallel delegation plan without requiring explicit user initiation. Note: `docs/wi-ca-003-contract-ready.md` was not found at the time of handoff, but the Alignment Agent's approved artefact reference to `docs/api-contract-wi-ca-003.md` served as the contract confirmation trigger.
+
+### What Was Decided
+
+No new architectural decisions were made. The parallel delegation plan at `docs/wi-ca-003-delegation-parallel.md` was produced, assigning two subtasks to Femke and Naut simultaneously:
+
+1. **Femke (Frontend Agent)**: Implement `fetchSourceFile(id)` in `analystApi.js`, wire the "Bekijken" link in `InvoiceDrawer.jsx`, enable/disable based on `sourceFileId` presence, add Jest tests.
+2. **Naut (Backend Agent)**: Implement `FileBackedExcelStoreService`, update `Invoice` entity with `sourceFileId`/`sourceFilename`, create Flyway migration V3, update `AnalystInvoiceDTO`, add `getSourceFile` endpoint to `AnalystController`, modify `ExcelIntakeController` to persist files during intake, write tests.
+
+All subtasks reference `docs/api-contract-wi-ca-003.md` (v1.0.0) as the shared contract. All security requirements S-006 through S-010 are explicitly carried into each subtask.
+
+### What Remains Open
+
+- Parallel implementation by Femke and Naut.
+- Both agents must submit alignment review requests upon completion.
+- The Alignment Agent must approve both implementations before the working item can be considered complete.
+- `docs/wi-ca-003-contract-ready.md` should be produced by Gerard to formally signal contract readiness and trigger Archibald's autonomous handoff in future iterations.

@@ -7,8 +7,9 @@ import { StatusBadge } from './StatusBadge.jsx';
  * @param {object} invoice - The selected invoice object.
  * @param {boolean} isOpen - Whether the drawer is currently open.
  * @param {function} onClose - Callback to close the drawer.
+ * @param {function} [onDownloadSourceFile] - Callback for source file download.
  */
-function InvoiceDrawer({ invoice, isOpen, onClose }) {
+function InvoiceDrawer({ invoice, isOpen, onClose, onDownloadSourceFile }) {
   if (!invoice) {
     return null;
   }
@@ -91,6 +92,25 @@ function InvoiceDrawer({ invoice, isOpen, onClose }) {
                 {invoice.resubmissionCount}
               </span>
             </div>
+
+            {invoice.sourceFileId && onDownloadSourceFile && (
+              <div className="detail-row">
+                <span className="detail-label">Source File</span>
+                <a
+                  href={`/api/v1/analyst/invoices/${invoice.id}/source-file`}
+                  download
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onDownloadSourceFile(invoice.id);
+                  }}
+                  className="source-file-link"
+                  data-testid="source-file-download-link"
+                  title={invoice.sourceFilename || 'Download source file'}
+                >
+                  Bekijken
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>

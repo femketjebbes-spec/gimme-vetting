@@ -27,6 +27,7 @@ server:
 
 gimme:
   poc-store-path: ${POC_STORE_PATH:/tmp/poc-store}
+  excel-store-path: ${EXCEL_STORE_PATH:/tmp/excel-store}
 
 ---
 spring:

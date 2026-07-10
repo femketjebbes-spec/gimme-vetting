@@ -1,8 +1,10 @@
 package com.gimmevettingsolution.intake;
 
+import com.gimmevettingsolution.excel.FileBackedExcelStoreService;
 import com.gimmevettingsolution.intake.dto.*;
 import com.gimmevettingsolution.intake.service.ExcelParsingService;
 import com.gimmevettingsolution.intake.service.MandatoryFieldValidationService;
+import com.gimmevettingsolution.intake.service.SourceFileContext;
 import com.gimmevettingsolution.intake.service.ValidationResult;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,12 +29,15 @@ public class ExcelIntakeController {
     private final ExcelParsingService excelParsingService;
     private final MandatoryFieldValidationService mandatoryFieldValidationService;
     private final Path uploadDir;
+    private final FileBackedExcelStoreService excelStoreService;
 
     public ExcelIntakeController(ExcelParsingService excelParsingService,
-                                 MandatoryFieldValidationService mandatoryFieldValidationService) throws IOException {
+                                 MandatoryFieldValidationService mandatoryFieldValidationService,
+                                 FileBackedExcelStoreService excelStoreService) throws IOException {
         this.excelParsingService = excelParsingService;
         this.mandatoryFieldValidationService = mandatoryFieldValidationService;
         this.uploadDir = Files.createTempDirectory("excel-upload-" + UUID.randomUUID());
+        this.excelStoreService = excelStoreService;
     }
 
     /**
@@ -103,6 +108,18 @@ public class ExcelIntakeController {
             List<ExcelInvoiceRow> rowList = java.util.Arrays.asList(parsedRows);
             ValidationResult validationResult = mandatoryFieldValidationService.validate(rowList);
 
+            // Save original file to persistent store and associate with invoices
+            String sourceFileId = null;
+            String sourceFilename = null;
+            try {
+                sourceFileId = excelStoreService.save(file);
+                sourceFilename = excelStoreService.sanitizeFilename(originalFilename);
+                SourceFileContext.setSourceFileId(sourceFileId, sourceFilename);
+            } catch (IllegalArgumentException e) {
+                // File save failed — log but continue processing
+                // The file won't be associated with invoices
+            }
+
             // Generate return Excel for failing rows
             String downloadLink = null;
             if (validationResult.getRowsFailed() > 0) {
@@ -151,6 +168,8 @@ public class ExcelIntakeController {
                     "Unexpected error during Excel processing"
             );
             return ResponseEntity.status(500).body(response);
+        } finally {
+            SourceFileContext.clear();
         }
     }
 
